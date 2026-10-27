@@ -1,0 +1,205 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import {
+  PORTFOLIO_DATA,
+  getCaseStudyBySlug,
+  type ProjectSlug,
+} from "@/data/portfolio";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { TechBracketCard } from "@/components/ui/TechBracketCard";
+import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
+import { cn } from "@/lib/utils";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+export function CapabilitiesSection() {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const isReducedMotion = useReducedMotion();
+  const [highlightedSlugs, setHighlightedSlugs] = useState<
+    readonly ProjectSlug[]
+  >([]);
+  const [activeSkillName, setActiveSkillName] = useState<string | null>(null);
+
+  const { capabilityDomains } = PORTFOLIO_DATA;
+
+  useEffect(() => {
+    if (isReducedMotion || !sectionRef.current) return;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ".skill-hud-reveal",
+        { y: 24, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.65,
+          stagger: 0.08,
+          ease: "power3.out",
+          clearProps: "transform",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 82%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
+    }, sectionRef);
+
+    return () => {
+      ctx.revert();
+    };
+  }, [isReducedMotion]);
+
+  return (
+    <section
+      id="skills"
+      ref={sectionRef}
+      aria-labelledby="skills-heading"
+      className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24"
+    >
+      {/* Section Header */}
+      <div className="skill-hud-reveal mb-10 flex flex-col justify-between gap-4 border-b border-border-subtle pb-6 md:flex-row md:items-end">
+        <div>
+          <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
+            <span className="h-2 w-2 bg-accent-primary" aria-hidden="true" />
+            <span>{"SYS.HUD // 02 — TECHNICAL ARSENAL"}</span>
+          </div>
+          <h2
+            id="skills-heading"
+            className="mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary"
+          >
+            SKILLS
+          </h2>
+        </div>
+
+        <div className="font-mono text-xs text-text-secondary">
+          {activeSkillName ? (
+            <span>
+              ACTIVE FILTER:{" "}
+              <strong className="text-accent-primary">{activeSkillName}</strong>{" "}
+              ({highlightedSlugs.length} DEPLOYED SYSTEMS)
+            </span>
+          ) : (
+            <span>
+              {"[ HOVER OR FOCUS ANY TECH PILL TO INSPECT LINKED PRODUCTION SYSTEMS ]"}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 3 Bracketed Skill Columns */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {capabilityDomains.map((domain) => (
+          <TechBracketCard
+            key={domain.id}
+            bracketSize="lg"
+            className="skill-hud-reveal flex flex-col justify-between p-6 sm:p-7"
+          >
+            <div>
+              {/* Column Top Tag */}
+              <div className="flex items-center justify-between border-b border-border-subtle pb-3 font-mono text-xs">
+                <span className="text-accent-primary">{domain.code}</span>
+                <span className="text-text-muted">
+                  {domain.skills.length} MODULES
+                </span>
+              </div>
+
+              {/* Column Display Heading */}
+              <h3 className="mt-4 font-display text-3xl tracking-wide text-text-primary">
+                {domain.title}
+              </h3>
+
+              <p className="mt-2 text-xs leading-relaxed text-text-secondary">
+                {domain.description}
+              </p>
+
+              {/* Individual Pill Badges with Brand SVG Icons */}
+              <div className="mt-6 flex flex-wrap gap-2">
+                {domain.skills.map((skill) => {
+                  const isSelected = activeSkillName === skill.name;
+                  return (
+                    <button
+                      key={skill.name}
+                      type="button"
+                      onMouseEnter={() => {
+                        setActiveSkillName(skill.name);
+                        setHighlightedSlugs(skill.relatedProjectSlugs);
+                      }}
+                      onFocus={() => {
+                        setActiveSkillName(skill.name);
+                        setHighlightedSlugs(skill.relatedProjectSlugs);
+                      }}
+                      onMouseLeave={() => {
+                        setActiveSkillName(null);
+                        setHighlightedSlugs([]);
+                      }}
+                      onBlur={() => {
+                        setActiveSkillName(null);
+                        setHighlightedSlugs([]);
+                      }}
+                      className={cn(
+                        "press-scale hover-lift inline-flex items-center gap-2 rounded-full border px-3.5 py-2 font-mono text-xs transition-colors duration-150",
+                        isSelected
+                          ? "border-accent-primary bg-accent-primary/15 text-text-primary"
+                          : "border-border-strong/70 bg-bg-primary/90 text-text-primary hover:border-accent-primary"
+                      )}
+                    >
+                      <BrandTechIcon
+                        name={skill.name}
+                        className={cn(
+                          "transition-colors duration-150",
+                          isSelected
+                            ? "text-accent-primary"
+                            : "text-accent-primary/90"
+                        )}
+                      />
+                      <span>{skill.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Bottom Applied Proof & Linked Projects */}
+            <div className="mt-8 border-t border-border-subtle pt-4">
+              <p className="font-mono text-[10px] tracking-wider text-text-muted">
+                DEPLOYED IN PRODUCTION:
+              </p>
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {Array.from(
+                  new Set(domain.skills.flatMap((s) => s.relatedProjectSlugs))
+                ).map((slug) => {
+                  const study = getCaseStudyBySlug(slug);
+                  if (!study) return null;
+                  const isHighlighted = highlightedSlugs.includes(slug);
+                  return (
+                    <Link
+                      key={slug}
+                      href={`/projects/${slug}`}
+                      className={cn(
+                        "press-scale inline-flex items-center gap-1 border px-2.5 py-1 font-mono text-[11px] transition-colors duration-150",
+                        isHighlighted
+                          ? "border-accent-emerald bg-accent-emerald/15 text-accent-emerald"
+                          : "border-border-subtle bg-bg-primary text-text-secondary hover:border-border-strong hover:text-text-primary"
+                      )}
+                    >
+                      <span>{study.shortTitle}</span>
+                      <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </TechBracketCard>
+        ))}
+      </div>
+    </section>
+  );
+}

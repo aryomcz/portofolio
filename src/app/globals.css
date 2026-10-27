@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+:root,
+[data-theme="light"] {
+  --bg-primary: #edf1f5;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #e2e8f0;
+  --bg-glass: rgba(255, 255, 255, 0.92);
+  --bg-footer: #080d1a;
+
+  --text-primary: #0a1120;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+
+  --border-subtle: #cbd5e1;
+  --border-strong: #64748b;
+
+  --accent-primary: #0e7c86;
+  --accent-emerald: #0d9488;
+
+  /* GitHub Heatmap Intensity Tokens (Light) */
+  --gh-level-0: #e2e8f0;
+  --gh-level-1: rgba(14, 124, 134, 0.22);
+  --gh-level-2: rgba(14, 124, 134, 0.45);
+  --gh-level-3: rgba(14, 124, 134, 0.72);
+  --gh-level-4: #0e7c86;
+
+  /* Emil Kowalski Precision Easing Curves (Never linear for UI) */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+[data-theme="dark"] {
+  --bg-primary: #080d16;
+  --bg-elevated: #0f1726;
+  --bg-subtle: #172236;
+  --bg-glass: rgba(15, 23, 38, 0.90);
+  --bg-footer: #04070d;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --border-subtle: #1e293b;
+  --border-strong: #475569;
+
+  --accent-primary: #14b8a6;
+  --accent-emerald: #10b981;
+
+  /* GitHub Heatmap Intensity Tokens (Dark) */
+  --gh-level-0: #131c2e;
+  --gh-level-1: rgba(20, 184, 166, 0.25);
+  --gh-level-2: rgba(20, 184, 166, 0.50);
+  --gh-level-3: rgba(20, 184, 166, 0.75);
+  --gh-level-4: #14b8a6;
+}
+
+@theme inline {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-bg-glass: var(--bg-glass);
+  --color-bg-footer: var(--bg-footer);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-emerald: var(--accent-emerald);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-display: var(--font-display), Impact, ui-sans-serif, sans-serif;
+}
+
+html {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  overflow-x: clip;
+}
+
+::selection {
+  background-color: var(--accent-primary);
+  color: #ffffff;
+}
+
+/* Heavy Condensed Display Sans-Serif utility (Anton) */
+.font-display {
+  font-family: var(--font-display), Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+/* Tabular numbers utility for zero layout jitter on live clocks & metrics */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tactile press feedback utility per emil-design-eng */
+.press-scale {
+  transition: transform 160ms var(--ease-out-strong),
+    border-color 180ms var(--ease-out-strong),
+    background-color 180ms var(--ease-out-strong),
+    color 180ms var(--ease-out-strong);
+}
+
+.press-scale:active {
+  transform: scale(0.97);
+}
+
+/* Hover enhancement gated behind pointer:fine per emil-design-eng */
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Visible keyboard focus ring per WCAG 2.1 AA */
+*:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Rule 3 (SYSTEM_RULES.md): Global CSS Reduced-Motion Safety Net */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
