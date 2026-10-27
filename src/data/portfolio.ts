@@ -353,7 +353,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
         { name: "Laravel", relatedProjectSlugs: ["tigo"] },
         { name: "Express", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "driver-app-pt-kjhms"] },
         { name: "Flutter", relatedProjectSlugs: ["tigo"] },
-        { name: "Tailwind", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "driver-app-pt-kjhms", "lumind"] },
+        { name: "Tailwind", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "driver-app-pt-kjhms", "lumind", 'tigo'] },
         { name: "Node.js", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "driver-app-pt-kjhms"] },
       ],
       productionProofSummary:
@@ -382,7 +382,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
   githubTelemetry: {
     username: "aryomcz",
     profileUrl: "https://github.com/aryomcz",
-    availableYears: [2026, 2025, 2024],
+    availableYears: [2026, 2025, 2024, 2023],
     languageDistribution: [
       { language: "TypeScript", percentage: 42, colorToken: "var(--accent-primary)" },
       { language: "JavaScript", percentage: 24, colorToken: "var(--accent-emerald)" },

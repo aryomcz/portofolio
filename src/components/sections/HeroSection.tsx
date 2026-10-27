@@ -92,7 +92,7 @@ export function HeroSection() {
           <div className="z-20 flex flex-col justify-center pt-6 lg:col-span-4 lg:pt-0">
             <h1
               id="hero-display-name"
-              className="hero-hud-reveal font-display text-[clamp(4.25rem,7.2vw,6.75rem)] leading-[0.94] tracking-[0.01em] text-text-primary select-none"
+              className="hero-hud-reveal lg:text-shadow-md text-shadow-accent-primary font-display text-[clamp(4.25rem,7.2vw,6.75rem)] leading-[0.94] tracking-[0.01em] text-text-primary select-none"
             >
               ARYO
               <br />
@@ -129,7 +129,7 @@ export function HeroSection() {
           <div className="relative z-10 flex h-[480px] w-full items-end justify-center sm:h-[580px] lg:col-span-4 lg:h-[calc(100vh-6.25rem)] lg:max-h-[820px]">
             <div className="relative aspect-[1.24/1] h-full shrink-0">
               <PortraitAuraCanvas
-                baseImageSrc="/images/profile/aryo-portrait.png"
+                baseImageSrc="/images/profile/aryo-portrait-2.png"
                 auraImageSrc="/images/profile/aryo-aura.jpg"
                 isAuraForced={isAuraForced}
               />

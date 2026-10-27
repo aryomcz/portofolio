@@ -1,16 +1,62 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, GitCommit } from "lucide-react";
 import { motion } from "motion/react";
-import { PORTFOLIO_DATA } from "@/data/portfolio";
+import { PORTFOLIO_DATA, type GithubContributionDay } from "@/data/portfolio";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion-tokens";
 import { TechBracketCard } from "@/components/ui/TechBracketCard";
 import { cn } from "@/lib/utils";
 
-function buildDeterministicHeatmap(year: number): readonly (0 | 1 | 2 | 3 | 4)[][] {
-  const weeks: (0 | 1 | 2 | 3 | 4)[][] = [];
+interface LiveYearTelemetry {
+  readonly year: number;
+  readonly totalContributions: number;
+  readonly source: "github-graphql" | "github-public-api" | "github-html";
+  readonly weeks: readonly (readonly GithubContributionDay[])[];
+}
+
+function clampLevel(val: number): 0 | 1 | 2 | 3 | 4 {
+  if (val <= 0) return 0;
+  if (val === 1) return 1;
+  if (val === 2) return 2;
+  if (val === 3) return 3;
+  return 4;
+}
+
+function groupDaysIntoWeeks(
+  days: readonly GithubContributionDay[],
+  year: number
+): readonly (readonly GithubContributionDay[])[] {
+  if (days.length === 0) return [];
+  const sorted = [...days].sort((a, b) => a.date.localeCompare(b.date));
+  const firstDate = new Date(`${sorted[0].date}T00:00:00Z`);
+  const firstDayOfWeek = Number.isNaN(firstDate.getUTCDay())
+    ? 0
+    : firstDate.getUTCDay();
+
+  const paddedDays: GithubContributionDay[] = [];
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    paddedDays.push({ date: `${year}-01-00`, count: 0, level: 0 });
+  }
+  for (const day of sorted) {
+    paddedDays.push(day);
+  }
+  while (paddedDays.length % 7 !== 0) {
+    paddedDays.push({ date: `${year}-12-32`, count: 0, level: 0 });
+  }
+
+  const weeks: GithubContributionDay[][] = [];
+  for (let i = 0; i < paddedDays.length; i += 7) {
+    weeks.push(paddedDays.slice(i, i + 7));
+  }
+  return weeks;
+}
+
+function buildDeterministicHeatmap(
+  year: number
+): readonly (readonly GithubContributionDay[])[] {
+  const weeks: GithubContributionDay[][] = [];
   let seed = year * 1337;
 
   const nextRand = () => {
@@ -19,18 +65,39 @@ function buildDeterministicHeatmap(year: number): readonly (0 | 1 | 2 | 3 | 4)[]
   };
 
   for (let w = 0; w < 52; w++) {
-    const days: (0 | 1 | 2 | 3 | 4)[] = [];
+    const days: GithubContributionDay[] = [];
     for (let d = 0; d < 7; d++) {
       const r = nextRand();
-      if (r < 0.28) days.push(0);
-      else if (r < 0.56) days.push(1);
-      else if (r < 0.78) days.push(2);
-      else if (r < 0.92) days.push(3);
-      else days.push(4);
+      let level: 0 | 1 | 2 | 3 | 4 = 0;
+      if (r < 0.28) level = 0;
+      else if (r < 0.56) level = 1;
+      else if (r < 0.78) level = 2;
+      else if (r < 0.92) level = 3;
+      else level = 4;
+
+      const count = level === 0 ? 0 : level * 3 + ((w + d) % 3);
+      days.push({
+        date: `W${w + 1}-D${d + 1}`,
+        count,
+        level,
+      });
     }
     weeks.push(days);
   }
   return weeks;
+}
+
+function formatContributionDate(dateStr: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  if (dateStr.endsWith("-00") || dateStr.endsWith("-32")) return "";
+  const parsed = new Date(`${dateStr}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return dateStr;
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 const LEVEL_BG_CLASSES: Record<0 | 1 | 2 | 3 | 4, string> = {
@@ -48,11 +115,107 @@ export function GithubActivitySection() {
     githubTelemetry.availableYears[0] ?? 2026
   );
   const [hoveredCellInfo, setHoveredCellInfo] = useState<string | null>(null);
+  const [liveCache, setLiveCache] = useState<Record<number, LiveYearTelemetry>>(
+    {}
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (liveCache[selectedYear]) return;
+
+    let isCancelled = false;
+    setIsLoading(true);
+
+    async function loadYearTelemetry() {
+      const username = githubTelemetry.username;
+
+      // 1. Try internal Next.js Route Handler (/api/github-contributions)
+      try {
+        const res = await fetch(
+          `/api/github-contributions?username=${encodeURIComponent(username)}&year=${selectedYear}`
+        );
+        if (res.ok) {
+          const data = (await res.json()) as LiveYearTelemetry;
+          if (!isCancelled && Array.isArray(data.weeks) && data.weeks.length > 0) {
+            setLiveCache((prev) => ({ ...prev, [selectedYear]: data }));
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch {
+        // Fallback to direct public API below
+      }
+
+      // 2. Fallback: Direct client fetch from public GitHub contributions API
+      try {
+        const directRes = await fetch(
+          `https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(username)}?y=${selectedYear}`
+        );
+        if (directRes.ok) {
+          const raw = (await directRes.json()) as {
+            total?: Record<string, number>;
+            contributions?: { date: string; count: number; level: number }[];
+          };
+          if (Array.isArray(raw.contributions) && raw.contributions.length > 0) {
+            const days: GithubContributionDay[] = raw.contributions.map((item) => ({
+              date: item.date,
+              count: item.count,
+              level: clampLevel(item.level),
+            }));
+            const sumTotal = days.reduce((acc, d) => acc + d.count, 0);
+            const totalContributions =
+              typeof raw.total?.[String(selectedYear)] === "number"
+                ? raw.total[String(selectedYear)]
+                : sumTotal;
+
+            if (!isCancelled) {
+              setLiveCache((prev) => ({
+                ...prev,
+                [selectedYear]: {
+                  year: selectedYear,
+                  totalContributions,
+                  source: "github-public-api",
+                  weeks: groupDaysIntoWeeks(days, selectedYear),
+                },
+              }));
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+      } catch {
+        // Keep deterministic snapshot fallback if offline
+      }
+
+      if (!isCancelled) {
+        setIsLoading(false);
+      }
+    }
+
+    void loadYearTelemetry();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [githubTelemetry.username, liveCache, selectedYear]);
+
+  const currentLiveYear = liveCache[selectedYear];
 
   const heatmapWeeks = useMemo(
-    () => buildDeterministicHeatmap(selectedYear),
-    [selectedYear]
+    () =>
+      currentLiveYear?.weeks && currentLiveYear.weeks.length > 0
+        ? currentLiveYear.weeks
+        : buildDeterministicHeatmap(selectedYear),
+    [currentLiveYear, selectedYear]
   );
+
+  const summaryStatusText = useMemo(() => {
+    if (hoveredCellInfo) return hoveredCellInfo;
+    if (currentLiveYear) {
+      return `${currentLiveYear.totalContributions.toLocaleString("en-US")} Contributions in ${selectedYear}`;
+    }
+    return githubTelemetry.summaryStats.totalContributionsLabel;
+  }, [currentLiveYear, githubTelemetry.summaryStats.totalContributionsLabel, hoveredCellInfo, selectedYear]);
 
   return (
     <section
@@ -111,11 +274,32 @@ export function GithubActivitySection() {
 
       <TechBracketCard bracketSize="lg" className="p-5 sm:p-7">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
-          <span className="text-accent-emerald">
-            @{githubTelemetry.username} · {selectedYear} CONTRIBUTION MATRIX
-          </span>
-          <span className="text-text-secondary">
-            {hoveredCellInfo ?? githubTelemetry.summaryStats.totalContributionsLabel}
+          <div className="flex items-center gap-2.5">
+            <span className="text-accent-emerald">
+              @{githubTelemetry.username} · {selectedYear} CONTRIBUTION MATRIX
+            </span>
+            <span className="inline-flex items-center gap-1.5 border border-border-subtle bg-bg-primary px-2 py-0.5 text-[10px] text-text-muted">
+              {isLoading ? (
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent-primary" aria-hidden="true" />
+                  <span>SYNCING GITHUB...</span>
+                </>
+              ) : currentLiveYear ? (
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent-emerald" aria-hidden="true" />
+                  <span>
+                    {currentLiveYear.source === "github-graphql"
+                      ? "LIVE GRAPHQL SYNC"
+                      : "LIVE GITHUB SYNC"}
+                  </span>
+                </>
+              ) : (
+                <span>LOCAL SNAPSHOT</span>
+              )}
+            </span>
+          </div>
+          <span className="tabular-nums text-text-secondary">
+            {summaryStatusText}
           </span>
         </div>
 
@@ -124,10 +308,26 @@ export function GithubActivitySection() {
           <div className="flex min-w-[680px] justify-between gap-1">
             {heatmapWeeks.map((week, wIdx) => (
               <div key={wIdx} className="flex flex-col gap-1">
-                {week.map((level, dIdx) => {
-                  const commitCount =
-                    level === 0 ? 0 : level * 3 + ((wIdx + dIdx) % 3);
-                  const label = `${commitCount} contributions — Week ${wIdx + 1}, Day ${dIdx + 1} (${selectedYear})`;
+                {week.map((day, dIdx) => {
+                  const isPaddingCell =
+                    day.date.endsWith("-00") || day.date.endsWith("-32");
+                  if (isPaddingCell) {
+                    return (
+                      <span
+                        key={`${wIdx}-${dIdx}`}
+                        aria-hidden="true"
+                        className="h-3 w-3 border border-transparent bg-transparent opacity-25"
+                      />
+                    );
+                  }
+
+                  const formattedDate = formatContributionDate(day.date);
+                  const countWord =
+                    day.count === 1 ? "contribution" : "contributions";
+                  const label = formattedDate
+                    ? `${day.count} ${countWord} on ${formattedDate}`
+                    : `${day.count} ${countWord} — Week ${wIdx + 1}, Day ${dIdx + 1} (${selectedYear})`;
+
                   return (
                     <button
                       key={`${wIdx}-${dIdx}`}
@@ -139,7 +339,7 @@ export function GithubActivitySection() {
                       onBlur={() => setHoveredCellInfo(null)}
                       className={cn(
                         "h-3 w-3 border border-border-subtle/40 transition-transform duration-150 ease-out hover:scale-125",
-                        LEVEL_BG_CLASSES[level]
+                        LEVEL_BG_CLASSES[day.level]
                       )}
                     />
                   );
@@ -149,7 +349,10 @@ export function GithubActivitySection() {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border-subtle pt-3 font-mono text-[11px] text-text-muted">
-            <span>52 WEEKS · {selectedYear} SNAPSHOT</span>
+            <span className="tabular-nums">
+              {heatmapWeeks.length} WEEKS · {selectedYear}{" "}
+              {currentLiveYear ? "LIVE TELEMETRY" : "SNAPSHOT"}
+            </span>
             <div className="flex items-center gap-1.5">
               <span>Less</span>
               {([0, 1, 2, 3, 4] as const).map((lvl) => (
