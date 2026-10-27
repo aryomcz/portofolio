@@ -6,32 +6,32 @@ import type { Transition } from "motion/react";
  */
 export const SPRING_SNAPPY: Transition = {
   type: "spring",
-  stiffness: 400,
-  damping: 30,
-  mass: 0.8,
+  stiffness: 240,
+  damping: 24,
+  mass: 0.85,
 };
 
 export const SPRING_LAYOUT: Transition = {
   type: "spring",
-  stiffness: 380,
-  damping: 32,
-  mass: 1,
+  stiffness: 170,
+  damping: 22,
+  mass: 0.95,
 };
 
 export const SPRING_MODAL: Transition = {
   type: "spring",
-  stiffness: 340,
-  damping: 30,
-  mass: 0.9,
+  stiffness: 180,
+  damping: 24,
+  mass: 0.95,
 };
 
 export const EASE_OUT_STRONG: Transition = {
-  duration: 0.24,
+  duration: 0.45,
   ease: [0.23, 1, 0.32, 1],
 };
 
 export const EASE_OUT_EXPO: Transition = {
-  duration: 0.45,
+  duration: 0.75,
   ease: [0.16, 1, 0.3, 1],
 };
 

@@ -16,8 +16,14 @@ const themeInitScript = `
       var saved = localStorage.getItem('theme');
       var theme = (saved === 'dark' || saved === 'light') ? saved : 'light';
       document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     } catch (e) {
       document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.classList.remove('dark');
     }
   })();
 `;

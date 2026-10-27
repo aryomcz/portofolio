@@ -102,7 +102,7 @@ export function AdaptiveNavbar() {
 
   // Shared surface class for each independent island (never applied to the outer wrapper)
   const islandSurfaceClass =
-    "pointer-events-auto flex h-13 shrink-0 items-center border border-slate-200/85 bg-white/85 shadow-[0_8px_28px_rgba(10,17,32,0.06)] backdrop-blur-md dark:border-slate-800/80 dark:bg-[#0f1726]/85 dark:shadow-[0_8px_28px_rgba(0,0,0,0.32)]";
+    "pointer-events-auto flex h-13 shrink-0 items-center border border-border-subtle bg-bg-glass shadow-[0_8px_28px_rgba(10,17,32,0.06)] backdrop-blur-md";
 
   return (
     <header className="pointer-events-none fixed top-5 right-0 left-0 z-40 flex flex-col items-center px-4 sm:px-8">
@@ -184,7 +184,7 @@ export function AdaptiveNavbar() {
                     <motion.span
                       layoutId="active-nav-pill"
                       transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
-                      className="absolute inset-0 rounded-full bg-slate-200/75 dark:bg-bg-subtle"
+                      className="absolute inset-0 rounded-full bg-bg-subtle shadow-xs"
                       aria-hidden="true"
                     />
                   ) : null}
@@ -198,7 +198,7 @@ export function AdaptiveNavbar() {
                           ? EASE_REDUCED
                           : { type: "spring", stiffness: 420, damping: 30 }
                       }
-                      className="absolute inset-0 rounded-full bg-slate-200/45 dark:bg-accent-primary/15"
+                      className="absolute inset-0 rounded-full bg-bg-subtle/60"
                       aria-hidden="true"
                     />
                   ) : null}
@@ -228,7 +228,7 @@ export function AdaptiveNavbar() {
             target="_blank"
             rel="noopener noreferrer"
             download="Aryo-Ristiawan-Machfudz-CV.pdf"
-            className="press-scale inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-200/90 bg-white px-3.5 font-mono text-xs font-medium text-text-primary hover:border-accent-primary hover:text-accent-primary dark:border-slate-700 dark:bg-bg-elevated"
+            className="press-scale inline-flex h-9 items-center gap-1.5 rounded-full border border-border-subtle bg-bg-elevated px-3.5 font-mono text-xs font-medium text-text-primary hover:border-accent-primary hover:text-accent-primary"
             aria-label="Download Official CV (PDF)"
           >
             <FileText
@@ -244,7 +244,7 @@ export function AdaptiveNavbar() {
           <a
             href={isHome ? "#contact" : "/#contact"}
             onClick={(e) => handleNavClick(e, "#contact", "contact")}
-            className="press-scale group hidden h-9 items-center gap-1.5 rounded-full bg-[#0A1120] px-4 text-[13px] font-medium text-white shadow-xs hover:opacity-90 sm:inline-flex dark:bg-accent-primary"
+            className="press-scale group hidden h-9 items-center gap-1.5 rounded-full bg-accent-primary px-4 text-[13px] font-medium text-white shadow-xs hover:opacity-90 sm:inline-flex"
           >
             <span>Contact</span>
             <ArrowUpRight
@@ -262,7 +262,7 @@ export function AdaptiveNavbar() {
                 isMobileMenuOpen ? "Close menu" : "Open navigation menu"
               }
               aria-expanded={isMobileMenuOpen}
-              className="press-scale flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/90 bg-white text-text-primary md:hidden dark:border-slate-700 dark:bg-bg-elevated"
+              className="press-scale flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-elevated text-text-primary md:hidden"
             >
               {isMobileMenuOpen ? (
                 <X className="h-4 w-4" aria-hidden="true" />
@@ -286,7 +286,7 @@ export function AdaptiveNavbar() {
                 ? EASE_REDUCED
                 : { duration: 0.18, ease: [0.23, 1, 0.32, 1] }
             }
-            className="pointer-events-auto mt-2 w-full max-w-sm origin-top rounded-2xl border border-slate-200/85 bg-white/95 p-3 shadow-2xl backdrop-blur-xl md:hidden dark:border-slate-800 dark:bg-[#0f1726]/95"
+            className="pointer-events-auto mt-2 w-full max-w-sm origin-top rounded-2xl border border-border-subtle bg-bg-glass p-3 shadow-2xl backdrop-blur-xl md:hidden"
           >
             <nav className="flex flex-col space-y-1">
               {NAV_ITEMS.map((item) => {

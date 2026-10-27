@@ -235,7 +235,7 @@ export function GithubActivitySection() {
               initial={isReducedMotion ? false : { y: "100%", opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true, margin: "-10%" }}
-              transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
               className="mt-2 font-display text-[clamp(2.75rem,5.5vw,4.5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
             >
               GITHUB TELEMETRY
@@ -278,7 +278,13 @@ export function GithubActivitySection() {
         </div>
       </div>
 
-      <TechBracketCard bracketSize="lg" className="p-5 sm:p-7">
+      <motion.div
+        initial={isReducedMotion ? false : { opacity: 0, y: 32 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-8%" }}
+        transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <TechBracketCard bracketSize="lg" className="p-5 sm:p-7">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
           <div className="flex items-center gap-2.5">
             <span className="text-accent-emerald">
@@ -427,6 +433,7 @@ export function GithubActivitySection() {
           </div>
         </div>
       </TechBracketCard>
+      </motion.div>
     </section>
   );
 }

@@ -65,10 +65,11 @@ export function SelectedWorksSection() {
     return projects.filter((p) => allowedSlugs.includes(p.slug));
   }, [projects, selectedCategory]);
 
-  // Reset active index when category changes
-  useEffect(() => {
+  const handleCategorySelect = (category: CategoryFilter) => {
+    setSelectedCategory(category);
     setActiveIndex(0);
-  }, [selectedCategory]);
+  };
+
 
   useEffect(() => {
     if (isReducedMotion || !containerRef.current) return;
@@ -81,8 +82,8 @@ export function SelectedWorksSection() {
         {
           yPercent: 0,
           opacity: 1,
-          duration: 0.85,
-          ease: "power4.out",
+          duration: 1.1,
+          ease: "power3.out",
           clearProps: "transform",
           scrollTrigger: {
             trigger: "#achievements",
@@ -92,15 +93,15 @@ export function SelectedWorksSection() {
         }
       );
 
-      // 2. Featured Achievement Card: spring scale dynamics
+      // 2. Featured Achievement Card: graceful spring scale & glide
       gsap.fromTo(
         ".hud-achievement-card",
-        { scale: 0.97, y: 22, opacity: 0 },
+        { scale: 0.94, y: 40, opacity: 0 },
         {
           scale: 1,
           y: 0,
           opacity: 1,
-          duration: 0.75,
+          duration: 1.05,
           ease: "power3.out",
           clearProps: "transform,opacity",
           scrollTrigger: {
@@ -114,12 +115,12 @@ export function SelectedWorksSection() {
       // 3. Featured Achievement HUD Corner Ornaments
       gsap.fromTo(
         ".hud-achievement-card .hud-corner-ornament",
-        { scale: 0.7, opacity: 0 },
+        { scale: 0.6, opacity: 0 },
         {
           scale: 1,
           opacity: 1,
-          duration: 0.5,
-          stagger: 0.04,
+          duration: 0.75,
+          stagger: 0.05,
           ease: "power2.out",
           clearProps: "transform,opacity",
           scrollTrigger: {
@@ -137,8 +138,8 @@ export function SelectedWorksSection() {
         {
           yPercent: 0,
           opacity: 1,
-          duration: 0.85,
-          ease: "power4.out",
+          duration: 1.1,
+          ease: "power3.out",
           clearProps: "transform",
           scrollTrigger: {
             trigger: "#projects",
@@ -429,7 +430,7 @@ export function SelectedWorksSection() {
                 <button
                   key={cat}
                   type="button"
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => handleCategorySelect(cat)}
                   className={cn(
                     "press-scale relative rounded-full border px-3.5 py-1.5 font-mono text-xs transition-colors",
                     isSelected
@@ -515,7 +516,7 @@ export function SelectedWorksSection() {
               transition={
                 isReducedMotion
                   ? EASE_REDUCED
-                  : { type: "spring", stiffness: 360, damping: 32 }
+                  : { type: "spring", stiffness: 150, damping: 22, mass: 0.9 }
               }
               className="flex gap-6 cursor-grab active:cursor-grabbing select-none"
             >

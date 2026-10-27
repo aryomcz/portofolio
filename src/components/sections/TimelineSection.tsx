@@ -35,8 +35,8 @@ export function TimelineSection() {
         {
           yPercent: 0,
           opacity: 1,
-          duration: 0.85,
-          ease: "power4.out",
+          duration: 1.1,
+          ease: "power3.out",
           clearProps: "transform",
           scrollTrigger: {
             trigger: sectionRef.current,
@@ -57,23 +57,23 @@ export function TimelineSection() {
               trigger: spineTrackRef.current,
               start: "top 70%",
               end: "bottom 65%",
-              scrub: 0.3,
+              scrub: 0.5,
             },
           }
         );
       }
 
-      // 2. Timeline Entry Cards with spring scale dynamics & HUD Corner brackets
+      // 2. Timeline Entry Cards with graceful spring scale & upward glide
       const items = gsap.utils.toArray<HTMLElement>(".timeline-entry-card");
       items.forEach((item) => {
         gsap.fromTo(
           item,
-          { scale: 0.97, y: 22, opacity: 0 },
+          { scale: 0.94, y: 36, opacity: 0 },
           {
             scale: 1,
             y: 0,
             opacity: 1,
-            duration: 0.7,
+            duration: 1.0,
             ease: "power3.out",
             clearProps: "transform,opacity",
             scrollTrigger: {
@@ -88,12 +88,12 @@ export function TimelineSection() {
         if (ornaments.length > 0) {
           gsap.fromTo(
             ornaments,
-            { scale: 0.7, opacity: 0 },
+            { scale: 0.6, opacity: 0 },
             {
               scale: 1,
               opacity: 1,
-              duration: 0.5,
-              stagger: 0.04,
+              duration: 0.75,
+              stagger: 0.05,
               ease: "power2.out",
               clearProps: "transform,opacity",
               scrollTrigger: {

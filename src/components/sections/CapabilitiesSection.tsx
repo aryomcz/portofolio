@@ -40,8 +40,8 @@ export function CapabilitiesSection() {
         {
           yPercent: 0,
           opacity: 1,
-          duration: 0.85,
-          ease: "power4.out",
+          duration: 1.1,
+          ease: "power3.out",
           clearProps: "transform",
           scrollTrigger: {
             trigger: sectionRef.current,
@@ -51,16 +51,16 @@ export function CapabilitiesSection() {
         }
       );
 
-      // 2. Bento Skill Cards: subtle spring scale dynamics
+      // 2. Bento Skill Cards: graceful spring scale and upward glide
       gsap.fromTo(
         ".skill-domain-card",
-        { scale: 0.97, y: 20, opacity: 0 },
+        { scale: 0.94, y: 36, opacity: 0 },
         {
           scale: 1,
           y: 0,
           opacity: 1,
-          duration: 0.7,
-          stagger: 0.12,
+          duration: 1.0,
+          stagger: 0.16,
           ease: "power3.out",
           clearProps: "transform,opacity",
           scrollTrigger: {
@@ -74,12 +74,12 @@ export function CapabilitiesSection() {
       // 3. Reveal corner bracket ornaments (┌ ┐ └ ┘)
       gsap.fromTo(
         ".skill-domain-card .hud-corner-ornament",
-        { scale: 0.7, opacity: 0 },
+        { scale: 0.6, opacity: 0 },
         {
           scale: 1,
           opacity: 1,
-          duration: 0.5,
-          stagger: 0.04,
+          duration: 0.75,
+          stagger: 0.05,
           ease: "power2.out",
           clearProps: "transform,opacity",
           scrollTrigger: {
