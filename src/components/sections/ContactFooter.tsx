@@ -96,6 +96,7 @@ export function ContactFooter() {
                 href={owner.contacts.resumePdfPath}
                 target="_blank"
                 rel="noopener noreferrer"
+                download="Aryo-Ristiawan-Machfudz-CV.pdf"
                 className="press-scale inline-flex min-h-11 items-center gap-2 border border-[#33435D] bg-[#0F1520] px-4 py-3 font-mono text-xs text-[#F3F5F8] hover:border-accent-primary"
               >
                 <FileText

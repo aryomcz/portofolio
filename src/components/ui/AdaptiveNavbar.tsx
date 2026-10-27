@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, FileText } from "lucide-react";
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { PORTFOLIO_DATA } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -124,8 +125,20 @@ export function AdaptiveNavbar() {
           </nav>
         ) : null}
 
-        {/* Right: Theme Toggle & Solid Dark Pill "Contact ↗" */}
+        {/* Right: CV Download, Theme Toggle & Solid Dark Pill "Contact ↗" */}
         <div className="flex items-center gap-2">
+          <a
+            href={PORTFOLIO_DATA.owner.contacts.resumePdfPath}
+            target="_blank"
+            rel="noopener noreferrer"
+            download="Aryo-Ristiawan-Machfudz-CV.pdf"
+            className="press-scale inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-elevated px-3 py-1.5 text-xs font-mono font-medium text-text-primary hover:border-accent-primary hover:text-accent-primary"
+            aria-label="Download Official CV (PDF)"
+          >
+            <FileText className="h-3.5 w-3.5 text-accent-primary" aria-hidden="true" />
+            <span>CV</span>
+          </a>
+
           <ThemeToggle />
 
           <a
