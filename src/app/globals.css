@@ -58,6 +58,39 @@
   --gh-level-4: #14b8a6;
 }
 
+/* =====================================================================
+   PER-PROJECT & ACHIEVEMENT TEXT AND BORDER ACCENT COLORS
+   - livingroom = orange-500 (#f97316)
+   - bks        = blue-500   (#3b82f6)
+   - tigo       = sky-500    (#0ea5e9)
+   - hms        = red-500    (#ef4444)
+   - lumind     = fuchsia-500 (#d946ef)
+====================================================================== */
+[data-project-theme="orange"] {
+  --accent-primary: #f97316;
+  --accent-emerald: #f97316;
+}
+
+[data-project-theme="blue"] {
+  --accent-primary: #3b82f6;
+  --accent-emerald: #3b82f6;
+}
+
+[data-project-theme="sky"] {
+  --accent-primary: #0ea5e9;
+  --accent-emerald: #0ea5e9;
+}
+
+[data-project-theme="red"] {
+  --accent-primary: #ef4444;
+  --accent-emerald: #ef4444;
+}
+
+[data-project-theme="fuchsia"] {
+  --accent-primary: #8b5cf6;
+  --accent-emerald: #8b5cf6;
+}
+
 @theme inline {
   --color-bg-primary: var(--bg-primary);
   --color-bg-elevated: var(--bg-elevated);
@@ -133,6 +166,7 @@ body {
 
 /* Rule 3 (SYSTEM_RULES.md): Global CSS Reduced-Motion Safety Net */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

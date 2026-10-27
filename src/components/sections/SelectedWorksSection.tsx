@@ -89,6 +89,7 @@ export function SelectedWorksSection() {
         <TechBracketCard
           bracketSize="lg"
           activeAccent
+          themeColor={featuredAchievement.themeColor}
           className="hud-work-reveal p-6 sm:p-8 lg:p-10"
         >
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
@@ -101,21 +102,21 @@ export function SelectedWorksSection() {
                   <span>{featuredAchievement.badgeText ?? "CHAMPION"}</span>
                 </span>
 
-                <span className="border border-border-strong bg-bg-primary px-3 py-1 font-mono text-xs text-accent-emerald">
+                <span className="border border-accent-primary/50 bg-bg-primary px-3 py-1 font-mono text-xs text-accent-primary">
                   JUARA 1 NASIONAL · {featuredAchievement.year}
                 </span>
 
-                <span className="border border-border-subtle bg-bg-primary px-3 py-1 font-mono text-xs text-text-secondary">
+                <span className="border border-accent-primary/35 bg-bg-primary px-3 py-1 font-mono text-xs text-accent-primary">
                   UIN Sunan Ampel Surabaya
                 </span>
               </div>
 
               {/* Display Title & Product Name */}
               <div>
-                <h3 className="font-display text-[clamp(2.1rem,3.6vw,3.25rem)] leading-[0.95] tracking-wide text-text-primary">
+                <h3 className="font-display text-[clamp(2.1rem,3.6vw,3.25rem)] leading-[0.95] tracking-wide text-accent-primary">
                   {featuredAchievement.title}
                 </h3>
-                <p className="mt-2 font-mono text-sm font-medium text-accent-primary">
+                <p className="mt-2 font-mono text-sm font-medium text-text-primary">
                   {featuredAchievement.subtitle}
                 </p>
               </div>
@@ -126,8 +127,8 @@ export function SelectedWorksSection() {
               </p>
 
               {/* Role & Contributions Box */}
-              <div className="border border-border-subtle bg-bg-primary/80 p-4">
-                <div className="flex items-center gap-2 font-mono text-xs text-text-primary">
+              <div className="border border-accent-primary/45 bg-bg-primary/80 p-4">
+                <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
                   <UserCheck
                     className="h-4 w-4 text-accent-primary"
                     aria-hidden="true"
@@ -136,15 +137,15 @@ export function SelectedWorksSection() {
                 </div>
                 <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">
                   Designed and engineered the interactive mental wellness modules:{" "}
-                  <strong className="text-text-primary">Lacak Emosi</strong>{" "}
+                  <strong className="text-accent-primary">Lacak Emosi</strong>{" "}
                   (Daily Mood Check-In),{" "}
-                  <strong className="text-text-primary">Atur Napas</strong>{" "}
+                  <strong className="text-accent-primary">Atur Napas</strong>{" "}
                   (Guided Breathing Cadence), and{" "}
-                  <strong className="text-text-primary">
+                  <strong className="text-accent-primary">
                     Temukan Ketenangan
                   </strong>{" "}
                   deployed at{" "}
-                  <span className="font-mono text-accent-emerald">
+                  <span className="font-mono text-accent-primary">
                     lumind.vercel.app
                   </span>
                   .
@@ -156,7 +157,7 @@ export function SelectedWorksSection() {
                 {featuredAchievement.techStack.map((tech) => (
                   <span
                     key={tech.name}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary px-3 py-1 font-mono text-xs text-text-secondary"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-accent-primary/45 bg-bg-primary px-3 py-1 font-mono text-xs text-accent-primary"
                   >
                     <BrandTechIcon
                       name={tech.name}
@@ -183,7 +184,7 @@ export function SelectedWorksSection() {
                 <button
                   type="button"
                   onClick={() => setPreviewStudy(featuredAchievement)}
-                  className="press-scale inline-flex min-h-11 items-center gap-1.5 border border-border-strong bg-bg-primary px-4 py-2.5 font-mono text-xs text-text-primary hover:border-accent-primary"
+                  className="press-scale inline-flex min-h-11 items-center gap-1.5 border border-accent-primary/60 bg-bg-primary px-4 py-2.5 font-mono text-xs text-accent-primary hover:border-accent-primary"
                 >
                   <Eye
                     className="h-3.5 w-3.5 text-accent-primary"
@@ -197,7 +198,7 @@ export function SelectedWorksSection() {
                     href={featuredAchievement.liveUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="press-scale inline-flex min-h-11 items-center gap-1.5 border border-border-subtle bg-bg-primary px-4 py-2.5 font-mono text-xs text-text-secondary hover:border-border-strong hover:text-text-primary"
+                    className="press-scale inline-flex min-h-11 items-center gap-1.5 border border-accent-primary/45 bg-bg-primary px-4 py-2.5 font-mono text-xs text-accent-primary hover:border-accent-primary"
                   >
                     <span>LUMIND.VERCEL.APP</span>
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
@@ -258,15 +259,20 @@ export function SelectedWorksSection() {
               key={project.slug}
               as="article"
               bracketSize="lg"
+              activeAccent
+              themeColor={project.themeColor}
               className="hud-work-reveal flex flex-col justify-between p-5 sm:p-7"
             >
               <div className="space-y-5">
                 {/* Top Category & Index Header */}
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-3 font-mono text-xs">
-                  <span className="text-accent-primary">
-                    {`PROJECT // ${project.index} · ${project.year}`}
-                  </span>
-                  <span className="border border-border-subtle bg-bg-primary px-2.5 py-0.5 text-[11px] text-text-secondary">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-accent-primary/35 pb-3 font-mono text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-accent-primary" aria-hidden="true" />
+                    <span className="font-semibold text-accent-primary">
+                      {`PROJECT // ${project.index} · ${project.year}`}
+                    </span>
+                  </div>
+                  <span className="border border-accent-primary/45 bg-bg-primary px-2.5 py-0.5 text-[11px] text-accent-primary">
                     {project.category}
                   </span>
                 </div>
@@ -283,10 +289,10 @@ export function SelectedWorksSection() {
                 {/* Project Title & Solution Summary */}
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="font-display text-3xl tracking-wide text-text-primary sm:text-4xl">
+                    <h3 className="font-display text-3xl tracking-wide text-accent-primary sm:text-4xl">
                       {project.title}
                     </h3>
-                    <span className="font-mono text-[11px] text-accent-emerald">
+                    <span className="font-mono text-[11px] text-accent-primary">
                       ● {project.clientOrContext}
                     </span>
                   </div>
@@ -297,8 +303,8 @@ export function SelectedWorksSection() {
                 </div>
 
                 {/* Impact Highlight Strip */}
-                <div className="border-l-2 border-accent-primary bg-bg-primary/90 px-3.5 py-2 font-mono text-xs text-text-primary">
-                  <span className="text-accent-primary">IMPACT // </span>
+                <div className="border border-accent-primary/35 border-l-2 border-l-accent-primary bg-bg-primary/90 px-3.5 py-2 font-mono text-xs text-text-primary">
+                  <span className="font-semibold text-accent-primary">IMPACT // </span>
                   <span>{project.heroMetricPill}</span>
                 </div>
 
@@ -307,7 +313,7 @@ export function SelectedWorksSection() {
                   {project.techStack.map((tech) => (
                     <span
                       key={tech.name}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary px-3 py-1 font-mono text-[11px] text-text-secondary"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-accent-primary/45 bg-bg-primary px-3 py-1 font-mono text-[11px] text-accent-primary"
                     >
                       <BrandTechIcon
                         name={tech.name}
@@ -320,11 +326,11 @@ export function SelectedWorksSection() {
               </div>
 
               {/* Card Footer Links */}
-              <div className="mt-7 flex flex-wrap items-center justify-between gap-2.5 border-t border-border-subtle pt-4">
+              <div className="mt-7 flex flex-wrap items-center justify-between gap-2.5 border-t border-accent-primary/35 pt-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
                     href={`/projects/${project.slug}`}
-                    className="press-scale group inline-flex min-h-10 items-center gap-1.5 bg-text-primary px-4 py-2 font-mono text-xs font-medium text-bg-primary hover:bg-accent-primary hover:text-white"
+                    className="press-scale group inline-flex min-h-10 items-center gap-1.5 bg-accent-primary px-4 py-2 font-mono text-xs font-semibold text-white hover:opacity-90"
                   >
                     <span>CASE STUDY</span>
                     <ArrowUpRight
@@ -336,7 +342,7 @@ export function SelectedWorksSection() {
                   <button
                     type="button"
                     onClick={() => setPreviewStudy(project)}
-                    className="press-scale inline-flex min-h-10 items-center gap-1.5 border border-border-strong bg-bg-primary px-3.5 py-2 font-mono text-xs text-text-primary hover:border-accent-primary"
+                    className="press-scale inline-flex min-h-10 items-center gap-1.5 border border-accent-primary/60 bg-bg-primary px-3.5 py-2 font-mono text-xs text-accent-primary hover:border-accent-primary"
                   >
                     <Eye
                       className="h-3.5 w-3.5 text-accent-primary"
@@ -351,7 +357,7 @@ export function SelectedWorksSection() {
                     href={project.liveUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="press-scale inline-flex min-h-10 items-center gap-1.5 border border-border-subtle bg-bg-primary px-3.5 py-2 font-mono text-xs text-accent-emerald hover:border-accent-emerald"
+                    className="press-scale inline-flex min-h-10 items-center gap-1.5 border border-accent-primary/45 bg-bg-primary px-3.5 py-2 font-mono text-xs text-accent-primary hover:border-accent-primary"
                   >
                     <span>LIVE SITE</span>
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />

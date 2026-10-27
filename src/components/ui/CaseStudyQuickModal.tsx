@@ -117,13 +117,15 @@ export function CaseStudyQuickModal({
             }
             transition={isReducedMotion ? EASE_REDUCED : SPRING_MODAL}
             data-lenis-prevent
+            data-project-theme={study.themeColor}
             style={{ maxHeight: "84dvh" }}
-            className="relative z-10 my-auto flex w-full max-w-4xl flex-col overflow-hidden border border-border-strong bg-bg-primary text-text-primary shadow-2xl"
+            className="relative z-10 my-auto flex w-full max-w-4xl flex-col overflow-hidden border border-accent-primary/60 bg-bg-primary text-text-primary shadow-2xl"
           >
             {/* Sticky Modal Header */}
-            <div className="flex shrink-0 items-center justify-between border-b border-border-subtle bg-bg-elevated px-5 py-3.5 sm:px-6">
+            <div className="flex shrink-0 items-center justify-between border-b border-accent-primary/35 bg-bg-elevated px-5 py-3.5 sm:px-6">
               <div className="flex items-center gap-3 font-mono text-xs">
-                <span className="text-accent-primary">
+                <span className="h-2 w-2 rounded-full bg-accent-primary" aria-hidden="true" />
+                <span className="font-semibold text-accent-primary">
                   {`${study.index} // QUICK ARCHITECTURAL PREVIEW`}
                 </span>
                 <span className="hidden text-text-muted sm:inline">·</span>
@@ -247,7 +249,7 @@ export function CaseStudyQuickModal({
                 <Link
                   href={`/projects/${study.slug}`}
                   onClick={onClose}
-                  className="press-scale inline-flex items-center gap-1.5 bg-text-primary px-4 py-2 font-mono text-xs font-medium text-bg-primary hover:bg-accent-primary hover:text-white"
+                  className="press-scale inline-flex items-center gap-1.5 bg-accent-primary px-4 py-2 font-mono text-xs font-semibold text-white hover:opacity-90"
                 >
                   <span>Open Full Case Study Page</span>
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />

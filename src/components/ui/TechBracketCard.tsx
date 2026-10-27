@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { ProjectThemeId } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
 interface TechBracketCardProps {
@@ -8,6 +9,7 @@ interface TechBracketCardProps {
   readonly bracketSize?: "sm" | "md" | "lg";
   readonly accentOnHover?: boolean;
   readonly activeAccent?: boolean;
+  readonly themeColor?: ProjectThemeId;
   readonly as?: "div" | "article" | "section" | "aside";
 }
 
@@ -23,6 +25,7 @@ export function TechBracketCard({
   bracketSize = "md",
   accentOnHover = true,
   activeAccent = false,
+  themeColor,
   as: Component = "div",
 }: TechBracketCardProps) {
   const sizeClasses = {
@@ -31,17 +34,22 @@ export function TechBracketCard({
     lg: "h-4.5 w-4.5",
   }[bracketSize];
 
-  const bracketColor = activeAccent
-    ? "border-accent-primary"
-    : cn(
-        "border-border-strong",
-        accentOnHover && "group-hover/hud:border-accent-primary"
-      );
+  const bracketColor =
+    activeAccent || Boolean(themeColor)
+      ? "border-accent-primary"
+      : cn(
+          "border-border-strong",
+          accentOnHover && "group-hover/hud:border-accent-primary"
+        );
 
   return (
     <Component
+      data-project-theme={themeColor}
       className={cn(
-        "group/hud relative border border-border-subtle/80 bg-bg-elevated/90 backdrop-blur-xs transition-colors duration-200 hover:border-border-strong",
+        "group/hud relative border bg-bg-elevated/90 backdrop-blur-xs transition-colors duration-200",
+        themeColor
+          ? "border-accent-primary/50 hover:border-accent-primary"
+          : "border-border-subtle/80 hover:border-border-strong",
         className
       )}
     >

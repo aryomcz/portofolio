@@ -5,6 +5,13 @@ export type ProjectSlug =
   | "driver-app-pt-kjhms"
   | "lumind";
 
+export type ProjectThemeId =
+  | "orange"
+  | "blue"
+  | "sky"
+  | "red"
+  | "fuchsia";
+
 export type SkillDomainId =
   | "architecture-analysis"
   | "fullstack-development"
@@ -77,6 +84,7 @@ export interface ProjectCaseStudy {
   readonly slug: ProjectSlug;
   readonly index: string;
   readonly kind: "project" | "achievement";
+  readonly themeColor: ProjectThemeId;
   readonly badgeText?: string; // e.g. "CHAMPION" for Achievement
   readonly title: string;
   readonly shortTitle: string;
@@ -400,6 +408,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       slug: "pos-livingroom",
       index: "01",
       kind: "project",
+      themeColor: "orange",
       title: "POS LIVINGROOM",
       shortTitle: "POS Livingroom",
       subtitle: "PWA Point of Sale & Multi-Period Sales Analytics",
@@ -564,6 +573,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       slug: "tigo",
       index: "02",
       kind: "project",
+      themeColor: "sky",
       title: "TIGO (TICKET ON THE GO)",
       shortTitle: "TIGO Ticketing",
       subtitle: "Full-Stack & Flutter Event Ticketing Ecosystem with Xendit",
@@ -726,6 +736,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       slug: "cms-pt-bks",
       index: "03",
       kind: "project",
+      themeColor: "blue",
       title: "CMS WEBSITE — PT BKS",
       shortTitle: "CMS PT BKS",
       subtitle: "Enterprise Ship Management Platform & Back-Office CMS",
@@ -881,6 +892,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       slug: "driver-app-pt-kjhms",
       index: "04",
       kind: "project",
+      themeColor: "red",
       title: "DRIVER APP — PT KJHMS",
       shortTitle: "Driver App PT KJHMS",
       subtitle: "OCR Receipt Extraction, Ritase Analytics & Auto-Print SIJ",
@@ -1045,6 +1057,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
     slug: "lumind",
     index: "AWARD // 01",
     kind: "achievement",
+    themeColor: "fuchsia",
     badgeText: "CHAMPION",
     title: "1ST WINNER — PRISMA FEST WEB DESIGN COMPETITION",
     shortTitle: "Lumind (Prisma Fest 1st Winner)",
@@ -1060,8 +1073,8 @@ export const PORTFOLIO_DATA: PortfolioData = {
     previewImage: {
       src: "/images/achievements/prisma/winner.png",
       alt: "Lumind Digital Mental Wellness Platform UI and 1st Winner Prisma Fest 2025 Award Certificate",
-      secondaryCertificateSrc: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1000&q=80",
-      aspectRatio: "16/10",
+      secondaryCertificateSrc: "/images/achievements/prisma/certificate.png",
+      aspectRatio: "16/9",
     },
     dummyGallery: [
       {
@@ -1073,14 +1086,21 @@ export const PORTFOLIO_DATA: PortfolioData = {
       },
       {
         id: "lumind-2",
-        tag: "DOC 02 // LUMIND SANCTUARY UI",
+        tag: "DOC 02 // OFFICIAL CERTIFICATE",
+        title: "Juara 1 National Web Design Certificate",
+        caption: "Official 1st Winner Certificate awarded by UIN Sunan Ampel Surabaya at Prisma Fest 2025.",
+        imageUrl: "/images/achievements/prisma/certificate.png",
+      },
+      {
+        id: "lumind-3",
+        tag: "DOC 03 // LUMIND SANCTUARY UI",
         title: "Personalized Daily Mood Check-In (Lacak Emosi)",
         caption: "Calming editorial interface at lumind.vercel.app designed for zero cognitive overload.",
         imageUrl: "/images/achievements/prisma/daily-mood.png",
       },
       {
-        id: "lumind-3",
-        tag: "DOC 03 // MINDFUL RITUALS",
+        id: "lumind-4",
+        tag: "DOC 04 // MINDFUL RITUALS",
         title: "Choreographed Breathing Cadence (Atur Napas)",
         caption: "Interactive visual breathing guide and distraction-free journaling module.",
         imageUrl: "/images/achievements/prisma/inhale.png",

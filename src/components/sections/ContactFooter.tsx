@@ -89,7 +89,7 @@ export function ContactFooter() {
               <CopyEmailButton
                 email={owner.contacts.email}
                 variant="pill"
-                className="border-[#33435D] bg-[#0F1520] text-[#F3F5F8] hover:border-accent-primary"
+                className="border-[#33435D] bg-[#0F1520] text-[#F3F5F8] hover:text-accent-primary hover:border-accent-primary"
               />
 
               <a

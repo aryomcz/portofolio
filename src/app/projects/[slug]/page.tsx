@@ -63,7 +63,10 @@ export default async function ProjectCaseStudyPage({
 
   return (
     <main className="min-h-screen text-text-primary">
-      <article className="mx-auto max-w-7xl px-4 pt-8 pb-16 sm:px-6 lg:px-8">
+      <article
+        data-project-theme={study.themeColor}
+        className="mx-auto max-w-7xl px-4 pt-8 pb-16 sm:px-6 lg:px-8"
+      >
         {/* 1. Top Breadcrumb & Case Study HUD Header */}
         <header className="space-y-8">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-subtle pb-4">
@@ -87,7 +90,7 @@ export default async function ProjectCaseStudyPage({
                   <span>{study.badgeText ?? "CHAMPION"}</span>
                 </span>
               ) : null}
-              <span className="text-accent-primary">
+              <span className="font-semibold text-accent-primary">
                 {`CASE STUDY // ${study.index}`}
               </span>
               <span className="text-text-muted">·</span>
@@ -118,6 +121,8 @@ export default async function ProjectCaseStudyPage({
             {/* Right 4 Cols: HUD Metadata & Live Site CTA */}
             <TechBracketCard
               bracketSize="md"
+              activeAccent
+              themeColor={study.themeColor}
               className="flex flex-col justify-between p-6 lg:col-span-4"
             >
               <div className="space-y-3">
@@ -173,6 +178,8 @@ export default async function ProjectCaseStudyPage({
               <TechBracketCard
                 key={idx}
                 bracketSize="sm"
+                activeAccent
+                themeColor={study.themeColor}
                 className="p-5"
               >
                 <div className="flex items-center justify-between">
@@ -213,35 +220,46 @@ export default async function ProjectCaseStudyPage({
             </span>
           </div>
 
-          {/* Hero Banner Dummy Photo */}
-          <TechBracketCard bracketSize="lg" className="overflow-hidden p-3 sm:p-4">
-            <div className="relative aspect-[16/9] w-full overflow-hidden border border-border-subtle bg-bg-primary sm:aspect-[21/9]">
+          {/* Hero Banner Showcase Photo (Full 16:9 Uncropped) */}
+          <TechBracketCard
+            bracketSize="lg"
+            activeAccent
+            themeColor={study.themeColor}
+            className="overflow-hidden p-3 sm:p-4"
+          >
+            <div className="relative aspect-[16/9] w-full overflow-hidden border border-border-subtle bg-bg-primary">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={study.previewImage.src}
                 alt={study.previewImage.alt}
-                className="h-full w-full object-cover object-top opacity-85"
+                className="h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-transparent to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-end justify-between gap-2">
-                <div className="border border-border-strong bg-bg-primary/90 px-3.5 py-2 backdrop-blur-xs">
-                  <p className="font-mono text-[10px] text-accent-primary">
-                    PRIMARY SYSTEM SHOWCASE // {study.shortTitle.toUpperCase()}
-                  </p>
-                  <p className="text-xs font-medium text-text-primary sm:text-sm">
-                    {study.previewImage.alt}
-                  </p>
-                </div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-accent-primary/35 pt-3">
+              <div>
+                <p className="font-mono text-[10px] font-semibold text-accent-primary">
+                  PRIMARY SYSTEM SHOWCASE // {study.shortTitle.toUpperCase()}
+                </p>
+                <p className="text-xs font-medium text-text-primary sm:text-sm">
+                  {study.previewImage.alt}
+                </p>
               </div>
             </div>
           </TechBracketCard>
 
-          {/* 3-Column Dummy Photo Cards Grid */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {/* Gallery Photo Cards Grid */}
+          <div
+            className={`grid grid-cols-1 gap-6 ${
+              study.dummyGallery.length === 4
+                ? "md:grid-cols-2"
+                : "md:grid-cols-3"
+            }`}
+          >
             {study.dummyGallery.map((photo) => (
               <TechBracketCard
                 key={photo.id}
                 bracketSize="md"
+                themeColor={study.themeColor}
                 className="flex flex-col justify-between overflow-hidden p-4"
               >
                 <div>
@@ -251,9 +269,9 @@ export default async function ProjectCaseStudyPage({
                       src={photo.imageUrl}
                       alt={photo.title}
                       loading="lazy"
-                      className="h-full w-full object-cover opacity-85 transition-transform duration-300 ease-out hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-300 ease-out hover:scale-105"
                     />
-                    <span className="absolute top-2 left-2 border border-border-strong bg-bg-primary/90 px-2 py-0.5 font-mono text-[10px] text-accent-primary">
+                    <span className="absolute top-2 left-2 border border-accent-primary/50 bg-bg-primary/95 px-2 py-0.5 font-mono text-[10px] font-medium text-accent-primary">
                       {photo.tag}
                     </span>
                   </div>
@@ -528,8 +546,12 @@ export default async function ProjectCaseStudyPage({
           className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2"
         >
           <Link href={`/projects/${prev.slug}`} className="press-scale block">
-            <TechBracketCard bracketSize="md" className="p-6">
-              <div className="flex items-center gap-2 font-mono text-xs text-text-muted">
+            <TechBracketCard
+              bracketSize="md"
+              themeColor={prev.themeColor}
+              className="p-6"
+            >
+              <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
                 <ArrowLeft className="h-3.5 w-3.5 text-accent-primary" />
                 <span>PREVIOUS ({prev.index})</span>
               </div>
@@ -543,8 +565,12 @@ export default async function ProjectCaseStudyPage({
           </Link>
 
           <Link href={`/projects/${next.slug}`} className="press-scale block">
-            <TechBracketCard bracketSize="md" className="p-6 text-right">
-              <div className="flex items-center justify-end gap-2 font-mono text-xs text-text-muted">
+            <TechBracketCard
+              bracketSize="md"
+              themeColor={next.themeColor}
+              className="p-6 text-right"
+            >
+              <div className="flex items-center justify-end gap-2 font-mono text-xs text-accent-primary">
                 <span>NEXT ({next.index})</span>
                 <ArrowRight className="h-3.5 w-3.5 text-accent-primary" />
               </div>
