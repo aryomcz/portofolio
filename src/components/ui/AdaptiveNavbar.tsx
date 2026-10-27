@@ -17,8 +17,8 @@ interface NavItem {
 
 const NAV_ITEMS: readonly NavItem[] = [
   { id: "hero", label: "About", href: "#hero" },
-  { id: "achievements", label: "Achievements", href: "#achievements" },
   { id: "skills", label: "Skills", href: "#skills" },
+  { id: "achievements", label: "Achievements", href: "#achievements" },
   { id: "projects", label: "Projects", href: "#projects" },
   { id: "timeline", label: "Experience", href: "#timeline" },
 ];
