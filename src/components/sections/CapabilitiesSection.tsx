@@ -33,19 +33,58 @@ export function CapabilitiesSection() {
     if (isReducedMotion || !sectionRef.current) return;
 
     const ctx = gsap.context(() => {
+      // 1. Text Header Reveal: masked kinetic slide-up for SKILLS
       gsap.fromTo(
-        ".skill-hud-reveal",
-        { y: 24, opacity: 0 },
+        ".skills-kinetic-title",
+        { yPercent: 105, opacity: 0 },
         {
-          y: 0,
+          yPercent: 0,
           opacity: 1,
-          duration: 0.65,
-          stagger: 0.08,
-          ease: "power3.out",
+          duration: 0.85,
+          ease: "power4.out",
           clearProps: "transform",
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: "top 82%",
+            start: "top 85%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
+
+      // 2. Bento Skill Cards: subtle spring scale dynamics
+      gsap.fromTo(
+        ".skill-domain-card",
+        { scale: 0.97, y: 20, opacity: 0 },
+        {
+          scale: 1,
+          y: 0,
+          opacity: 1,
+          duration: 0.7,
+          stagger: 0.12,
+          ease: "power3.out",
+          clearProps: "transform,opacity",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 80%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
+
+      // 3. Reveal corner bracket ornaments (┌ ┐ └ ┘)
+      gsap.fromTo(
+        ".skill-domain-card .hud-corner-ornament",
+        { scale: 0.7, opacity: 0 },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.5,
+          stagger: 0.04,
+          ease: "power2.out",
+          clearProps: "transform,opacity",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 80%",
             toggleActions: "play none none none",
           },
         }
@@ -65,18 +104,20 @@ export function CapabilitiesSection() {
       className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24"
     >
       {/* Section Header */}
-      <div className="skill-hud-reveal mb-10 flex flex-col justify-between gap-4 border-b border-border-subtle pb-6 md:flex-row md:items-end">
+      <div className="mb-10 flex flex-col justify-between gap-4 border-b border-border-subtle pb-6 md:flex-row md:items-end">
         <div>
           <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
             <span className="h-2 w-2 bg-accent-primary" aria-hidden="true" />
             <span>{"SYS.HUD // 02 — TECHNICAL ARSENAL"}</span>
           </div>
-          <h2
-            id="skills-heading"
-            className="mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary"
-          >
-            SKILLS
-          </h2>
+          <div className="overflow-hidden">
+            <h2
+              id="skills-heading"
+              className="skills-kinetic-title mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+            >
+              SKILLS
+            </h2>
+          </div>
         </div>
 
         <div className="font-mono text-xs text-text-secondary">
@@ -100,7 +141,7 @@ export function CapabilitiesSection() {
           <TechBracketCard
             key={domain.id}
             bracketSize="lg"
-            className="skill-hud-reveal flex flex-col justify-between p-6 sm:p-7"
+            className="skill-domain-card flex flex-col justify-between p-6 sm:p-7"
           >
             <div>
               {/* Column Top Tag */}
@@ -120,7 +161,7 @@ export function CapabilitiesSection() {
                 {domain.description}
               </p>
 
-              {/* Individual Pill Badges with Brand SVG Icons */}
+              {/* Individual Pill Badges with Brand SVG Icons & Spring Hover */}
               <div className="mt-6 flex flex-wrap gap-2">
                 {domain.skills.map((skill) => {
                   const isSelected = activeSkillName === skill.name;
@@ -145,7 +186,7 @@ export function CapabilitiesSection() {
                         setHighlightedSlugs([]);
                       }}
                       className={cn(
-                        "press-scale hover-lift inline-flex items-center gap-2 rounded-full border px-3.5 py-2 font-mono text-xs transition-colors duration-150",
+                        "press-scale badge-spring inline-flex items-center gap-2 rounded-full border px-3.5 py-2 font-mono text-xs",
                         isSelected
                           ? "border-accent-primary bg-accent-primary/15 text-text-primary"
                           : "border-border-strong/70 bg-bg-primary/90 text-text-primary hover:border-accent-primary"
@@ -184,14 +225,14 @@ export function CapabilitiesSection() {
                       key={slug}
                       href={`/projects/${slug}`}
                       className={cn(
-                        "press-scale inline-flex items-center gap-1 border px-2.5 py-1 font-mono text-[11px] transition-colors duration-150",
+                        "press-scale group inline-flex items-center gap-1 border px-2.5 py-1 font-mono text-[11px] transition-colors duration-150",
                         isHighlighted
                           ? "border-accent-emerald bg-accent-emerald/15 text-accent-emerald"
                           : "border-border-subtle bg-bg-primary text-text-secondary hover:border-border-strong hover:text-text-primary"
                       )}
                     >
                       <span>{study.shortTitle}</span>
-                      <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+                      <ArrowUpRight className="arrow-drift h-3 w-3" aria-hidden="true" />
                     </Link>
                   );
                 })}

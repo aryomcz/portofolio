@@ -29,25 +29,118 @@ export function SelectedWorksSection() {
     if (isReducedMotion || !containerRef.current) return;
 
     const ctx = gsap.context(() => {
-      const blocks = gsap.utils.toArray<HTMLElement>(".hud-work-reveal");
-      blocks.forEach((block) => {
-        gsap.fromTo(
-          block,
-          { y: 26, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.65,
-            ease: "power3.out",
-            clearProps: "transform",
-            scrollTrigger: {
-              trigger: block,
-              start: "top 85%",
-              toggleActions: "play none none none",
-            },
-          }
-        );
-      });
+      // 1. Achievements Section Kinetic Title Reveal
+      gsap.fromTo(
+        ".achieve-kinetic-title",
+        { yPercent: 105, opacity: 0 },
+        {
+          yPercent: 0,
+          opacity: 1,
+          duration: 0.85,
+          ease: "power4.out",
+          clearProps: "transform",
+          scrollTrigger: {
+            trigger: "#achievements",
+            start: "top 85%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
+
+      // 2. Featured Achievement Card: spring scale dynamics
+      gsap.fromTo(
+        ".hud-achievement-card",
+        { scale: 0.97, y: 22, opacity: 0 },
+        {
+          scale: 1,
+          y: 0,
+          opacity: 1,
+          duration: 0.75,
+          ease: "power3.out",
+          clearProps: "transform,opacity",
+          scrollTrigger: {
+            trigger: "#achievements",
+            start: "top 82%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
+
+      // 3. Featured Achievement HUD Corner Ornaments (┌ ┐ └ ┘)
+      gsap.fromTo(
+        ".hud-achievement-card .hud-corner-ornament",
+        { scale: 0.7, opacity: 0 },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.5,
+          stagger: 0.04,
+          ease: "power2.out",
+          clearProps: "transform,opacity",
+          scrollTrigger: {
+            trigger: "#achievements",
+            start: "top 82%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
+
+      // 4. Projects Section Kinetic Title Reveal
+      gsap.fromTo(
+        ".projects-kinetic-title",
+        { yPercent: 105, opacity: 0 },
+        {
+          yPercent: 0,
+          opacity: 1,
+          duration: 0.85,
+          ease: "power4.out",
+          clearProps: "transform",
+          scrollTrigger: {
+            trigger: "#projects",
+            start: "top 85%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
+
+      // 5. Bento Project Cards: spring scale dynamics
+      gsap.fromTo(
+        ".hud-project-card",
+        { scale: 0.97, y: 22, opacity: 0 },
+        {
+          scale: 1,
+          y: 0,
+          opacity: 1,
+          duration: 0.7,
+          stagger: 0.15,
+          ease: "power3.out",
+          clearProps: "transform,opacity",
+          scrollTrigger: {
+            trigger: "#projects",
+            start: "top 82%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
+
+      // 6. Project Cards HUD Corner Ornaments (┌ ┐ └ ┘)
+      gsap.fromTo(
+        ".hud-project-card .hud-corner-ornament",
+        { scale: 0.7, opacity: 0 },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.5,
+          stagger: 0.04,
+          ease: "power2.out",
+          clearProps: "transform,opacity",
+          scrollTrigger: {
+            trigger: "#projects",
+            start: "top 82%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
     }, containerRef);
 
     return () => {
@@ -66,18 +159,20 @@ export function SelectedWorksSection() {
         className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16"
       >
         {/* Section Heading */}
-        <div className="hud-work-reveal mb-8 flex flex-col justify-between gap-4 border-b border-border-subtle pb-5 md:flex-row md:items-end">
+        <div className="mb-8 flex flex-col justify-between gap-4 border-b border-border-subtle pb-5 md:flex-row md:items-end">
           <div>
             <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
               <Award className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{"SYS.HUD // 03 — HONORS & NATIONAL RECOGNITION"}</span>
             </div>
-            <h2
-              id="achievements-heading"
-              className="mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary"
-            >
-              ACHIEVEMENTS
-            </h2>
+            <div className="overflow-hidden">
+              <h2
+                id="achievements-heading"
+                className="achieve-kinetic-title mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+              >
+                ACHIEVEMENTS
+              </h2>
+            </div>
           </div>
 
           <p className="font-mono text-xs text-text-secondary">
@@ -90,7 +185,7 @@ export function SelectedWorksSection() {
           bracketSize="lg"
           activeAccent
           themeColor={featuredAchievement.themeColor}
-          className="hud-work-reveal p-6 sm:p-8 lg:p-10"
+          className="hud-achievement-card p-6 sm:p-8 lg:p-10"
         >
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
             {/* Left 6 Cols: CHAMPION Badge, Narrative, Role Breakdown & CTA */}
@@ -157,7 +252,7 @@ export function SelectedWorksSection() {
                 {featuredAchievement.techStack.map((tech) => (
                   <span
                     key={tech.name}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-accent-primary/45 bg-bg-primary px-3 py-1 font-mono text-xs text-accent-primary"
+                    className="badge-spring inline-flex items-center gap-1.5 rounded-full border border-accent-primary/45 bg-bg-primary px-3 py-1 font-mono text-xs text-accent-primary"
                   >
                     <BrandTechIcon
                       name={tech.name}
@@ -176,7 +271,7 @@ export function SelectedWorksSection() {
                 >
                   <span>READ THE STORY</span>
                   <ArrowUpRight
-                    className="h-4 w-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    className="arrow-drift h-4 w-4"
                     aria-hidden="true"
                   />
                 </Link>
@@ -233,18 +328,20 @@ export function SelectedWorksSection() {
         <div id="works" className=" -top-24" aria-hidden="true" />
 
         {/* Section Heading */}
-        <div className="hud-work-reveal mb-10 flex flex-col justify-between gap-4 border-b border-border-subtle pb-5 md:flex-row md:items-end">
+        <div className="mb-10 flex flex-col justify-between gap-4 border-b border-border-subtle pb-5 md:flex-row md:items-end">
           <div>
             <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
               <span className="h-2 w-2 bg-accent-primary" aria-hidden="true" />
               <span>{"SYS.HUD // 04 — PRODUCTION ENGINEERING PORTFOLIO"}</span>
             </div>
-            <h2
-              id="projects-heading"
-              className="mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary"
-            >
-              PROJECTS
-            </h2>
+            <div className="overflow-hidden">
+              <h2
+                id="projects-heading"
+                className="projects-kinetic-title mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+              >
+                PROJECTS
+              </h2>
+            </div>
           </div>
 
           <p className="font-mono text-xs text-text-secondary">
@@ -261,7 +358,7 @@ export function SelectedWorksSection() {
               bracketSize="lg"
               activeAccent
               themeColor={project.themeColor}
-              className="hud-work-reveal flex flex-col justify-between p-5 sm:p-7"
+              className="hud-project-card flex flex-col justify-between p-5 sm:p-7"
             >
               <div className="space-y-5">
                 {/* Top Category & Index Header */}
@@ -313,7 +410,7 @@ export function SelectedWorksSection() {
                   {project.techStack.map((tech) => (
                     <span
                       key={tech.name}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-accent-primary/45 bg-bg-primary px-3 py-1 font-mono text-[11px] text-accent-primary"
+                      className="badge-spring inline-flex items-center gap-1.5 rounded-full border border-accent-primary/45 bg-bg-primary px-3 py-1 font-mono text-[11px] text-accent-primary"
                     >
                       <BrandTechIcon
                         name={tech.name}
@@ -334,7 +431,7 @@ export function SelectedWorksSection() {
                   >
                     <span>CASE STUDY</span>
                     <ArrowUpRight
-                      className="h-3.5 w-3.5 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                      className="arrow-drift h-3.5 w-3.5"
                       aria-hidden="true"
                     />
                   </Link>

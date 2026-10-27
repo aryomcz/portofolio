@@ -144,10 +144,25 @@ export function SmoothScrollProvider({ children }: { readonly children: ReactNod
   );
 }
 
+const DEFAULT_SMOOTH_SCROLL_CONTEXT: SmoothScrollContextValue = {
+  isLocked: false,
+  isReducedMotion: false,
+  stopScroll: () => {},
+  startScroll: () => {},
+  scrollTo: (target, options) => {
+    if (typeof window === "undefined") return;
+    if (typeof target === "number") {
+      window.scrollTo({ top: target, behavior: options?.immediate ? "auto" : "smooth" });
+    } else if (typeof target === "string") {
+      const el = document.querySelector(target);
+      el?.scrollIntoView({ behavior: options?.immediate ? "auto" : "smooth" });
+    } else if (target instanceof HTMLElement) {
+      target.scrollIntoView({ behavior: options?.immediate ? "auto" : "smooth" });
+    }
+  },
+};
+
 export function useSmoothScroll(): SmoothScrollContextValue {
   const context = useContext(SmoothScrollContext);
-  if (!context) {
-    throw new Error("useSmoothScroll must be used within a <SmoothScrollProvider>");
-  }
-  return context;
+  return context ?? DEFAULT_SMOOTH_SCROLL_CONTEXT;
 }

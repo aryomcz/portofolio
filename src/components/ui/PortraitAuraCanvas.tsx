@@ -430,6 +430,7 @@ const FRAGMENT_SHADER = `
   uniform vec2 uTrailMouse;
   uniform float uHover;
   uniform float uToggleMode;
+  uniform float uIntroAura;
   uniform float uTime;
   uniform float uContainerAspect;
   uniform float uTexAspect;
@@ -515,7 +516,12 @@ const FRAGMENT_SHADER = `
     // Invert behavior when switched:
     // - Normal Mode (uToggleMode = 0.0): default is Base (0.0), hovering reveals Aura (1.0)
     // - Switched Mode (uToggleMode = 1.0): default is Aura (1.0), hovering reveals Base (0.0)
-    float auraMix = mix(lensMask, 1.0 - lensMask, uToggleMode);
+    float baseAuraMix = mix(lensMask, 1.0 - lensMask, uToggleMode);
+
+    // Initial 0.5s Aura display -> ~0.75s dispersion dissolve into high-res portrait underneath
+    float dissolveNoise = snoise(uv * 7.5 + vec2(uTime * 0.25, -uTime * 0.25)) * 0.08;
+    float introFade = smoothstep(0.0, 0.22, uIntroAura - dissolveNoise * (1.0 - uIntroAura));
+    float auraMix = clamp(max(baseAuraMix, introFade), 0.0, 1.0);
 
     // Premultiplied alpha compositing so transparent pixels NEVER bleed background RGB
     float wBase = baseCol.a * (1.0 - auraMix);
@@ -543,6 +549,42 @@ const FRAGMENT_SHADER = `
     gl_FragColor = vec4(outRgb, outAlpha);
   }
 `;
+
+function createCubicBezier(p1x: number, p1y: number, p2x: number, p2y: number) {
+  const cx = 3 * p1x;
+  const bx = 3 * (p2x - p1x) - cx;
+  const ax = 1 - cx - bx;
+
+  const cy = 3 * p1y;
+  const by = 3 * (p2y - p1y) - cy;
+  const ay = 1 - cy - by;
+
+  function sampleCurveX(t: number) {
+    return ((ax * t + bx) * t + cx) * t;
+  }
+  function sampleCurveY(t: number) {
+    return ((ay * t + by) * t + cy) * t;
+  }
+  function solveCurveX(x: number) {
+    let t = x;
+    for (let i = 0; i < 8; i++) {
+      const xEst = sampleCurveX(t) - x;
+      if (Math.abs(xEst) < 1e-4) return t;
+      const dX = (3 * ax * t + 2 * bx) * t + cx;
+      if (Math.abs(dX) < 1e-5) break;
+      t -= xEst / dX;
+    }
+    return t;
+  }
+
+  return (x: number) => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    return sampleCurveY(solveCurveX(x));
+  };
+}
+
+const easeDissolve = createCubicBezier(0.16, 1.0, 0.3, 1.0);
 
 export function PortraitAuraCanvas({
   baseImageSrc,
@@ -585,6 +627,7 @@ export function PortraitAuraCanvas({
       uTrailMouse: { value: new THREE.Vector2(0.5, 0.55) },
       uHover: { value: 0.0 },
       uToggleMode: { value: isAuraForcedRef.current ? 1.0 : 0.0 },
+      uIntroAura: { value: isReducedMotion ? 0.0 : 1.0 },
       uTime: { value: 0.0 },
       uContainerAspect: { value: width / Math.max(1, height) },
       uTexAspect: { value: TEX_ASPECT },
@@ -686,6 +729,19 @@ export function PortraitAuraCanvas({
       const elapsed = (now - startTime) * 0.001;
       uniforms.uTime.value = isReducedMotion ? 0.0 : elapsed;
 
+      // 0.5s display at full strength, then 0.75s dispersion dissolve via cubic-bezier(0.16, 1, 0.3, 1)
+      if (isReducedMotion) {
+        uniforms.uIntroAura.value = 0.0;
+      } else if (elapsed < 0.5) {
+        uniforms.uIntroAura.value = 1.0;
+      } else if (elapsed < 1.25) {
+        const rawProgress = (elapsed - 0.5) / 0.75;
+        const easedProgress = easeDissolve(rawProgress);
+        uniforms.uIntroAura.value = 1.0 - easedProgress;
+      } else {
+        uniforms.uIntroAura.value = 0.0;
+      }
+
       currentMouse.x += (targetMouse.x - currentMouse.x) * 0.16;
       currentMouse.y += (targetMouse.y - currentMouse.y) * 0.16;
       trailMouse.x += (currentMouse.x - trailMouse.x) * 0.075;
@@ -717,6 +773,9 @@ export function PortraitAuraCanvas({
       uniforms.uBaseTex.value.dispose();
       uniforms.uAuraTex.value.dispose();
       renderer.dispose();
+      if (renderer.domElement.parentElement) {
+        renderer.domElement.parentElement.removeChild(renderer.domElement);
+      }
     };
   }, [baseImageSrc, auraImageSrc, isReducedMotion]);
 

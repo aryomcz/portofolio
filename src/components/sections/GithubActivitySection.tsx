@@ -229,12 +229,18 @@ export function GithubActivitySection() {
             <GitCommit className="h-3.5 w-3.5" aria-hidden="true" />
             <span>{"SYS.HUD // 06 — OPEN SOURCE & COMMIT TELEMETRY"}</span>
           </div>
-          <h2
-            id="github-heading"
-            className="mt-2 font-display text-[clamp(2.75rem,5.5vw,4.5rem)] leading-[0.9] tracking-wide text-text-primary"
-          >
-            GITHUB TELEMETRY
-          </h2>
+          <div className="overflow-hidden">
+            <motion.h2
+              id="github-heading"
+              initial={isReducedMotion ? false : { y: "100%", opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true, margin: "-10%" }}
+              transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-2 font-display text-[clamp(2.75rem,5.5vw,4.5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+            >
+              GITHUB TELEMETRY
+            </motion.h2>
+          </div>
         </div>
 
         {/* Year Filter Pills */}

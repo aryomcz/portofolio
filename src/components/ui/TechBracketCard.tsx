@@ -57,7 +57,7 @@ export function TechBracketCard({
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none absolute -top-px -left-px z-20 border-t-2 border-l-2 transition-transform duration-200 ease-out",
+          "hud-corner-ornament pointer-events-none absolute -top-px -left-px z-20 border-t-2 border-l-2 transition-transform duration-200 ease-out",
           sizeClasses,
           bracketColor,
           accentOnHover &&
@@ -69,7 +69,7 @@ export function TechBracketCard({
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none absolute -top-px -right-px z-20 border-t-2 border-r-2 transition-transform duration-200 ease-out",
+          "hud-corner-ornament pointer-events-none absolute -top-px -right-px z-20 border-t-2 border-r-2 transition-transform duration-200 ease-out",
           sizeClasses,
           bracketColor,
           accentOnHover &&
@@ -81,7 +81,7 @@ export function TechBracketCard({
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none absolute -bottom-px -left-px z-20 border-b-2 border-l-2 transition-transform duration-200 ease-out",
+          "hud-corner-ornament pointer-events-none absolute -bottom-px -left-px z-20 border-b-2 border-l-2 transition-transform duration-200 ease-out",
           sizeClasses,
           bracketColor,
           accentOnHover &&
@@ -93,7 +93,7 @@ export function TechBracketCard({
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none absolute -right-px -bottom-px z-20 border-r-2 border-b-2 transition-transform duration-200 ease-out",
+          "hud-corner-ornament pointer-events-none absolute -right-px -bottom-px z-20 border-r-2 border-b-2 transition-transform duration-200 ease-out",
           sizeClasses,
           bracketColor,
           accentOnHover &&

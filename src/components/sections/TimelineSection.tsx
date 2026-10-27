@@ -28,6 +28,24 @@ export function TimelineSection() {
     if (isReducedMotion || !sectionRef.current) return;
 
     const ctx = gsap.context(() => {
+      // 1. Experience Section Kinetic Title Reveal
+      gsap.fromTo(
+        ".timeline-kinetic-title",
+        { yPercent: 105, opacity: 0 },
+        {
+          yPercent: 0,
+          opacity: 1,
+          duration: 0.85,
+          ease: "power4.out",
+          clearProps: "transform",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 85%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
+
       if (spineTrackRef.current && spineProgressRef.current) {
         gsap.fromTo(
           spineProgressRef.current,
@@ -45,17 +63,19 @@ export function TimelineSection() {
         );
       }
 
+      // 2. Timeline Entry Cards with spring scale dynamics & HUD Corner brackets
       const items = gsap.utils.toArray<HTMLElement>(".timeline-entry-card");
       items.forEach((item) => {
         gsap.fromTo(
           item,
-          { y: 24, opacity: 0 },
+          { scale: 0.97, y: 22, opacity: 0 },
           {
+            scale: 1,
             y: 0,
             opacity: 1,
-            duration: 0.65,
+            duration: 0.7,
             ease: "power3.out",
-            clearProps: "transform",
+            clearProps: "transform,opacity",
             scrollTrigger: {
               trigger: item,
               start: "top 85%",
@@ -63,6 +83,27 @@ export function TimelineSection() {
             },
           }
         );
+
+        const ornaments = item.querySelectorAll(".hud-corner-ornament");
+        if (ornaments.length > 0) {
+          gsap.fromTo(
+            ornaments,
+            { scale: 0.7, opacity: 0 },
+            {
+              scale: 1,
+              opacity: 1,
+              duration: 0.5,
+              stagger: 0.04,
+              ease: "power2.out",
+              clearProps: "transform,opacity",
+              scrollTrigger: {
+                trigger: item,
+                start: "top 85%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
+        }
       });
     }, sectionRef);
 
@@ -85,12 +126,14 @@ export function TimelineSection() {
             <span className="h-2 w-2 bg-accent-primary" aria-hidden="true" />
             <span>{"SYS.HUD // 05 — TRACK RECORD & LEADERSHIP"}</span>
           </div>
-          <h2
-            id="timeline-heading"
-            className="mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary"
-          >
-            EXPERIENCE
-          </h2>
+          <div className="overflow-hidden">
+            <h2
+              id="timeline-heading"
+              className="timeline-kinetic-title mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+            >
+              EXPERIENCE
+            </h2>
+          </div>
         </div>
 
         <p className="font-mono text-xs text-text-secondary">
@@ -181,7 +224,7 @@ export function TimelineSection() {
                     {entry.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="border border-border-subtle bg-bg-primary px-2.5 py-0.5 font-mono text-[11px] text-text-muted"
+                        className="badge-spring border border-border-subtle bg-bg-primary px-2.5 py-0.5 font-mono text-[11px] text-text-muted"
                       >
                         {tag}
                       </span>

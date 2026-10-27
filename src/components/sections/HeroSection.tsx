@@ -250,7 +250,7 @@ export function HeroSection() {
             />
             <span>VIEW PROJECTS</span>
             <ArrowUpRight
-              className="h-4 w-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              className="arrow-drift h-4 w-4"
               aria-hidden="true"
             />
           </a>
