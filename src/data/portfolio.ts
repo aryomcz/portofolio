@@ -330,11 +330,11 @@ export const PORTFOLIO_DATA: PortfolioData = {
       description:
         "Bridging business bottlenecks with normalized schemas, system specifications, and resilient API contracts.",
       skills: [
-        { name: "System Analyst", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "driver-app-pt-kjhms"] },
+        { name: "System Analyst", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "driver-app-pt-kjhms", "tigo"] },
         { name: "Database Design", relatedProjectSlugs: ["pos-livingroom", "tigo", "cms-pt-bks"] },
         { name: "API Architecture", relatedProjectSlugs: ["pos-livingroom", "tigo", "cms-pt-bks", "driver-app-pt-kjhms"] },
-        { name: "Requirements Engineering", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "lumind"] },
-        { name: "RBAC & OAuth Security", relatedProjectSlugs: ["tigo", "cms-pt-bks"] },
+        { name: "Requirements Engineering", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "tigo"] },
+        { name: "RBAC & OAuth Security", relatedProjectSlugs: ["tigo", "cms-pt-bks", "driver-app-pt-kjhms", "pos-livingroom"] },
         { name: "Webhook Orchestration", relatedProjectSlugs: ["tigo", "driver-app-pt-kjhms"] },
       ],
       productionProofSummary:
@@ -366,14 +366,14 @@ export const PORTFOLIO_DATA: PortfolioData = {
       description:
         "Relational & NoSQL data stores, type-safe ORMs, payment gateways, OCR pipelines, and cloud edge hosting.",
       skills: [
-        { name: "PostgreSQL", relatedProjectSlugs: ["pos-livingroom"] },
+        { name: "PostgreSQL", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "driver-app-pt-kjhms"] },
         { name: "MongoDB", relatedProjectSlugs: ["tigo"] },
-        { name: "Prisma ORM", relatedProjectSlugs: ["pos-livingroom"] },
+        { name: "Prisma ORM", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "driver-app-pt-kjhms"] },
         { name: "Git", relatedProjectSlugs: ["pos-livingroom", "tigo", "cms-pt-bks", "driver-app-pt-kjhms", "lumind"] },
-        { name: "Vercel", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "lumind"] },
+        { name: "Vercel", relatedProjectSlugs: ["pos-livingroom", "cms-pt-bks", "lumind", "driver-app-pt-kjhms"] },
         { name: "Xendit", relatedProjectSlugs: ["tigo"] },
         { name: "Cloudinary", relatedProjectSlugs: ["pos-livingroom", "tigo", "cms-pt-bks", "driver-app-pt-kjhms"] },
-        { name: "Figma", relatedProjectSlugs: ["cms-pt-bks", "driver-app-pt-kjhms", "lumind"] },
+        { name: "Figma", relatedProjectSlugs: ["cms-pt-bks", "driver-app-pt-kjhms", "lumind", "tigo", "pos-livingroom"] },
       ],
       productionProofSummary:
         "Managed 99.9% uptime edge deployments, automated Xendit payment settlements, and OCR/Web-to-Printer bridges.",
@@ -412,7 +412,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       cardSummary:
         "Digitized manual ice cream shop cashier operations into an installable Next.js PWA backed by Express.js and Prisma ORM, eliminating human logging errors and empowering owners with real-time SKU sales analytics.",
       previewImage: {
-        src: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80",
+        src: "/images/projects/livingroom/livingroom.png",
         alt: "Livingroom POS PWA Dashboard showing Total Items Terjual, Total Pendapatan, and Chart.js sales trends",
         aspectRatio: "16/10",
       },
@@ -422,21 +422,21 @@ export const PORTFOLIO_DATA: PortfolioData = {
           tag: "FIG 01 // ADMIN ANALYTICS",
           title: "Real-Time Revenue & SKU Velocity Dashboard",
           caption: "Interactive Chart.js dashboard filtering Minggu, 1 Bulan, 3 Bulan, and 6 Bulan sales windows.",
-          imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1000&q=80",
+          imageUrl: "/images/projects/livingroom/chart.png",
         },
         {
           id: "pos-2",
           tag: "FIG 02 // CASHIER PWA TERMINAL",
           title: "Touch-Optimized Cashier Checkout Interface",
           caption: "Installable PWA interface for rapid order entry across Kul-kul, 1 Scoop, and Muffle menu items.",
-          imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1000&q=80",
+          imageUrl: "/images/projects/livingroom/checkout.png",
         },
         {
           id: "pos-3",
           tag: "FIG 03 // PRISMA LEDGER",
           title: "Transactional Order History & Stock Audit",
           caption: "Normalized relational schema ensuring zero shift-end discrepancies.",
-          imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=80",
+          imageUrl: "/images/projects/livingroom/history.png",
         },
       ],
       techStack: [
@@ -575,7 +575,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       cardSummary:
         "Architected a dual-platform event ticketing ecosystem combining a React/Laravel web dashboard, MongoDB NoSQL storage, real-time Xendit payment webhooks, and a cross-platform Flutter RBAC QR scanner.",
       previewImage: {
-        src: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80",
+        src: "/images/projects/tigo/tigo.png",
         alt: "TIGO Event Organizer Web Dashboard and Flutter Mobile QR Code Scanner",
         aspectRatio: "16/10",
       },
@@ -585,21 +585,21 @@ export const PORTFOLIO_DATA: PortfolioData = {
           tag: "FIG 01 // WEB TICKETING PORTAL",
           title: "Event Discovery & Xendit Instant Checkout",
           caption: "React & Laravel web interface with Google OAuth and automated Xendit invoice generation.",
-          imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1000&q=80",
+          imageUrl: "/images/projects/tigo/checkout.png",
         },
         {
           id: "tigo-2",
           tag: "FIG 02 // FLUTTER QR SCANNER",
           title: "Sub-2-Second RBAC Mobile Gate Scanner",
           caption: "Cross-platform Flutter mobile app validating attendee QR payloads in under 2 seconds.",
-          imageUrl: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=1000&q=80",
+          imageUrl: "/images/projects/tigo/scan.png",
         },
         {
           id: "tigo-3",
           tag: "FIG 03 // WEBHOOK TELEMETRY",
           title: "Real-Time MongoDB & Xendit Settlement Logs",
-          caption: "Automated webhook reconciliation updating ticket statuses without manual review.",
-          imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1000&q=80",
+          caption: "Automated webhook reconciliation updating withdrawal status iwth approval from xendit and ticket statuses without manual review.",
+          imageUrl: "/images/projects/tigo/xendit-webhook.png",
         },
       ],
       techStack: [
@@ -738,7 +738,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       cardSummary:
         "Modernized the corporate web platform for PT Bahtera Khatulistiwa Shipping from a rigid legacy static site into a high-performance Next.js and Express.js application with a custom back-office CMS.",
       previewImage: {
-        src: "https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?auto=format&fit=crop&w=1200&q=80",
+        src: "/images/projects/bks/bks.png",
         alt: "PT Bahtera Khatulistiwa Shipping Corporate Website and Custom CMS Dashboard",
         aspectRatio: "16/10",
       },
@@ -748,21 +748,21 @@ export const PORTFOLIO_DATA: PortfolioData = {
           tag: "FIG 01 // CORPORATE PORTAL",
           title: "Modernized Maritime Fleet & Services Showcase",
           caption: "Responsive Next.js corporate landing experience deployed at www.bks-shipmanagement.com.",
-          imageUrl: "https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?auto=format&fit=crop&w=1000&q=80",
+          imageUrl: "/images/projects/bks/home.png",
         },
         {
           id: "bks-2",
           tag: "FIG 02 // BACK-OFFICE CMS",
           title: "Self-Service Content & Career Management Console",
           caption: "Custom CMS empowering non-technical staff to publish updates 70% faster.",
-          imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=80",
+          imageUrl: "/images/projects/bks/career.png",
         },
         {
           id: "bks-3",
           tag: "FIG 03 // CLOUDINARY PIPELINE",
           title: "Automated High-Res Vessel Media Delivery",
           caption: "Express.js + Cloudinary integration serving optimized WebP vessel galleries.",
-          imageUrl: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=1000&q=80",
+          imageUrl: "/images/projects/bks/vessel.png",
         },
       ],
       techStack: [
@@ -892,7 +892,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       cardSummary:
         "Engineered an OCR-assisted driver trip (ritase) submission platform and admin dispatch dashboard in Next.js, cutting manual driver reporting time by 60% and automating Surat Izin Jalan (SIJ) printing.",
       previewImage: {
-        src: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80",
+        src: "/images/projects/hms/hms.png",
         alt: "PT KJHMS Driver Management Dashboard showing Grafik Ritase and OCR receipt verification",
         aspectRatio: "16/10",
       },
@@ -902,21 +902,21 @@ export const PORTFOLIO_DATA: PortfolioData = {
           tag: "FIG 01 // OCR RECEIPT UPLOAD",
           title: "Automated Driver Receipt Metadata Extraction",
           caption: "Drivers upload receipt screenshots to auto-populate trip forms, cutting submission time by 60%.",
-          imageUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1000&q=80",
+          imageUrl: "/images/projects/hms/scan.jpeg",
         },
         {
           id: "kjhms-2",
           tag: "FIG 02 // GRAFIK RITASE CONSOLE",
           title: "7-Day Rolling Fleet Ritase Telemetry",
           caption: "Real-time Next.js dashboard tracking driver trip counts and delivery logs.",
-          imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1000&q=80",
+          imageUrl: "/images/projects/hms/ritase.jpeg",
         },
         {
           id: "kjhms-3",
           tag: "FIG 03 // WEB-TO-PRINTER SIJ",
           title: "1-Click Surat Izin Jalan (SIJ) Auto-Printing",
           caption: "Direct hardware print bridge issuing physical dispatch slips upon verification.",
-          imageUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1000&q=80",
+          imageUrl: "/images/projects/hms/sij.jpeg",
         },
       ],
       techStack: [
@@ -1058,7 +1058,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
     cardSummary:
       "Awarded 1st Place Nationally (Champion) at Prisma Fest 2025 for designing and engineering Lumind—an interactive digital mental wellness platform featuring daily mood check-ins, choreographed breathing cadences, and mindful journaling.",
     previewImage: {
-      src: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80",
+      src: "/images/achievements/prisma/winner.png",
       alt: "Lumind Digital Mental Wellness Platform UI and 1st Winner Prisma Fest 2025 Award Certificate",
       secondaryCertificateSrc: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1000&q=80",
       aspectRatio: "16/10",
@@ -1069,21 +1069,21 @@ export const PORTFOLIO_DATA: PortfolioData = {
         tag: "DOC 01 // CHAMPION AWARDING",
         title: "1st Place Winner (Juara 1) — Prisma Fest 2025",
         caption: "Representing IPB University at the National Web Design Competition, UIN Sunan Ampel Surabaya.",
-        imageUrl: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1000&q=80",
+        imageUrl: "/images/achievements/prisma/photo.jpg",
       },
       {
         id: "lumind-2",
         tag: "DOC 02 // LUMIND SANCTUARY UI",
         title: "Personalized Daily Mood Check-In (Lacak Emosi)",
         caption: "Calming editorial interface at lumind.vercel.app designed for zero cognitive overload.",
-        imageUrl: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1000&q=80",
+        imageUrl: "/images/achievements/prisma/daily-mood.png",
       },
       {
         id: "lumind-3",
         tag: "DOC 03 // MINDFUL RITUALS",
         title: "Choreographed Breathing Cadence (Atur Napas)",
         caption: "Interactive visual breathing guide and distraction-free journaling module.",
-        imageUrl: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1000&q=80",
+        imageUrl: "/images/achievements/prisma/inhale.png",
       },
     ],
     techStack: [

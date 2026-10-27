@@ -206,7 +206,7 @@ export default async function ProjectCaseStudyPage({
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-4">
             <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
               <Camera className="h-4 w-4" aria-hidden="true" />
-              <span>{"VISUAL DOCUMENTATION & INTERFACE SNAPSHOTS (DUMMY GALLERY)"}</span>
+              <span>{"VISUAL DOCUMENTATION & INTERFACE SNAPSHOTS"}</span>
             </div>
             <span className="font-mono text-xs text-text-muted">
               {study.dummyGallery.length} FRAMES CAPTURED
@@ -220,7 +220,7 @@ export default async function ProjectCaseStudyPage({
               <img
                 src={study.previewImage.src}
                 alt={study.previewImage.alt}
-                className="h-full w-full object-cover opacity-85"
+                className="h-full w-full object-cover object-top opacity-85"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-end justify-between gap-2">

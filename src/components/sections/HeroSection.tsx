@@ -120,7 +120,7 @@ export function HeroSection() {
                   className="h-4 w-4 shrink-0 text-accent-primary"
                   aria-hidden="true"
                 />
-                <span>FULL-STACK, SYSTEM ANALYST AND API</span>
+                <span>FULL-STACK DEVELOPER & SYSTEM ANALYST</span>
               </li>
             </ul>
           </div>
@@ -148,12 +148,12 @@ export function HeroSection() {
                   SOFTWARE ENGINEERING STUDENT
                 </p>
                 <p className="mt-0.5 text-[12px] font-medium tracking-[0.03em] text-text-muted uppercase leading-snug">
-                  IPB UNIVERSITY (REKAYASA PERANGKAT LUNAK)
+                  IPB UNIVERSITY
                 </p>
               </OpenHudCorners>
 
               {/* Block 2: LATEST PROJECT + Smooth Wave Line */}
-              <OpenHudCorners>
+              {/* <OpenHudCorners>
                 <p className="text-[11px] font-bold tracking-[0.08em] text-accent-primary uppercase">
                   LATEST PROJECT
                 </p>
@@ -162,10 +162,10 @@ export function HeroSection() {
                 </p>
                 <p className="mt-0.5 text-[12px] font-medium tracking-[0.03em] text-text-muted uppercase">
                   NEXT.JS &amp; FLUTTER, 2026
-                </p>
+                </p> */}
 
-                {/* Smooth Mountain Wave Curve (matches rinlayheang.me) */}
-                <svg
+              {/* Smooth Mountain Wave Curve (matches rinlayheang.me) */}
+              {/* <svg
                   viewBox="0 0 240 28"
                   className="mt-3 h-7 w-full overflow-visible text-text-primary"
                   aria-label="Latest project activity curve"
@@ -178,7 +178,7 @@ export function HeroSection() {
                     strokeLinecap="round"
                   />
                 </svg>
-              </OpenHudCorners>
+              </OpenHudCorners> */}
 
               {/* Block 3: AT A GLANCE */}
               <OpenHudCorners>
