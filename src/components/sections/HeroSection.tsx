@@ -129,8 +129,8 @@ export function HeroSection() {
           <div className="relative z-10 flex h-[480px] w-full items-end justify-center sm:h-[580px] lg:col-span-4 lg:h-[calc(100vh-6.25rem)] lg:max-h-[820px]">
             <div className="relative aspect-[1.24/1] h-full shrink-0">
               <PortraitAuraCanvas
-                baseImageSrc="/images/profile/aryo-portrait-2.png"
-                auraImageSrc="/images/profile/aryo-aura2.jpg"
+                baseImageSrc="/images/profile/aryo-base-aligned.png"
+                auraImageSrc="/images/profile/aryo-aura-aligned.png"
                 isAuraForced={isAuraForced}
               />
             </div>

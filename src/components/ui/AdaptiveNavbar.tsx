@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, FileText } from "lucide-react";
-import { motion } from "motion/react";
+import { ArrowLeft, ArrowUpRight, FileText, Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -28,9 +28,9 @@ const NAV_ITEMS: readonly NavItem[] = [
 
 const SPLIT_SPRING = {
   type: "spring" as const,
-  stiffness: 320,
+  stiffness: 260,
   damping: 28,
-  mass: 0.8,
+  mass: 0.6,
 };
 
 export function AdaptiveNavbar() {
@@ -39,7 +39,9 @@ export function AdaptiveNavbar() {
   const { scrollTo } = useSmoothScroll();
   const isReducedMotion = useReducedMotion();
   const [activeSection, setActiveSection] = useState<string>("hero");
+  const [hoveredSection, setHoveredSection] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,39 +94,43 @@ export function AdaptiveNavbar() {
     if (!isHome) return;
     event.preventDefault();
     setActiveSection(id);
+    setIsMobileMenuOpen(false);
     scrollTo(href, { offset: -88 });
   };
 
   const springTransition = isReducedMotion ? EASE_REDUCED : SPLIT_SPRING;
 
+  // Shared surface class for each independent island (never applied to the outer wrapper)
+  const islandSurfaceClass =
+    "pointer-events-auto flex h-13 shrink-0 items-center border border-slate-200/85 bg-white/85 shadow-[0_8px_28px_rgba(10,17,32,0.06)] backdrop-blur-md dark:border-slate-800/80 dark:bg-[#0f1726]/85 dark:shadow-[0_8px_28px_rgba(0,0,0,0.32)]";
+
   return (
-    <header className="fixed top-5 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
-      <motion.div
-        layout
-        transition={springTransition}
+    <header className="pointer-events-none fixed top-5 right-0 left-0 z-40 flex flex-col items-center px-4 sm:px-8">
+      {/* Transparent layout track — zero background, zero border, zero shadow */}
+      <div
         className={cn(
-          "pointer-events-auto flex items-center transition-colors duration-300",
+          "pointer-events-none flex items-center",
           isScrolled
-            ? "w-full max-w-5xl justify-between gap-3 sm:gap-4"
-            : "w-auto justify-center gap-2 rounded-full border border-border-subtle/70 bg-bg-glass px-3 py-1.5 shadow-[0_8px_30px_rgba(10,17,32,0.08)] backdrop-blur-md sm:gap-4 sm:px-5 sm:py-2"
+            ? "w-full max-w-6xl justify-between gap-3 sm:gap-4"
+            : "w-auto justify-center gap-0"
         )}
       >
-        {/* Island A (Left): Brand Logo */}
+        {/* IslandLeft: Brand Logo (ARYO) */}
         <motion.div
           layout
           transition={springTransition}
           className={cn(
-            "flex items-center shrink-0 transition-all duration-300",
+            islandSurfaceClass,
             isScrolled
-              ? "rounded-full border border-border-subtle/70 bg-bg-glass px-4 py-2 shadow-[0_8px_30px_rgba(10,17,32,0.08)] backdrop-blur-md"
-              : "pl-1"
+              ? "rounded-full px-6"
+              : "rounded-l-full rounded-r-none border-r-0 pr-4 pl-6"
           )}
         >
           {isHome ? (
             <a
               href="#hero"
               onClick={(e) => handleNavClick(e, "#hero", "hero")}
-              className="press-scale font-display text-base tracking-wider text-text-primary hover:text-accent-primary sm:text-lg"
+              className="press-scale font-display text-lg tracking-wider text-text-primary hover:text-accent-primary"
             >
               ARYO
             </a>
@@ -142,41 +148,61 @@ export function AdaptiveNavbar() {
           )}
         </motion.div>
 
-        {/* Island B (Center): Navigation anchors with active scroll-spy indicators */}
+        {/* IslandCenter: Desktop Navigation Links */}
         {isHome ? (
           <motion.nav
             layout
             transition={springTransition}
             aria-label="Primary navigation"
+            onMouseLeave={() => setHoveredSection(null)}
             className={cn(
-              "hidden items-center gap-1 md:flex lg:gap-1.5 transition-all duration-300",
+              islandSurfaceClass,
+              "hidden gap-1 md:flex lg:gap-1.5",
               isScrolled
-                ? "rounded-full border border-border-subtle/70 bg-bg-glass px-4 py-1.5 shadow-[0_8px_30px_rgba(10,17,32,0.08)] backdrop-blur-md"
-                : "px-1"
+                ? "rounded-full px-5"
+                : "rounded-none border-x-0 px-3"
             )}
           >
             {NAV_ITEMS.map((item) => {
               const isActive = activeSection === item.id;
+              const isHovered = hoveredSection === item.id;
               return (
                 <a
                   key={item.id}
                   href={item.href}
                   onClick={(e) => handleNavClick(e, item.href, item.id)}
+                  onMouseEnter={() => setHoveredSection(item.id)}
                   className={cn(
-                    "press-scale relative rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors duration-150",
+                    "press-scale relative rounded-full px-3.5 py-1.5 text-[13px] font-medium",
                     isActive
                       ? "font-semibold text-text-primary"
                       : "text-text-secondary hover:text-text-primary"
                   )}
                 >
+                  {/* Active Section Solid Pill */}
                   {isActive ? (
                     <motion.span
                       layoutId="active-nav-pill"
                       transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
-                      className="absolute inset-0 rounded-full bg-bg-subtle/80 dark:bg-bg-subtle"
+                      className="absolute inset-0 rounded-full bg-slate-200/75 dark:bg-bg-subtle"
                       aria-hidden="true"
                     />
                   ) : null}
+
+                  {/* Interactive Cursor-Following Hover Pill */}
+                  {isHovered && !isActive ? (
+                    <motion.span
+                      layoutId="hover-nav-pill"
+                      transition={
+                        isReducedMotion
+                          ? EASE_REDUCED
+                          : { type: "spring", stiffness: 420, damping: 30 }
+                      }
+                      className="absolute inset-0 rounded-full bg-slate-200/45 dark:bg-accent-primary/15"
+                      aria-hidden="true"
+                    />
+                  ) : null}
+
                   <span className="relative z-10">{item.label}</span>
                 </a>
               );
@@ -184,35 +210,41 @@ export function AdaptiveNavbar() {
           </motion.nav>
         ) : null}
 
-        {/* Island C (Right): Action cluster (CV download, theme toggle, Contact ↗) */}
+        {/* IslandRight: Action Cluster (CV, Theme Toggle, Contact ↗, Mobile Menu) */}
         <motion.div
           layout
           transition={springTransition}
           className={cn(
-            "flex items-center gap-2 shrink-0 transition-all duration-300",
+            islandSurfaceClass,
+            "gap-2",
             isScrolled
-              ? "rounded-full border border-border-subtle/70 bg-bg-glass px-3 py-1.5 shadow-[0_8px_30px_rgba(10,17,32,0.08)] backdrop-blur-md sm:px-4 sm:py-2"
-              : ""
+              ? "rounded-full px-3"
+              : "rounded-l-none rounded-r-full border-l-0 pr-2.5 pl-3"
           )}
         >
+          {/* CV Download CTA */}
           <a
             href={PORTFOLIO_DATA.owner.contacts.resumePdfPath}
             target="_blank"
             rel="noopener noreferrer"
             download="Aryo-Ristiawan-Machfudz-CV.pdf"
-            className="press-scale inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-elevated px-3 py-1.5 text-xs font-mono font-medium text-text-primary hover:border-accent-primary hover:text-accent-primary"
+            className="press-scale inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-200/90 bg-white px-3.5 font-mono text-xs font-medium text-text-primary hover:border-accent-primary hover:text-accent-primary dark:border-slate-700 dark:bg-bg-elevated"
             aria-label="Download Official CV (PDF)"
           >
-            <FileText className="h-3.5 w-3.5 text-accent-primary" aria-hidden="true" />
+            <FileText
+              className="h-3.5 w-3.5 text-accent-primary"
+              aria-hidden="true"
+            />
             <span>CV</span>
           </a>
 
           <ThemeToggle />
 
+          {/* Desktop Contact CTA */}
           <a
             href={isHome ? "#contact" : "/#contact"}
             onClick={(e) => handleNavClick(e, "#contact", "contact")}
-            className="press-scale group inline-flex items-center gap-1.5 rounded-full bg-[#0A1120] px-4 py-2 text-[13px] font-medium text-white shadow-xs transition-all hover:opacity-90 dark:bg-accent-primary"
+            className="press-scale group hidden h-9 items-center gap-1.5 rounded-full bg-[#0A1120] px-4 text-[13px] font-medium text-white shadow-xs hover:opacity-90 sm:inline-flex dark:bg-accent-primary"
           >
             <span>Contact</span>
             <ArrowUpRight
@@ -220,8 +252,79 @@ export function AdaptiveNavbar() {
               aria-hidden="true"
             />
           </a>
+
+          {/* Mobile Menu Hamburger Toggle */}
+          {isHome ? (
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              aria-label={
+                isMobileMenuOpen ? "Close menu" : "Open navigation menu"
+              }
+              aria-expanded={isMobileMenuOpen}
+              className="press-scale flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/90 bg-white text-text-primary md:hidden dark:border-slate-700 dark:bg-bg-elevated"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Menu className="h-4 w-4" aria-hidden="true" />
+              )}
+            </button>
+          ) : null}
         </motion.div>
-      </motion.div>
+      </div>
+
+      {/* Mobile Slide-Down Drawer Navigation */}
+      <AnimatePresence>
+        {isHome && isMobileMenuOpen ? (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={
+              isReducedMotion
+                ? EASE_REDUCED
+                : { duration: 0.18, ease: [0.23, 1, 0.32, 1] }
+            }
+            className="pointer-events-auto mt-2 w-full max-w-sm origin-top rounded-2xl border border-slate-200/85 bg-white/95 p-3 shadow-2xl backdrop-blur-xl md:hidden dark:border-slate-800 dark:bg-[#0f1726]/95"
+          >
+            <nav className="flex flex-col space-y-1">
+              {NAV_ITEMS.map((item) => {
+                const isActive = activeSection === item.id;
+                return (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    onClick={(e) => handleNavClick(e, item.href, item.id)}
+                    className={cn(
+                      "flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-accent-primary/10 font-semibold text-accent-primary"
+                        : "text-text-secondary hover:bg-bg-subtle/60 hover:text-text-primary"
+                    )}
+                  >
+                    <span>{item.label}</span>
+                    {isActive ? (
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent-primary" />
+                    ) : null}
+                  </a>
+                );
+              })}
+
+              <div className="border-t border-border-subtle/60 pt-2">
+                <a
+                  href="#contact"
+                  onClick={(e) => handleNavClick(e, "#contact", "contact")}
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-accent-primary px-4 py-2.5 text-sm font-semibold text-white shadow-xs"
+                >
+                  <span>Contact Aryo</span>
+                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                </a>
+              </div>
+            </nav>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </header>
   );
 }

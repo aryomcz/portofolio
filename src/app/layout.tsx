@@ -1,29 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Anton } from "next/font/google";
 import "./globals.css";
 import { SmoothScrollProvider } from "@/hooks/useSmoothScroll";
 import { AdaptiveNavbar } from "@/components/ui/AdaptiveNavbar";
 import { TopographicBg } from "@/components/ui/TopographicBg";
 import { PORTFOLIO_DATA } from "@/data/portfolio";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const antonDisplay = Anton({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: `${PORTFOLIO_DATA.owner.fullName} — Full-Stack Developer & System Analyst`,
@@ -52,9 +32,19 @@ export default function RootLayout({
       lang="en"
       data-theme="light"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${antonDisplay.variable} antialiased`}
+      className="antialiased"
     >
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Anton&family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap"
+          rel="stylesheet"
+        />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="relative min-h-screen flex flex-col bg-bg-primary text-text-primary">
