@@ -10,99 +10,124 @@ interface PortraitAuraCanvasProps {
   readonly isAuraForced: boolean;
 }
 
+const TEX_WIDTH = 1240;
+const TEX_HEIGHT = 1000;
+const TEX_ASPECT = TEX_WIDTH / TEX_HEIGHT;
+
 /**
- * Flood-fill exterior background removal on an offscreen canvas.
- * Removes connected white / studio-gray background pixels starting from the image borders
- * while keeping interior white shirt collars and bright silver metallic highlights 100% opaque.
+ * Builds the aligned, shadow-free, transparent-background cutout canvas for the Aura statue + Cyber-Wolf.
+ * Leaves clean transparent margins on top, left, and right while anchoring row 825 at the bottom
+ * so the left arm, chest, and right wolf tail sit 100% flush along the Hero bottom border.
  */
-function createCutoutCanvas(
-  img: HTMLImageElement,
-  targetWidth: number,
-  targetHeight: number,
-  scaleAdjust = 1.0,
-  offsetYRatio = 0.0
-): HTMLCanvasElement {
+function createAuraCutoutCanvas(img: HTMLImageElement): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
-  canvas.width = targetWidth;
-  canvas.height = targetHeight;
+  canvas.width = TEX_WIDTH;
+  canvas.height = TEX_HEIGHT;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) return canvas;
 
-  // Draw image anchored at bottom-center so head & shoulders align between Base & Aura
-  const imgAspect = img.naturalWidth / Math.max(1, img.naturalHeight);
-  const drawHeight = targetHeight * scaleAdjust;
-  const drawWidth = drawHeight * imgAspect;
-  const drawX = (targetWidth - drawWidth) * 0.5;
-  const drawY = targetHeight - drawHeight + targetHeight * offsetYRatio;
+  const auraDrawH = Math.round(TEX_HEIGHT * (955 / 815));
+  const auraDrawW = Math.round(auraDrawH * (img.naturalWidth / Math.max(1, img.naturalHeight)));
+  const auraDrawX = Math.round((TEX_WIDTH - auraDrawW) * 0.5) - 18;
+  const auraDrawY = -12;
 
-  ctx.clearRect(0, 0, targetWidth, targetHeight);
-  ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+  ctx.clearRect(0, 0, TEX_WIDTH, TEX_HEIGHT);
+  ctx.drawImage(img, auraDrawX, auraDrawY, auraDrawW, auraDrawH);
 
-  const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+  const imageData = ctx.getImageData(0, 0, TEX_WIDTH, TEX_HEIGHT);
   const data = imageData.data;
-  const totalPixels = targetWidth * targetHeight;
-  const visited = new Uint8Array(totalPixels);
-  const isBg = new Uint8Array(totalPixels);
+  const totalPixels = TEX_WIDTH * TEX_HEIGHT;
 
-  // Helper to check if a pixel is part of the studio white/light-gray background
-  const isStudioBackground = (idx: number): boolean => {
-    const a = data[idx + 3] ?? 0;
-    if (a < 20) return true;
+  const lumaArr = new Float32Array(totalPixels);
+  const chromaArr = new Uint8Array(totalPixels);
+  for (let p = 0; p < totalPixels; p++) {
+    const idx = p * 4;
     const r = data[idx] ?? 0;
     const g = data[idx + 1] ?? 0;
     const b = data[idx + 2] ?? 0;
-    const maxC = Math.max(r, g, b);
-    const minC = Math.min(r, g, b);
-    const chroma = maxC - minC;
-    const luma = 0.299 * r + 0.587 * g + 0.114 * b;
-    // White or neutral studio drop-shadow gray on the exterior
-    return luma > 212 && chroma < 22;
+    lumaArr[p] = 0.299 * r + 0.587 * g + 0.114 * b;
+    chromaArr[p] = Math.max(r, g, b) - Math.min(r, g, b);
+  }
+
+  // Compute 3x3 local luma range to distinguish soft studio drop-shadow from crisp metallic edges
+  const range3x3 = new Float32Array(totalPixels);
+  for (let y = 1; y < TEX_HEIGHT - 1; y++) {
+    for (let x = 1; x < TEX_WIDTH - 1; x++) {
+      const p = y * TEX_WIDTH + x;
+      let minL = 255;
+      let maxL = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        const row = (y + dy) * TEX_WIDTH + x;
+        for (let dx = -1; dx <= 1; dx++) {
+          const v = lumaArr[row + dx] ?? 0;
+          if (v < minL) minL = v;
+          if (v > maxL) maxL = v;
+        }
+      }
+      range3x3[p] = maxL - minL;
+    }
+  }
+
+  const visited = new Uint8Array(totalPixels);
+  const isBg = new Uint8Array(totalPixels);
+
+  const isAuraBg = (p: number): boolean => {
+    const a = data[p * 4 + 3] ?? 0;
+    if (a < 20) return true;
+    const luma = lumaArr[p] ?? 0;
+    const chroma = chromaArr[p] ?? 0;
+    const grad = range3x3[p] ?? 0;
+    if (luma > 234 && chroma <= 14) return true;
+    if (luma > 130 && chroma <= 10 && grad <= 18) return true;
+    return false;
   };
 
-  // BFS Queue seeded from top, left, and right borders (not bottom, where the suit touches)
   const queue = new Int32Array(totalPixels);
   let head = 0;
   let tail = 0;
 
   const pushSeed = (x: number, y: number) => {
-    const p = y * targetWidth + x;
+    const p = y * TEX_WIDTH + x;
     if (visited[p]) return;
     visited[p] = 1;
-    if (isStudioBackground(p * 4)) {
+    if (isAuraBg(p)) {
       isBg[p] = 1;
       queue[tail++] = p;
     }
   };
 
-  for (let x = 0; x < targetWidth; x++) {
+  for (let x = 0; x < TEX_WIDTH; x++) {
     pushSeed(x, 0);
     pushSeed(x, 1);
   }
-  for (let y = 0; y < targetHeight; y++) {
+  for (let y = 0; y < TEX_HEIGHT; y++) {
     pushSeed(0, y);
     pushSeed(1, y);
-    pushSeed(targetWidth - 1, y);
-    pushSeed(targetWidth - 2, y);
+    pushSeed(TEX_WIDTH - 1, y);
+    pushSeed(TEX_WIDTH - 2, y);
+  }
+  for (let x = 0; x < Math.round(TEX_WIDTH * 0.18); x++) {
+    pushSeed(x, TEX_HEIGHT - 1);
+  }
+  for (let x = Math.round(TEX_WIDTH * 0.9); x < TEX_WIDTH; x++) {
+    pushSeed(x, TEX_HEIGHT - 1);
   }
 
   while (head < tail) {
     const curr = queue[head++]!;
-    const cx = curr % targetWidth;
-    const cy = (curr / targetWidth) | 0;
-
-    // 4-neighbors
+    const cx = curr % TEX_WIDTH;
+    const cy = (curr / TEX_WIDTH) | 0;
     const neighbors = [
       cx > 0 ? curr - 1 : -1,
-      cx < targetWidth - 1 ? curr + 1 : -1,
-      cy > 0 ? curr - targetWidth : -1,
-      cy < targetHeight - 1 ? curr + targetWidth : -1,
+      cx < TEX_WIDTH - 1 ? curr + 1 : -1,
+      cy > 0 ? curr - TEX_WIDTH : -1,
+      cy < TEX_HEIGHT - 1 ? curr + TEX_WIDTH : -1,
     ];
-
     for (let i = 0; i < 4; i++) {
       const np = neighbors[i]!;
       if (np >= 0 && !visited[np]) {
         visited[np] = 1;
-        if (isStudioBackground(np * 4)) {
+        if (isAuraBg(np)) {
           isBg[np] = 1;
           queue[tail++] = np;
         }
@@ -110,29 +135,280 @@ function createCutoutCanvas(
     }
   }
 
-  // Apply alpha cutout with 1px soft edge feathering
-  for (let y = 1; y < targetHeight - 1; y++) {
-    for (let x = 1; x < targetWidth - 1; x++) {
-      const p = y * targetWidth + x;
-      if (isBg[p]) {
-        data[p * 4 + 3] = 0;
-      } else {
-        // Check if adjacent to background for soft anti-aliased edge
-        const bgNeighbors =
-          (isBg[p - 1] ?? 0) +
-          (isBg[p + 1] ?? 0) +
-          (isBg[p - targetWidth] ?? 0) +
-          (isBg[p + targetWidth] ?? 0);
-        if (bgNeighbors > 0) {
-          data[p * 4 + 3] = Math.round((data[p * 4 + 3] ?? 255) * (1 - bgNeighbors * 0.18));
+  // Dilate 2px into remaining low-chroma halo fringe
+  for (let step = 0; step < 2; step++) {
+    const prev = new Uint8Array(isBg);
+    for (let y = 1; y < TEX_HEIGHT - 1; y++) {
+      for (let x = 1; x < TEX_WIDTH - 1; x++) {
+        const p = y * TEX_WIDTH + x;
+        if (prev[p]) continue;
+        if (
+          (prev[p - 1] || prev[p + 1] || prev[p - TEX_WIDTH] || prev[p + TEX_WIDTH]) &&
+          (lumaArr[p] ?? 0) > 145 &&
+          (chromaArr[p] ?? 0) <= 12 &&
+          (range3x3[p] ?? 0) <= 36
+        ) {
+          isBg[p] = 1;
         }
       }
     }
   }
 
-  // Clear 1px outer border
-  for (let x = 0; x < targetWidth; x++) {
-    data[x * 4 + 3] = 0;
+  // Apply cutout across ALL pixels (including 0 and TEX_WIDTH-1 borders!) and anti-aliased edge feathering
+  for (let p = 0; p < totalPixels; p++) {
+    if (isBg[p]) {
+      data[p * 4] = 0;
+      data[p * 4 + 1] = 0;
+      data[p * 4 + 2] = 0;
+      data[p * 4 + 3] = 0;
+    }
+  }
+
+  for (let y = 1; y < TEX_HEIGHT - 1; y++) {
+    for (let x = 1; x < TEX_WIDTH - 1; x++) {
+      const p = y * TEX_WIDTH + x;
+      if (!isBg[p]) {
+        const bgNeighbors =
+          (isBg[p - 1] ?? 0) +
+          (isBg[p + 1] ?? 0) +
+          (isBg[p - TEX_WIDTH] ?? 0) +
+          (isBg[p + TEX_WIDTH] ?? 0);
+        if (bgNeighbors > 0) {
+          data[p * 4 + 3] = Math.round((data[p * 4 + 3] ?? 255) * (1 - bgNeighbors * 0.2));
+        }
+      }
+    }
+  }
+
+  // Clear 4px outer border on top, left, and right to guarantee zero canvas frame border artifacts
+  for (let y = 0; y < TEX_HEIGHT; y++) {
+    for (let x = 0; x < 4; x++) {
+      const lIdx = (y * TEX_WIDTH + x) * 4;
+      const rIdx = (y * TEX_WIDTH + (TEX_WIDTH - 1 - x)) * 4;
+      data[lIdx] = data[lIdx + 1] = data[lIdx + 2] = data[lIdx + 3] = 0;
+      data[rIdx] = data[rIdx + 1] = data[rIdx + 2] = data[rIdx + 3] = 0;
+    }
+  }
+  for (let y = 0; y < 4; y++) {
+    for (let x = 0; x < TEX_WIDTH; x++) {
+      const tIdx = (y * TEX_WIDTH + x) * 4;
+      data[tIdx] = data[tIdx + 1] = data[tIdx + 2] = data[tIdx + 3] = 0;
+    }
+  }
+
+  // Ensure the bottom-left silver sleeve under the wolf's outermost claw touches y = TEX_HEIGHT - 1 cleanly
+  for (let x = 200; x <= 310; x++) {
+    let lastY = -1;
+    for (let y = 880; y < TEX_HEIGHT; y++) {
+      if ((data[(y * TEX_WIDTH + x) * 4 + 3] ?? 0) > 200) {
+        lastY = y;
+      }
+    }
+    if (lastY >= 935 && lastY < TEX_HEIGHT - 1) {
+      const sIdx = ((lastY - 3) * TEX_WIDTH + x) * 4;
+      const sr = data[sIdx] ?? 0;
+      const sg = data[sIdx + 1] ?? 0;
+      const sb = data[sIdx + 2] ?? 0;
+      for (let y = lastY; y < TEX_HEIGHT; y++) {
+        const dIdx = (y * TEX_WIDTH + x) * 4;
+        data[dIdx] = sr;
+        data[dIdx + 1] = sg;
+        data[dIdx + 2] = sb;
+        data[dIdx + 3] = 255;
+      }
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+/**
+ * Builds the aligned, transparent-background cutout canvas for the Base Portrait.
+ * Scales and aligns to match the Aura statue's exact facial landmarks and reconstructs natural
+ * curved outer sleeve contours so there are zero vertical cut-off photo borders (`batas foto`).
+ */
+function createBaseCutoutCanvas(img: HTMLImageElement): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = TEX_WIDTH;
+  canvas.height = TEX_HEIGHT;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return canvas;
+
+  const auraDrawH = Math.round(TEX_HEIGHT * (955 / 815));
+  const auraDrawY = -12;
+  const portDrawH = Math.round(auraDrawH * 0.942);
+  const portDrawW = Math.round(portDrawH * (img.naturalWidth / Math.max(1, img.naturalHeight)));
+  const portDrawX = Math.round((TEX_WIDTH - portDrawW) * 0.5) - 12;
+  const portDrawY = auraDrawY + 4;
+
+  ctx.clearRect(0, 0, TEX_WIDTH, TEX_HEIGHT);
+  ctx.drawImage(img, portDrawX, portDrawY, portDrawW, portDrawH);
+
+  const imageData = ctx.getImageData(0, 0, TEX_WIDTH, TEX_HEIGHT);
+  const data = imageData.data;
+  const totalPixels = TEX_WIDTH * TEX_HEIGHT;
+  const visited = new Uint8Array(totalPixels);
+  const isBg = new Uint8Array(totalPixels);
+
+  const isPortBg = (p: number): boolean => {
+    const idx = p * 4;
+    const a = data[idx + 3] ?? 0;
+    if (a < 20) return true;
+    const r = data[idx] ?? 0;
+    const g = data[idx + 1] ?? 0;
+    const b = data[idx + 2] ?? 0;
+    const chroma = Math.max(r, g, b) - Math.min(r, g, b);
+    const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+    return luma > 212 && chroma < 22;
+  };
+
+  const queue = new Int32Array(totalPixels);
+  let head = 0;
+  let tail = 0;
+
+  const pushSeed = (x: number, y: number) => {
+    const p = y * TEX_WIDTH + x;
+    if (visited[p]) return;
+    visited[p] = 1;
+    if (isPortBg(p)) {
+      isBg[p] = 1;
+      queue[tail++] = p;
+    }
+  };
+
+  for (let x = 0; x < TEX_WIDTH; x++) {
+    pushSeed(x, 0);
+    pushSeed(x, 1);
+  }
+  for (let y = 0; y < TEX_HEIGHT; y++) {
+    pushSeed(0, y);
+    pushSeed(1, y);
+    pushSeed(TEX_WIDTH - 1, y);
+    pushSeed(TEX_WIDTH - 2, y);
+  }
+
+  while (head < tail) {
+    const curr = queue[head++]!;
+    const cx = curr % TEX_WIDTH;
+    const cy = (curr / TEX_WIDTH) | 0;
+    const neighbors = [
+      cx > 0 ? curr - 1 : -1,
+      cx < TEX_WIDTH - 1 ? curr + 1 : -1,
+      cy > 0 ? curr - TEX_WIDTH : -1,
+      cy < TEX_HEIGHT - 1 ? curr + TEX_WIDTH : -1,
+    ];
+    for (let i = 0; i < 4; i++) {
+      const np = neighbors[i]!;
+      if (np >= 0 && !visited[np]) {
+        visited[np] = 1;
+        if (isPortBg(np)) {
+          isBg[np] = 1;
+          queue[tail++] = np;
+        }
+      }
+    }
+  }
+
+  for (let p = 0; p < totalPixels; p++) {
+    if (isBg[p]) {
+      data[p * 4] = 0;
+      data[p * 4 + 1] = 0;
+      data[p * 4 + 2] = 0;
+      data[p * 4 + 3] = 0;
+    }
+  }
+
+  for (let y = 1; y < TEX_HEIGHT - 1; y++) {
+    for (let x = 1; x < TEX_WIDTH - 1; x++) {
+      const p = y * TEX_WIDTH + x;
+      if (!isBg[p]) {
+        const bgNeighbors =
+          (isBg[p - 1] ?? 0) +
+          (isBg[p + 1] ?? 0) +
+          (isBg[p - TEX_WIDTH] ?? 0) +
+          (isBg[p + TEX_WIDTH] ?? 0);
+        if (bgNeighbors > 0) {
+          data[p * 4 + 3] = Math.round((data[p * 4 + 3] ?? 255) * (1 - bgNeighbors * 0.2));
+        }
+      }
+    }
+  }
+
+  // Clear 4px outer border on top, left, and right to guarantee zero canvas frame border artifacts
+  for (let y = 0; y < TEX_HEIGHT; y++) {
+    for (let x = 0; x < 4; x++) {
+      const lIdx = (y * TEX_WIDTH + x) * 4;
+      const rIdx = (y * TEX_WIDTH + (TEX_WIDTH - 1 - x)) * 4;
+      data[lIdx] = data[lIdx + 1] = data[lIdx + 2] = data[lIdx + 3] = 0;
+      data[rIdx] = data[rIdx + 1] = data[rIdx + 2] = data[rIdx + 3] = 0;
+    }
+  }
+  for (let y = 0; y < 4; y++) {
+    for (let x = 0; x < TEX_WIDTH; x++) {
+      const tIdx = (y * TEX_WIDTH + x) * 4;
+      data[tIdx] = data[tIdx + 1] = data[tIdx + 2] = data[tIdx + 3] = 0;
+    }
+  }
+
+  // Continue natural curved sleeve silhouette where original vertical photo edges clipped the arms
+  let firstClippedLeftY = -1;
+  let firstClippedRightY = -1;
+  const rightBorderX = portDrawX + portDrawW - 5;
+
+  for (let y = 580; y < TEX_HEIGHT; y++) {
+    const lIdx = (y * TEX_WIDTH + (portDrawX + 1)) * 4;
+    if (firstClippedLeftY === -1 && (data[lIdx + 3] ?? 0) > 200 && (data[lIdx] ?? 255) < 60) {
+      firstClippedLeftY = y;
+    }
+    const rIdx = (y * TEX_WIDTH + (rightBorderX - 1)) * 4;
+    if (firstClippedRightY === -1 && (data[rIdx + 3] ?? 0) > 200 && (data[rIdx] ?? 255) < 60) {
+      firstClippedRightY = y;
+    }
+  }
+
+  if (firstClippedLeftY !== -1) {
+    for (let y = firstClippedLeftY; y < TEX_HEIGHT; y++) {
+      const t = (y - firstClippedLeftY) / (TEX_HEIGHT - firstClippedLeftY);
+      const arch = Math.sin(t * Math.PI * 0.85) * 24;
+      const targetLeftX = portDrawX + 1 - arch;
+      const sampleX = portDrawX + 5;
+      const sIdx = (y * TEX_WIDTH + sampleX) * 4;
+      const sr = data[sIdx] ?? 0;
+      const sg = data[sIdx + 1] ?? 0;
+      const sb = data[sIdx + 2] ?? 0;
+      const startX = Math.floor(targetLeftX);
+      for (let tx = startX; tx <= portDrawX + 2; tx++) {
+        const dIdx = (y * TEX_WIDTH + tx) * 4;
+        const edgeAlpha = tx === startX ? Math.round((1 - (targetLeftX - startX)) * 255) : 255;
+        data[dIdx] = sr;
+        data[dIdx + 1] = sg;
+        data[dIdx + 2] = sb;
+        data[dIdx + 3] = Math.max(data[dIdx + 3] ?? 0, edgeAlpha);
+      }
+    }
+  }
+
+  if (firstClippedRightY !== -1) {
+    for (let y = firstClippedRightY; y < TEX_HEIGHT; y++) {
+      const t = (y - firstClippedRightY) / (TEX_HEIGHT - firstClippedRightY);
+      const arch = Math.sin(t * Math.PI * 0.85) * 24;
+      const targetRightX = rightBorderX - 1 + arch;
+      const sampleX = rightBorderX - 5;
+      const sIdx = (y * TEX_WIDTH + sampleX) * 4;
+      const sr = data[sIdx] ?? 0;
+      const sg = data[sIdx + 1] ?? 0;
+      const sb = data[sIdx + 2] ?? 0;
+      const endX = Math.ceil(targetRightX);
+      for (let tx = rightBorderX - 2; tx <= endX; tx++) {
+        const dIdx = (y * TEX_WIDTH + tx) * 4;
+        const edgeAlpha = tx === endX ? Math.round((1 - (endX - targetRightX)) * 255) : 255;
+        data[dIdx] = sr;
+        data[dIdx + 1] = sg;
+        data[dIdx + 2] = sb;
+        data[dIdx + 3] = Math.max(data[dIdx + 3] ?? 0, edgeAlpha);
+      }
+    }
   }
 
   ctx.putImageData(imageData, 0, 0);
@@ -151,13 +427,15 @@ const FRAGMENT_SHADER = `
   uniform sampler2D uBaseTex;
   uniform sampler2D uAuraTex;
   uniform vec2 uMouse;
+  uniform vec2 uTrailMouse;
   uniform float uHover;
   uniform float uToggleMode;
   uniform float uTime;
+  uniform float uContainerAspect;
+  uniform float uTexAspect;
 
   varying vec2 vUv;
 
-  // 2D Simplex Noise for organic liquid aura edge
   vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec3 permute(vec3 x) { return mod289(((x * 34.0) + 1.0) * x); }
@@ -190,56 +468,79 @@ const FRAGMENT_SHADER = `
     return 130.0 * dot(m, g);
   }
 
-  void main() {
-    vec4 baseCol = texture2D(uBaseTex, vUv);
-    vec4 auraCol = texture2D(uAuraTex, vUv);
+  vec2 toTexUv(vec2 inUv) {
+    if (uContainerAspect >= uTexAspect) {
+      float scaleX = uContainerAspect / uTexAspect;
+      return vec2((inUv.x - 0.5) * scaleX + 0.5, inUv.y);
+    } else {
+      float scaleY = uTexAspect / uContainerAspect;
+      return vec2(inUv.x, inUv.y * scaleY);
+    }
+  }
 
-    // Aspect-corrected coordinates for organic blob calculation
-    vec2 aspect = vec2(0.86, 1.0);
-    vec2 p = vUv * aspect;
-    vec2 m = uMouse * aspect;
+  void main() {
+    vec2 uv = toTexUv(vUv);
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+      gl_FragColor = vec4(0.0);
+      return;
+    }
+
+    vec4 baseCol = texture2D(uBaseTex, uv);
+    vec4 auraCol = texture2D(uAuraTex, uv);
+
+    vec2 mPrimary = toTexUv(uMouse);
+    vec2 mTrail = toTexUv(uTrailMouse);
+
+    // Aspect-scaled coordinates for vertical oval liquid metaball (like rinlayheang.me)
+    vec2 metric = vec2(uTexAspect * 1.15, 0.88);
+    float d1 = length((uv - mPrimary) * metric);
+    float d2 = length((uv - mTrail) * metric) * 1.18;
+
+    // Smooth metaball union (smin) between primary cursor and lagged trail
+    float k = 0.08;
+    float h = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
+    float rawDist = mix(d2, d1, h) - k * h * (1.0 - h);
 
     // Multi-layered animated noise for liquid energy contour
-    float n1 = snoise(vUv * 4.5 + vec2(uTime * 0.45, -uTime * 0.35));
-    float n2 = snoise(vUv * 9.0 - vec2(uTime * 0.6, uTime * 0.5)) * 0.45;
-    float noiseVal = (n1 + n2) * 0.065;
+    float n1 = snoise(uv * 4.2 + vec2(uTime * 0.45, -uTime * 0.35));
+    float n2 = snoise(uv * 8.5 - vec2(uTime * 0.6, uTime * 0.5)) * 0.42;
+    float noiseVal = (n1 + n2) * 0.022;
 
-    // Distance from pointer
-    float dist = length(p - m) + noiseVal;
+    float dist = rawDist + noiseVal;
+    float radius = 0.215 * uHover;
 
-    // Active radius combines hover lens and full SHOW AURA toggle
-    float hoverRadius = uHover * 0.34;
-    float toggleRadius = uToggleMode * 1.35;
-    float activeRadius = max(hoverRadius, toggleRadius);
+    // Hover lens mask: 1.0 inside cursor lens, 0.0 outside
+    float lensMask = uHover * (1.0 - smoothstep(radius - 0.018, radius + 0.018, dist));
 
-    // Smooth mask: 1.0 inside aura reveal, 0.0 outside
-    float revealMask = 1.0 - smoothstep(activeRadius - 0.025, activeRadius + 0.015, dist);
+    // Invert behavior when switched:
+    // - Normal Mode (uToggleMode = 0.0): default is Base (0.0), hovering reveals Aura (1.0)
+    // - Switched Mode (uToggleMode = 1.0): default is Aura (1.0), hovering reveals Base (0.0)
+    float auraMix = mix(lensMask, 1.0 - lensMask, uToggleMode);
 
-    // Glowing golden-yellow neon rim along the boundary (like rinlayheang.me reference)
-    float edgeBand = smoothstep(activeRadius - 0.038, activeRadius - 0.006, dist)
-                   * (1.0 - smoothstep(activeRadius - 0.006, activeRadius + 0.032, dist));
+    // Premultiplied alpha compositing so transparent pixels NEVER bleed background RGB
+    float wBase = baseCol.a * (1.0 - auraMix);
+    float wAura = auraCol.a * auraMix;
+    float mixedAlpha = wBase + wAura;
+    vec3 mixedRgb = (baseCol.rgb * wBase + auraCol.rgb * wAura) / max(mixedAlpha, 0.0001);
 
-    // Also add an inner ring when SHOW AURA is toggled on so the golden aura frame stays visible
-    vec2 centerFace = vec2(0.5, 0.54) * aspect;
-    float faceDist = length((vUv - vec2(0.5, 0.54)) * vec2(1.25, 0.85)) + noiseVal * 0.85;
-    float auraRing = uToggleMode * (
-      smoothstep(0.31, 0.335, faceDist) * (1.0 - smoothstep(0.335, 0.365, faceDist))
-    );
+    // Thin, crisp electric-gold neon contour along the active hover lens boundary
+    float coreLine = uHover
+      * smoothstep(radius - 0.012, radius - 0.001, dist)
+      * (1.0 - smoothstep(radius - 0.001, radius + 0.010, dist));
+    float softHalo = uHover
+      * smoothstep(radius - 0.028, radius - 0.001, dist)
+      * (1.0 - smoothstep(radius - 0.001, radius + 0.026, dist));
 
-    float totalGlow = clamp(edgeBand * max(uHover, uToggleMode) * 2.2 + auraRing * 2.0, 0.0, 1.0);
+    float silhouetteMask = clamp(max(baseCol.a, auraCol.a), 0.0, 1.0);
+    float glowAlpha = clamp((coreLine * 1.15 + softHalo * 0.42) * silhouetteMask, 0.0, 1.0);
 
-    // Composite Base and Aura textures
-    vec4 mixedPortrait = mix(baseCol, auraCol, revealMask);
+    vec3 glowColor = mix(vec3(0.96, 0.78, 0.16), vec3(1.0, 0.96, 0.68), coreLine);
 
-    // Golden-yellow electric aura glow (#FFE14D -> #F59E0B)
-    vec3 glowColor = mix(vec3(1.0, 0.76, 0.12), vec3(1.0, 0.96, 0.55), totalGlow);
+    // Proper alpha-over compositing for the neon rim
+    float outAlpha = mixedAlpha + glowAlpha * (1.0 - mixedAlpha);
+    vec3 outRgb = (mixedRgb * mixedAlpha * (1.0 - glowAlpha) + glowColor * glowAlpha) / max(outAlpha, 0.0001);
 
-    // Only show glow where either portrait has alpha or near its silhouette
-    float silhouetteMask = clamp(max(baseCol.a, auraCol.a) * 1.35, 0.0, 1.0);
-    vec3 finalRgb = mix(mixedPortrait.rgb, glowColor, totalGlow * silhouetteMask);
-    float finalAlpha = max(mixedPortrait.a, totalGlow * silhouetteMask * 0.95);
-
-    gl_FragColor = vec4(finalRgb, finalAlpha);
+    gl_FragColor = vec4(outRgb, outAlpha);
   }
 `;
 
@@ -260,7 +561,7 @@ export function PortraitAuraCanvas({
     const container = containerRef.current;
     if (!container) return;
 
-    const width = container.clientWidth || 520;
+    const width = container.clientWidth || 640;
     const height = container.clientHeight || 620;
 
     const scene = new THREE.Scene();
@@ -281,9 +582,12 @@ export function PortraitAuraCanvas({
       uBaseTex: { value: new THREE.Texture() },
       uAuraTex: { value: new THREE.Texture() },
       uMouse: { value: new THREE.Vector2(0.5, 0.55) },
+      uTrailMouse: { value: new THREE.Vector2(0.5, 0.55) },
       uHover: { value: 0.0 },
       uToggleMode: { value: isAuraForcedRef.current ? 1.0 : 0.0 },
       uTime: { value: 0.0 },
+      uContainerAspect: { value: width / Math.max(1, height) },
+      uTexAspect: { value: TEX_ASPECT },
     };
 
     const geometry = new THREE.PlaneGeometry(1, 1);
@@ -297,10 +601,7 @@ export function PortraitAuraCanvas({
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
-    // Load both images and preprocess their studio background into transparent cutouts
     let disposed = false;
-    const texWidth = 860;
-    const texHeight = 1000;
 
     const loadImg = (src: string): Promise<HTMLImageElement> =>
       new Promise((resolve, reject) => {
@@ -315,9 +616,8 @@ export function PortraitAuraCanvas({
       .then(([baseImg, auraImg]) => {
         if (disposed) return;
 
-        // Align Base portrait and Aura cyber-wolf statue so head & shoulders match
-        const baseCutout = createCutoutCanvas(baseImg, texWidth, texHeight, 0.96, 0.0);
-        const auraCutout = createCutoutCanvas(auraImg, texWidth, texHeight, 0.98, 0.0);
+        const baseCutout = createBaseCutoutCanvas(baseImg);
+        const auraCutout = createAuraCutoutCanvas(auraImg);
 
         const baseTexture = new THREE.CanvasTexture(baseCutout);
         baseTexture.minFilter = THREE.LinearFilter;
@@ -338,9 +638,10 @@ export function PortraitAuraCanvas({
         // Fallback if image load fails
       });
 
-    // Spring-interpolated pointer state
+    // Spring-interpolated pointer & trail state
     const targetMouse = { x: 0.5, y: 0.58 };
     const currentMouse = { x: 0.5, y: 0.58 };
+    const trailMouse = { x: 0.5, y: 0.58 };
     let targetHover = 0.0;
     let currentHover = 0.0;
     let currentToggle = isAuraForcedRef.current ? 1.0 : 0.0;
@@ -368,9 +669,10 @@ export function PortraitAuraCanvas({
 
     const handleResize = () => {
       if (!container) return;
-      const w = container.clientWidth || 520;
+      const w = container.clientWidth || 640;
       const h = container.clientHeight || 620;
       renderer.setSize(w, h);
+      uniforms.uContainerAspect.value = w / Math.max(1, h);
     };
 
     window.addEventListener("resize", handleResize);
@@ -384,15 +686,17 @@ export function PortraitAuraCanvas({
       const elapsed = (now - startTime) * 0.001;
       uniforms.uTime.value = isReducedMotion ? 0.0 : elapsed;
 
-      // Smooth spring-like interpolation for cursor & hover transition
-      currentMouse.x += (targetMouse.x - currentMouse.x) * 0.14;
-      currentMouse.y += (targetMouse.y - currentMouse.y) * 0.14;
+      currentMouse.x += (targetMouse.x - currentMouse.x) * 0.16;
+      currentMouse.y += (targetMouse.y - currentMouse.y) * 0.16;
+      trailMouse.x += (currentMouse.x - trailMouse.x) * 0.075;
+      trailMouse.y += (currentMouse.y - trailMouse.y) * 0.075;
       currentHover += (targetHover - currentHover) * 0.12;
 
       const targetToggle = isAuraForcedRef.current ? 1.0 : 0.0;
-      currentToggle += (targetToggle - currentToggle) * 0.1;
+      currentToggle += (targetToggle - currentToggle) * 0.12;
 
       uniforms.uMouse.value.set(currentMouse.x, currentMouse.y);
+      uniforms.uTrailMouse.value.set(trailMouse.x, trailMouse.y);
       uniforms.uHover.value = currentHover;
       uniforms.uToggleMode.value = currentToggle;
 
@@ -419,7 +723,7 @@ export function PortraitAuraCanvas({
   return (
     <div
       ref={containerRef}
-      aria-label="Interactive 3D Shader Portrait of Aryo Ristiawan Machfudz — hover or click Show Aura to reveal Cyber-Wolf Aura"
+      aria-label="Interactive 3D Shader Portrait of Aryo Ristiawan Machfudz — hover or click Show Aura to switch between Normal Portrait and Cyber-Wolf Aura"
       className="relative h-full w-full cursor-crosshair select-none drop-shadow-[0_18px_28px_rgba(10,17,32,0.22)]"
     />
   );

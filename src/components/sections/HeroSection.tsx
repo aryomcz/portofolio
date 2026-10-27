@@ -126,8 +126,8 @@ export function HeroSection() {
           </div>
 
           {/* 2. CENTER COLUMN (4 Cols): Large Bottom-Anchored Three.js Portrait Cutout */}
-          <div className="relative z-10 flex h-[460px] w-full items-end justify-center sm:h-[560px] lg:col-span-4 lg:h-[86vh] lg:max-h-[800px]">
-            <div className="relative h-full w-full max-w-[560px] lg:w-[130%] lg:max-w-none">
+          <div className="relative z-10 flex h-[480px] w-full items-end justify-center sm:h-[580px] lg:col-span-4 lg:h-[calc(100vh-6.25rem)] lg:max-h-[820px]">
+            <div className="relative aspect-[1.24/1] h-full shrink-0">
               <PortraitAuraCanvas
                 baseImageSrc="/images/profile/aryo-portrait.png"
                 auraImageSrc="/images/profile/aryo-aura.jpg"
