@@ -107,11 +107,15 @@ export function ContactFooter() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-emerald opacity-75" />
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent-emerald" />
             </span>
+            <KineticBlockReveal delay={0.05} blockColor="bg-[#14b8a6]">
             <span className="text-[#F3F5F8]">
               {owner.availability.detailBanner}
             </span>
+            </KineticBlockReveal>
           </div>
+          <KineticBlockReveal delay={0.1} blockColor="bg-[#14b8a6]">
           <span className="text-accent-primary">{"SYS.HUD // 07 — TRANSMISSION"}</span>
+          </KineticBlockReveal>
         </div>
 
         {/* Main 2-Column Footer Grid */}
@@ -119,14 +123,14 @@ export function ContactFooter() {
           {/* Left 7 Cols: Giant Display "LET'S WORK." + Quick Actions */}
           <div className="flex flex-col justify-between space-y-8 lg:col-span-7">
             <div>
-              <KineticBlockReveal delay={0.05} blockColor="bg-[#0e7c86]">
+              <KineticBlockReveal delay={0.1} blockColor="bg-[#0e7c86]">
                 <p className="font-mono text-xs tracking-widest text-[#0e7c86]">
                   {"[ READY FOR NEW CHALLENGES & COLLABORATIONS ]"}
                 </p>
               </KineticBlockReveal>
 
               <div className="mt-3">
-                {/* <KineticBlockReveal delay={0.15} blockColor="bg-[#0e7c86]"> */}
+               
                   <h2
                     id="footer-giant-heading"
                     ref={headingRef}
@@ -151,11 +155,10 @@ export function ContactFooter() {
                       WORK.
                     </span>
                   </h2>
-                {/* </KineticBlockReveal> */}
               </div>
 
               <div className="mt-4">
-                <KineticBlockReveal delay={0.25} blockColor="bg-[#14b8a6]">
+                <KineticBlockReveal delay={0.2} blockColor="bg-[#14b8a6]">
                   <p className="max-w-[54ch] text-sm leading-relaxed text-[#9BA5B7] sm:text-base">
                     Need a Full-Stack Engineer or System Analyst to architect web
                     platforms, mobile apps, or custom operational workflows? Initiate

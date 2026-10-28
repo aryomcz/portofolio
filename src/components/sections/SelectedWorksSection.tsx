@@ -291,23 +291,23 @@ export function SelectedWorksSection() {
                 </span>
 
                 <span className="border border-accent-primary/50 bg-bg-primary px-3 py-1 font-mono text-xs text-accent-primary">
-                  JUARA 1 NASIONAL · {featuredAchievement.year}
+                  JUARA {featuredAchievement.podium} · {featuredAchievement.year}
                 </span>
 
                 <span className="border border-accent-primary/35 bg-bg-primary px-3 py-1 font-mono text-xs text-accent-primary">
-                  UIN Sunan Ampel Surabaya
+                 {featuredAchievement.univ}
                 </span>
               </div>
 
               {/* Display Title & Product Name */}
               <div>
-                <KineticBlockReveal delay={0.15} blockColor="bg-[#0e7c86]">
+                 <KineticBlockReveal delay={0.15} themeColor={featuredAchievement.themeColor}>
                   <h3 className="font-display text-[clamp(2.1rem,3.6vw,3.25rem)] leading-[0.95] tracking-wide text-accent-primary">
                     {featuredAchievement.title}
                   </h3>
                 </KineticBlockReveal>
                 <div className="mt-2">
-                  <KineticBlockReveal delay={0.25} blockColor="bg-[#14b8a6]">
+                  <KineticBlockReveal delay={0.25} themeColor={featuredAchievement.themeColor}>
                     <p className="font-mono text-sm font-medium text-text-primary">
                       {featuredAchievement.subtitle}
                     </p>
@@ -628,13 +628,18 @@ export function SelectedWorksSection() {
                               className="h-2 w-2 rounded-full bg-accent-primary"
                               aria-hidden="true"
                             />
+                            <KineticBlockReveal delay={0.1} themeColor={project.themeColor}>
                             <span className="font-semibold text-accent-primary">
                               {`PROJECT // ${project.index} · ${project.year}`}
                             </span>
+                            </KineticBlockReveal>
                           </div>
+                          <KineticBlockReveal delay={0.2} themeColor={project.themeColor}>
+
                           <span className="border border-accent-primary/45 bg-bg-primary px-2.5 py-0.5 text-[11px] text-accent-primary">
                             {project.category}
                           </span>
+                          </KineticBlockReveal>
                         </div>
 
                         {/* Sharp Visual Preview Frame */}
@@ -650,12 +655,16 @@ export function SelectedWorksSection() {
                         {/* Project Title & Solution Summary */}
                         <div>
                           <div className="flex flex-wrap items-center justify-between gap-2">
+                            <KineticBlockReveal delay={0.3} themeColor={project.themeColor}>
                             <h3 className="font-display text-3xl tracking-wide text-accent-primary sm:text-4xl">
                               {project.title}
                             </h3>
+                            </KineticBlockReveal>
+                            <KineticBlockReveal delay={0.4} themeColor={project.themeColor}>
                             <span className="font-mono text-[11px] text-accent-primary">
                               ● {project.clientOrContext}
                             </span>
+                            </KineticBlockReveal>
                           </div>
 
                           <p className="mt-2 text-sm leading-relaxed text-text-secondary">

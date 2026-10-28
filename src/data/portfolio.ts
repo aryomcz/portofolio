@@ -102,6 +102,8 @@ export interface ProjectCaseStudy {
   readonly themeColor: ProjectThemeId;
   readonly badgeText?: string; // e.g. "CHAMPION" for Achievement
   readonly title: string;
+  readonly podium: string;
+  readonly univ: string;
   readonly shortTitle: string;
   readonly subtitle: string;
   readonly year: string;
@@ -1092,6 +1094,8 @@ export const PORTFOLIO_DATA: PortfolioData = {
   featuredAchievement: {
     slug: "lumind",
     index: "AWARD // 01",
+    univ: "UIN Sunan Ampel Surabaya",
+    podium: "1 Nasional",
     kind: "achievement",
     themeColor: "fuchsia",
     badgeText: "CHAMPION",

@@ -21,6 +21,7 @@ import { TechBracketCard } from "@/components/ui/TechBracketCard";
 import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
 import { ArchitectureDiagram } from "@/components/ui/ArchitectureDiagram";
 import { ContactFooter } from "@/components/sections/ContactFooter";
+import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 
 export function generateStaticParams() {
   return getAllCaseStudies().map((item) => ({
@@ -109,14 +110,20 @@ export default async function ProjectCaseStudyPage({
                 </p>
 
                 <div className="overflow-hidden">
-                  <h1 className="project-detail-title font-display text-[clamp(3.2rem,7vw,5.75rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform">
-                    {study.title}
-                  </h1>
+                  <KineticBlockReveal delay={0.08} themeColor={study.themeColor}>
+                    <h1 className="project-detail-title font-display text-[clamp(3.2rem,7vw,5.75rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform">
+                      {study.title}
+                    </h1>
+                  </KineticBlockReveal>
                 </div>
 
-                <p className="font-mono text-sm font-medium text-accent-primary sm:text-base">
-                  {study.subtitle}
-                </p>
+                <div>
+                  <KineticBlockReveal delay={0.18} themeColor={study.themeColor}>
+                    <p className="font-mono text-sm font-medium text-accent-primary sm:text-base">
+                      {study.subtitle}
+                    </p>
+                  </KineticBlockReveal>
+                </div>
 
                 <p className="max-w-[65ch] text-base leading-relaxed text-text-secondary">
                   {study.cardSummary}
@@ -222,7 +229,9 @@ export default async function ProjectCaseStudyPage({
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle pb-4">
             <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
               <Camera className="h-4 w-4" aria-hidden="true" />
-              <span>{"VISUAL DOCUMENTATION & INTERFACE SNAPSHOTS"}</span>
+              <KineticBlockReveal delay={0.05} themeColor={study.themeColor}>
+                <span>{"VISUAL DOCUMENTATION & INTERFACE SNAPSHOTS"}</span>
+              </KineticBlockReveal>
             </div>
             <span className="font-mono text-xs text-text-muted">
               {study.dummyGallery.length} FRAMES CAPTURED
@@ -306,7 +315,9 @@ export default async function ProjectCaseStudyPage({
             <TechBracketCard bracketSize="md" className="p-6 lg:sticky lg:top-24">
               <div className="flex items-center gap-2 border-b border-border-subtle pb-3 font-mono text-xs text-accent-primary">
                 <Layers className="h-4 w-4" aria-hidden="true" />
-                <span>TECHNOLOGY STACK</span>
+                <KineticBlockReveal delay={0.05} themeColor={study.themeColor}>
+                  <span>TECHNOLOGY STACK</span>
+                </KineticBlockReveal>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -376,12 +387,20 @@ export default async function ProjectCaseStudyPage({
               className="p-6 sm:p-8"
             >
               <div id="overview" className="space-y-4">
-                <span className="font-mono text-xs text-accent-primary">
-                  {"01 // BUSINESS CONTEXT & OPERATIONAL BOTTLENECK"}
-                </span>
-                <h2 className="font-display text-3xl tracking-wide text-text-primary sm:text-4xl">
-                  {study.problemStatement.headline}
-                </h2>
+                <div>
+                  <KineticBlockReveal delay={0.05} themeColor={study.themeColor}>
+                    <span className="font-mono text-xs text-accent-primary">
+                      {"01 // BUSINESS CONTEXT & OPERATIONAL BOTTLENECK"}
+                    </span>
+                  </KineticBlockReveal>
+                </div>
+                <div>
+                  <KineticBlockReveal delay={0.12} themeColor={study.themeColor}>
+                    <h2 className="font-display text-3xl tracking-wide text-text-primary sm:text-4xl">
+                      {study.problemStatement.headline}
+                    </h2>
+                  </KineticBlockReveal>
+                </div>
                 <div className="space-y-3 text-sm leading-relaxed text-text-secondary sm:text-base">
                   {study.problemStatement.contextParagraphs.map((p, idx) => (
                     <p key={idx}>{p}</p>
@@ -411,12 +430,20 @@ export default async function ProjectCaseStudyPage({
               className="p-6 sm:p-8"
             >
               <div id="system-analysis" className="space-y-4">
-                <span className="font-mono text-xs text-accent-emerald">
-                  {"02 // SYSTEM ANALYSIS & DATA MODELING"}
-                </span>
-                <h2 className="font-display text-3xl tracking-wide text-text-primary sm:text-4xl">
-                  {study.systemAnalysis.headline}
-                </h2>
+                <div>
+                  <KineticBlockReveal delay={0.05} themeColor={study.themeColor}>
+                    <span className="font-mono text-xs text-accent-emerald">
+                      {"02 // SYSTEM ANALYSIS & DATA MODELING"}
+                    </span>
+                  </KineticBlockReveal>
+                </div>
+                <div>
+                  <KineticBlockReveal delay={0.12} themeColor={study.themeColor}>
+                    <h2 className="font-display text-3xl tracking-wide text-text-primary sm:text-4xl">
+                      {study.systemAnalysis.headline}
+                    </h2>
+                  </KineticBlockReveal>
+                </div>
                 <div className="space-y-3 text-sm leading-relaxed text-text-secondary sm:text-base">
                   {study.systemAnalysis.methodologyParagraphs.map((p, idx) => (
                     <p key={idx}>{p}</p>
@@ -456,12 +483,20 @@ export default async function ProjectCaseStudyPage({
               className="p-6 sm:p-8"
             >
               <div id="execution" className="space-y-5">
-                <span className="font-mono text-xs text-accent-primary">
-                  {"04 // KEY ENGINEERING DECISIONS"}
-                </span>
-                <h2 className="font-display text-3xl tracking-wide text-text-primary sm:text-4xl">
-                  {study.engineeringExecution.headline}
-                </h2>
+                <div>
+                  <KineticBlockReveal delay={0.05} themeColor={study.themeColor}>
+                    <span className="font-mono text-xs text-accent-primary">
+                      {"04 // KEY ENGINEERING DECISIONS"}
+                    </span>
+                  </KineticBlockReveal>
+                </div>
+                <div>
+                  <KineticBlockReveal delay={0.12} themeColor={study.themeColor}>
+                    <h2 className="font-display text-3xl tracking-wide text-text-primary sm:text-4xl">
+                      {study.engineeringExecution.headline}
+                    </h2>
+                  </KineticBlockReveal>
+                </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {study.engineeringExecution.decisions.map((decision, idx) => (
@@ -473,9 +508,13 @@ export default async function ProjectCaseStudyPage({
                         <span className="font-mono text-[11px] text-accent-primary">
                           {`DECISION // 0${idx + 1}`}
                         </span>
-                        <h3 className="mt-1 font-display text-2xl tracking-wide text-text-primary">
-                          {decision.title}
-                        </h3>
+                        <div>
+                          <KineticBlockReveal delay={0.08 + idx * 0.05} themeColor={study.themeColor}>
+                            <h3 className="mt-1 font-display text-2xl tracking-wide text-text-primary">
+                              {decision.title}
+                            </h3>
+                          </KineticBlockReveal>
+                        </div>
                         <p className="mt-2 text-xs leading-relaxed text-text-secondary sm:text-sm">
                           {decision.description}
                         </p>
@@ -504,12 +543,20 @@ export default async function ProjectCaseStudyPage({
               className="p-6 sm:p-8"
             >
               <div id="outcomes" className="space-y-5">
-                <span className="font-mono text-xs text-accent-emerald">
-                  {"05 // QUANTIFIABLE IMPACT & OUTCOMES"}
-                </span>
-                <h2 className="font-display text-3xl tracking-wide text-text-primary sm:text-4xl">
-                  BEFORE VS. AFTER INTERVENTION
-                </h2>
+                <div>
+                  <KineticBlockReveal delay={0.05} themeColor={study.themeColor}>
+                    <span className="font-mono text-xs text-accent-emerald">
+                      {"05 // QUANTIFIABLE IMPACT & OUTCOMES"}
+                    </span>
+                  </KineticBlockReveal>
+                </div>
+                <div>
+                  <KineticBlockReveal delay={0.12} themeColor={study.themeColor}>
+                    <h2 className="font-display text-3xl tracking-wide text-text-primary sm:text-4xl">
+                      BEFORE VS. AFTER INTERVENTION
+                    </h2>
+                  </KineticBlockReveal>
+                </div>
                 <p className="text-sm leading-relaxed text-text-secondary sm:text-base">
                   {study.impactAndOutcomes.summary}
                 </p>
@@ -570,9 +617,11 @@ export default async function ProjectCaseStudyPage({
                 <ArrowLeft className="h-3.5 w-3.5 text-accent-primary" />
                 <span>PREVIOUS ({prev.index})</span>
               </div>
-              <p className="mt-2 font-display text-3xl tracking-wide text-text-primary">
-                {prev.title}
-              </p>
+              <KineticBlockReveal delay={0.05} themeColor={prev.themeColor}>
+                <p className="mt-2 font-display text-3xl tracking-wide text-text-primary">
+                  {prev.title}
+                </p>
+              </KineticBlockReveal>
               <p className="font-mono text-xs text-text-secondary">
                 {prev.subtitle}
               </p>
@@ -593,9 +642,11 @@ export default async function ProjectCaseStudyPage({
                 <span>NEXT ({next.index})</span>
                 <ArrowRight className="h-3.5 w-3.5 text-accent-primary" />
               </div>
-              <p className="mt-2 font-display text-3xl tracking-wide text-text-primary">
-                {next.title}
-              </p>
+              <KineticBlockReveal delay={0.05} themeColor={next.themeColor}>
+                <p className="mt-2 font-display text-3xl tracking-wide text-text-primary">
+                  {next.title}
+                </p>
+              </KineticBlockReveal>
               <p className="font-mono text-xs text-text-secondary">
                 {next.subtitle}
               </p>
