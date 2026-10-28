@@ -24,9 +24,11 @@ import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
 import { CaseStudyQuickModal } from "@/components/ui/CaseStudyQuickModal";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion-tokens";
 import { cn } from "@/lib/utils";
+import SplitText from "gsap/dist/SplitText";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
+  gsap.registerPlugin(ScrollTrigger, SplitText);
+  
 }
 
 type CategoryFilter =
@@ -131,23 +133,51 @@ export function SelectedWorksSection() {
         }
       );
 
-      // 4. Projects Section Kinetic Title Reveal
-      gsap.fromTo(
-        ".projects-kinetic-title",
-        { yPercent: 105, opacity: 0 },
-        {
-          yPercent: 0,
-          opacity: 1,
-          duration: 1.1,
-          ease: "power3.out",
-          clearProps: "transform",
-          scrollTrigger: {
-            trigger: "#projects",
-            start: "top 85%",
-            toggleActions: "play none none none",
-          },
-        }
-      );
+      // 4. Projects Section Kinetic Title: Staggered Letters Reveal
+      const split1 = SplitText.create(".projects-title-selected", {
+        type: "chars",
+      });
+      const split2 = SplitText.create(".projects-title-projects", {
+        type: "chars",
+      });
+
+      // Animasi 1: "SELECTED" (Bounce / Slide up)
+      gsap.from(split1.chars, {
+        y: 50,
+        opacity: 0,
+        stagger: 0.03,
+        duration: 1,
+        ease: "back.out(1.7)",
+        scrollTrigger: {
+          trigger: "#projects",
+          start: "top 85%",
+          toggleActions: "play none none none",
+        },
+      });
+
+      // Animasi 2: "PROJECTS" (Blur, Scale & Opacity)
+      gsap.from(split2.chars, {
+        opacity: 0.1,
+        scale: 0.8,
+        filter: "blur(4px)",
+        stagger: {
+          each: 0.06,
+          from: "start",
+        },
+        duration: 1,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: "#projects",
+          start: "top 85%",
+          toggleActions: "play none none none",
+        },
+      });
+      
+      // Cleanup SplitText saat context di-revert
+      return () => {
+        split1.revert();
+        split2.revert();
+      };
     }, containerRef);
 
     return () => {
@@ -357,12 +387,17 @@ export function SelectedWorksSection() {
               <span className="h-2 w-2 bg-accent-primary" aria-hidden="true" />
               <span>{"SYS.HUD // 04 — PRODUCTION ENGINEERING PORTFOLIO"}</span>
             </div>
-            <div className="overflow-hidden">
+            <div className="overflow-hidden py-1">
               <h2
                 id="projects-heading"
-                className="projects-kinetic-title mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+                className="mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
               >
-                PROJECTS
+                <span className="projects-title-selected inline-block mr-[0.25em]">
+                  SELECTED
+                </span>
+                <span className="projects-title-projects inline-block">
+                  PROJECTS
+                </span>
               </h2>
             </div>
           </div>
