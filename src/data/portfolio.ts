@@ -443,6 +443,8 @@ export const PORTFOLIO_DATA: PortfolioData = {
   },
   projects: [
     {
+      podium:"",
+      univ:"",
       slug: "pos-livingroom",
       index: "01",
       kind: "project",
@@ -608,6 +610,8 @@ export const PORTFOLIO_DATA: PortfolioData = {
       },
     },
     {
+      podium:"",
+      univ:"",
       slug: "tigo",
       index: "02",
       kind: "project",
@@ -771,6 +775,8 @@ export const PORTFOLIO_DATA: PortfolioData = {
       },
     },
     {
+      podium:"",
+      univ:"",
       slug: "cms-pt-bks",
       index: "03",
       kind: "project",
@@ -927,6 +933,8 @@ export const PORTFOLIO_DATA: PortfolioData = {
       },
     },
     {
+      podium:"",
+      univ:"",
       slug: "driver-app-pt-kjhms",
       index: "04",
       kind: "project",
