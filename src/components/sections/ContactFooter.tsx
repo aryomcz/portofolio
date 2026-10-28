@@ -1,13 +1,88 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { ArrowUpRight, FileText } from "lucide-react";
 import { PORTFOLIO_DATA } from "@/data/portfolio";
 import { useBogorClock } from "@/hooks/useBogorClock";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { CopyEmailButton } from "@/components/ui/CopyEmailButton";
+import { cn } from "@/lib/utils";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export function ContactFooter() {
   const { owner } = PORTFOLIO_DATA;
   const bogorTime = useBogorClock();
+  const isReducedMotion = useReducedMotion();
+  const footerRef = useRef<HTMLElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const tlRef = useRef<gsap.core.Timeline | null>(null);
+  const [isGlitching, setIsGlitching] = useState(false);
+
+  const runGlitch = useCallback(() => {
+    if (isReducedMotion || !headingRef.current) return;
+
+    if (tlRef.current) {
+      tlRef.current.kill();
+    }
+
+    setIsGlitching(true);
+
+    const headingEl = headingRef.current;
+    const tl = gsap.timeline({
+      repeat: 2,
+      onComplete: () => {
+        setIsGlitching(false);
+        gsap.set(headingEl, { x: 0, skewX: 0 });
+      },
+    });
+
+    tlRef.current = tl;
+
+    // Wiggle and skew displacement sequence
+    tl.to(headingEl, { x: -3, skewX: 7, duration: 0.05, ease: "power1.inOut" })
+      .to(headingEl, { x: 3, skewX: -6, duration: 0.05, ease: "power1.inOut" })
+      .to(headingEl, { x: -3, skewX: 3, duration: 0.04, ease: "power1.inOut" })
+      .to(headingEl, { x: 0, skewX: 0, duration: 0.05, ease: "power1.inOut" });
+  }, [isReducedMotion]);
+
+  useEffect(() => {
+    if (isReducedMotion) return;
+
+    // 1. ScrollTrigger untuk trigger saat footer di-scroll masuk/keluar
+    const ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: footerRef.current,
+        start: "top 90%",
+        onEnter: () => runGlitch(),
+        onEnterBack: () => runGlitch(),
+      });
+    }, footerRef);
+
+    // 2. Initial trigger jika halaman dibuka atau di-refresh langsung pada posisi footer
+    const initialTimer = setTimeout(() => {
+      if (footerRef.current) {
+        const rect = footerRef.current.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          runGlitch();
+        }
+      }
+    }, 250);
+
+    return () => {
+      clearTimeout(initialTimer);
+      if (tlRef.current) {
+        tlRef.current.kill();
+        tlRef.current = null;
+      }
+      setIsGlitching(false);
+      ctx.revert();
+    };
+  }, [isReducedMotion, runGlitch]);
 
   const contactItems = [
     {
@@ -43,6 +118,7 @@ export function ContactFooter() {
   return (
     <footer
       id="contact"
+      ref={footerRef}
       aria-labelledby="footer-giant-heading"
       className="relative mt-12 border-t border-[#1D2738] bg-bg-footer text-[#F3F5F8]"
     >
@@ -72,10 +148,27 @@ export function ContactFooter() {
 
               <h2
                 id="footer-giant-heading"
-                className="mt-3 font-display text-[clamp(4.5rem,11vw,9.25rem)] leading-[0.85] tracking-wide text-[#F3F5F8]"
+                ref={headingRef}
+                onMouseEnter={runGlitch}
+                onClick={runGlitch}
+                className="mt-3 inline-block cursor-pointer select-none font-display text-[clamp(4.5rem,11vw,9.25rem)] leading-[0.85] tracking-wide text-[#F3F5F8]"
+                title="Hover or click to glitch"
               >
-                LET&apos;S{" "}
-                <span className="text-accent-primary">WORK.</span>
+                <span
+                  className={cn("glitch-text", isGlitching && "is-glitching")}
+                  data-text="LET'S"
+                >
+                  LET&apos;S
+                </span>{" "}
+                <span
+                  className={cn(
+                    "glitch-text text-accent-primary",
+                    isGlitching && "is-glitching"
+                  )}
+                  data-text="WORK."
+                >
+                  WORK.
+                </span>
               </h2>
 
               <p className="mt-4 max-w-[54ch] text-sm leading-relaxed text-[#9BA5B7] sm:text-base">
