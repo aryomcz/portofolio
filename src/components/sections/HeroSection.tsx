@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useLenis } from "@/hooks/useLenis";
 import { PortraitAuraCanvas } from "@/components/ui/PortraitAuraCanvas";
+import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 
 /**
  * Open, transparent corner-bracket frame (`┌ ┐ └ ┘`) matching rinlayheang.me's right HUD column.
@@ -335,21 +336,27 @@ export function HeroSection() {
                   className="h-4 w-4 shrink-0 text-accent-primary"
                   aria-hidden="true"
                 />
-                <span>BOGOR, INDONESIA</span>
+                <KineticBlockReveal delay={0.15} blockColor="bg-[#0e7c86]">
+                  <span>BOGOR, INDONESIA</span>
+                </KineticBlockReveal>
               </li>
               <li className="hero-meta-row flex items-center gap-3">
                 <GraduationCap
                   className="h-4 w-4 shrink-0 text-accent-primary"
                   aria-hidden="true"
                 />
-                <span>SOFTWARE ENGINEERING, YEAR 3 AT IPB</span>
+                <KineticBlockReveal delay={0.25} blockColor="bg-[#0e7c86]">
+                  <span>SOFTWARE ENGINEERING, YEAR 3 AT IPB</span>
+                </KineticBlockReveal>
               </li>
               <li className="hero-meta-row flex items-center gap-3">
                 <Code2
                   className="h-4 w-4 shrink-0 text-accent-primary"
                   aria-hidden="true"
                 />
-                <span>FULL-STACK DEVELOPER & SYSTEM ANALYST</span>
+                <KineticBlockReveal delay={0.35} blockColor="bg-[#0e7c86]">
+                  <span>FULL-STACK DEVELOPER &amp; SYSTEM ANALYST</span>
+                </KineticBlockReveal>
               </li>
             </ul>
           </div>
@@ -374,29 +381,44 @@ export function HeroSection() {
               {/* Block 1: CURRENTLY */}
               <div className="hero-hud-block">
                 <OpenHudCorners>
-                  <p className="hero-hud-label-currently font-mono text-[11px] font-bold tracking-[0.08em] text-accent-primary uppercase">
-                    CURRENTLY
-                  </p>
-                  <p className="mt-1.5 text-[14px] font-bold tracking-[0.03em] text-text-primary uppercase">
-                    SOFTWARE ENGINEERING STUDENT
-                  </p>
-                  <p className="mt-0.5 text-[12px] font-medium tracking-[0.03em] text-text-muted uppercase leading-snug">
-                    IPB UNIVERSITY
-                  </p>
+                  <KineticBlockReveal delay={0.1} blockColor="bg-[#0e7c86]">
+                    <p className="hero-hud-label-currently font-mono text-[11px] font-bold tracking-[0.08em] text-accent-primary uppercase">
+                      CURRENTLY
+                    </p>
+                  </KineticBlockReveal>
+                  <div className="mt-1.5">
+                    <KineticBlockReveal delay={0.2} blockColor="bg-[#0e7c86]">
+                      <p className="text-[14px] font-bold tracking-[0.03em] text-text-primary uppercase">
+                        SOFTWARE ENGINEERING STUDENT
+                      </p>
+                    </KineticBlockReveal>
+                  </div>
+                  <div className="mt-0.5">
+                    <KineticBlockReveal delay={0.3} blockColor="bg-[#14b8a6]">
+                      <p className="text-[12px] font-medium tracking-[0.03em] text-text-muted uppercase leading-snug">
+                        IPB UNIVERSITY
+                      </p>
+                    </KineticBlockReveal>
+                  </div>
                 </OpenHudCorners>
               </div>
 
               {/* Block 2: AT A GLANCE */}
               <div className="hero-hud-block">
                 <OpenHudCorners>
+                  <KineticBlockReveal delay={0.1} blockColor="bg-[#0e7c86]">
                   <p className="hero-hud-label-glance font-mono text-[11px] font-bold tracking-[0.08em] text-accent-primary uppercase">
                     AT A GLANCE
                   </p>
+                  </KineticBlockReveal>
+
                   <div className="mt-2.5 grid grid-cols-3 gap-4">
                     <div>
+                  <KineticBlockReveal delay={0.2} blockColor="bg-[#0e7c86]">
                       <p className="text-[10px] font-semibold tracking-[0.06em] text-text-muted uppercase">
                         PROJECTS
                       </p>
+                  </KineticBlockReveal>
                       <p
                         ref={statProjectsRef}
                         className="tabular-nums mt-1 font-display text-4xl leading-none text-text-primary"
@@ -405,9 +427,11 @@ export function HeroSection() {
                       </p>
                     </div>
                     <div>
+                      <KineticBlockReveal delay={0.2} blockColor="bg-[#0e7c86]">
                       <p className="text-[10px] font-semibold tracking-[0.06em] text-text-muted uppercase">
                         GPA
                       </p>
+                      </KineticBlockReveal>
                       <p
                         ref={statGpaRef}
                         className="tabular-nums mt-1 font-display text-4xl leading-none text-text-primary"
@@ -416,9 +440,12 @@ export function HeroSection() {
                       </p>
                     </div>
                     <div>
+                      <KineticBlockReveal delay={0.2} blockColor="bg-[#0e7c86]">
+
                       <p className="text-[10px] font-semibold tracking-[0.06em] text-text-muted uppercase">
                         AWARD
                       </p>
+                      </KineticBlockReveal>
                       <p
                         ref={statAwardRef}
                         className="tabular-nums mt-1 font-display text-4xl leading-none text-text-primary"

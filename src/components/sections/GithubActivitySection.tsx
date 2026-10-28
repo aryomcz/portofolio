@@ -8,6 +8,7 @@ import { PORTFOLIO_DATA, type GithubContributionDay } from "@/data/portfolio";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion-tokens";
 import { TechBracketCard } from "@/components/ui/TechBracketCard";
+import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 import { cn } from "@/lib/utils";
 
 interface LiveYearTelemetry {
@@ -306,17 +307,21 @@ export function GithubActivitySection() {
     >
       <div className="mb-8 flex flex-col justify-between gap-4 border-b border-border-subtle pb-5 sm:flex-row sm:items-end">
         <div>
-          <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
-            <GitCommit className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>{"SYS.HUD // 06 — OPEN SOURCE & COMMIT TELEMETRY"}</span>
-          </div>
-          <div className="overflow-hidden">
-            <h2
-              id="github-heading"
-              className="github-kinetic-title mt-2 font-display text-[clamp(2.75rem,5.5vw,4.5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
-            >
-              GITHUB TELEMETRY
-            </h2>
+          <KineticBlockReveal delay={0.05} blockColor="bg-[#0e7c86]">
+            <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
+              <GitCommit className="h-3.5 w-3.5 text-[#0e7c86]" aria-hidden="true" />
+              <span>{"SYS.HUD // 06 — OPEN SOURCE & COMMIT TELEMETRY"}</span>
+            </div>
+          </KineticBlockReveal>
+          <div className="overflow-hidden mt-1">
+            <KineticBlockReveal delay={0.15} blockColor="bg-[#0e7c86]">
+              <h2
+                id="github-heading"
+                className="font-display text-[clamp(2.75rem,5.5vw,4.5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+              >
+                GITHUB TELEMETRY
+              </h2>
+            </KineticBlockReveal>
           </div>
         </div>
 

@@ -7,6 +7,7 @@ import { PORTFOLIO_DATA } from "@/data/portfolio";
 import { useBogorClock } from "@/hooks/useBogorClock";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { CopyEmailButton } from "@/components/ui/CopyEmailButton";
+import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 import { cn } from "@/lib/utils";
 
 export function ContactFooter() {
@@ -118,40 +119,50 @@ export function ContactFooter() {
           {/* Left 7 Cols: Giant Display "LET'S WORK." + Quick Actions */}
           <div className="flex flex-col justify-between space-y-8 lg:col-span-7">
             <div>
-              <p className="font-mono text-xs tracking-widest text-accent-primary">
-                {"[ READY FOR NEW CHALLENGES & COLLABORATIONS ]"}
-              </p>
+              <KineticBlockReveal delay={0.05} blockColor="bg-[#0e7c86]">
+                <p className="font-mono text-xs tracking-widest text-[#0e7c86]">
+                  {"[ READY FOR NEW CHALLENGES & COLLABORATIONS ]"}
+                </p>
+              </KineticBlockReveal>
 
-              <h2
-                id="footer-giant-heading"
-                ref={headingRef}
-                onMouseEnter={runGlitch}
-                onClick={runGlitch}
-                className="mt-3 inline-block cursor-pointer select-none font-display text-[clamp(4.5rem,11vw,9.25rem)] leading-[0.85] tracking-wide text-[#F3F5F8]"
-                title="Hover or click to glitch"
-              >
-                <span
-                  className={cn("glitch-text", isGlitching && "is-glitching")}
-                  data-text="LET'S"
-                >
-                  LET&apos;S
-                </span>{" "}
-                <span
-                  className={cn(
-                    "glitch-text text-accent-primary",
-                    isGlitching && "is-glitching"
-                  )}
-                  data-text="WORK."
-                >
-                  WORK.
-                </span>
-              </h2>
+              <div className="mt-3">
+                {/* <KineticBlockReveal delay={0.15} blockColor="bg-[#0e7c86]"> */}
+                  <h2
+                    id="footer-giant-heading"
+                    ref={headingRef}
+                    onMouseEnter={runGlitch}
+                    onClick={runGlitch}
+                    className="inline-block cursor-pointer select-none font-display text-[clamp(4.5rem,11vw,9.25rem)] leading-[0.85] tracking-wide text-[#F3F5F8]"
+                    title="Hover or click to glitch"
+                  >
+                    <span
+                      className={cn("glitch-text", isGlitching && "is-glitching")}
+                      data-text="LET'S"
+                    >
+                      LET&apos;S
+                    </span>{" "}
+                    <span
+                      className={cn(
+                        "glitch-text text-[#0e7c86]",
+                        isGlitching && "is-glitching"
+                      )}
+                      data-text="WORK."
+                    >
+                      WORK.
+                    </span>
+                  </h2>
+                {/* </KineticBlockReveal> */}
+              </div>
 
-              <p className="mt-4 max-w-[54ch] text-sm leading-relaxed text-[#9BA5B7] sm:text-base">
-                Need a Full-Stack Engineer or System Analyst to architect web
-                platforms, mobile apps, or custom operational workflows? Initiate
-                a direct connection.
-              </p>
+              <div className="mt-4">
+                <KineticBlockReveal delay={0.25} blockColor="bg-[#14b8a6]">
+                  <p className="max-w-[54ch] text-sm leading-relaxed text-[#9BA5B7] sm:text-base">
+                    Need a Full-Stack Engineer or System Analyst to architect web
+                    platforms, mobile apps, or custom operational workflows? Initiate
+                    a direct connection.
+                  </p>
+                </KineticBlockReveal>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">

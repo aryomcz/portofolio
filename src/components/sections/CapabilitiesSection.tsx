@@ -11,6 +11,7 @@ import {
 } from "@/data/portfolio";
 import { TechBracketCard } from "@/components/ui/TechBracketCard";
 import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
+import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 import { cn } from "@/lib/utils";
 
 export function CapabilitiesSection() {
@@ -129,21 +130,27 @@ export function CapabilitiesSection() {
       {/* Section Header */}
       <div className="mb-10 flex flex-col justify-between gap-4 border-b border-border-subtle pb-6 md:flex-row md:items-end">
         <div>
-          <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
-            <span className="h-2 w-2 bg-accent-primary" aria-hidden="true" />
-            <span>{"SYS.HUD // 02 — TECHNICAL ARSENAL"}</span>
-          </div>
-          <div className="overflow-hidden">
-            <h2
-              id="skills-heading"
-              className="skills-kinetic-title mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
-            >
-              SKILLS
-            </h2>
+          <KineticBlockReveal delay={0.05} blockColor="bg-[#0e7c86]">
+            <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
+              <span className="h-2 w-2 bg-[#0e7c86]" aria-hidden="true" />
+              <span>{"SYS.HUD // 02 — TECHNICAL ARSENAL"}</span>
+            </div>
+          </KineticBlockReveal>
+          <div className="overflow-hidden mt-1">
+            <KineticBlockReveal delay={0.15} blockColor="bg-[#0e7c86]">
+              <h2
+                id="skills-heading"
+                className="font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+              >
+                TECHNICAL SKILLS
+              </h2>
+            </KineticBlockReveal>
           </div>
         </div>
 
         <div className="font-mono text-xs text-text-secondary">
+          <KineticBlockReveal delay={0.25} blockColor="bg-[#14b8a6]">
+
           {activeSkillName ? (
             <span>
               ACTIVE FILTER:{" "}
@@ -155,12 +162,13 @@ export function CapabilitiesSection() {
               {"[ HOVER OR FOCUS ANY TECH PILL TO INSPECT LINKED PRODUCTION SYSTEMS ]"}
             </span>
           )}
+          </KineticBlockReveal>
         </div>
       </div>
 
       {/* 3 Bracketed Skill Columns */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {capabilityDomains.map((domain) => (
+        {capabilityDomains.map((domain, idx) => (
           <TechBracketCard
             key={domain.id}
             bracketSize="lg"
@@ -175,10 +183,14 @@ export function CapabilitiesSection() {
                 </span>
               </div>
 
-              {/* Column Display Heading */}
-              <h3 className="mt-4 font-display text-3xl tracking-wide text-text-primary">
-                {domain.title}
-              </h3>
+              {/* Column Display Heading with Kinetic Block Reveal */}
+              <div className="mt-4">
+                <KineticBlockReveal delay={0.1 + idx * 0.08} blockColor="bg-[#0e7c86]">
+                  <h3 className="font-display text-3xl tracking-wide text-text-primary">
+                    {domain.title}
+                  </h3>
+                </KineticBlockReveal>
+              </div>
 
               <p className="mt-2 text-xs leading-relaxed text-text-secondary">
                 {domain.description}

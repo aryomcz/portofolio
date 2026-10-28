@@ -5,6 +5,7 @@ import { gsap, useGSAP, GSAP_MEDIA_QUERIES, refreshScrollTrigger } from "@/lib/g
 import { motion } from "motion/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { EASE_REDUCED, SPRING_SNAPPY } from "@/lib/motion";
+import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 import { cn } from "@/lib/utils";
 
 export type ExperienceTrackId = "work" | "organization";
@@ -124,17 +125,21 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
       {/* Section header + track switcher */}
       <div className="mb-10 flex flex-col gap-6 border-b border-border-subtle pb-5 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
-            <span className="h-2 w-2 bg-accent-primary" aria-hidden="true" />
-            <span>{"SYS.HUD // 05 — CAREER & LEADERSHIP TIMELINE"}</span>
-          </div>
-          <div className="overflow-hidden">
-            <h2
-              id="experience-heading"
-              className="experience-kinetic-title mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
-            >
-              EXPERIENCE
-            </h2>
+          <KineticBlockReveal delay={0.05} blockColor="bg-[#0e7c86]">
+            <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
+              <span className="h-2 w-2 bg-[#0e7c86]" aria-hidden="true" />
+              <span>{"SYS.HUD // 05 — CAREER & LEADERSHIP TIMELINE"}</span>
+            </div>
+          </KineticBlockReveal>
+          <div className="overflow-hidden mt-1">
+            <KineticBlockReveal delay={0.15} blockColor="bg-[#0e7c86]">
+              <h2
+                id="experience-heading"
+                className="font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+              >
+                EXPERIENCE
+              </h2>
+            </KineticBlockReveal>
           </div>
         </div>
 

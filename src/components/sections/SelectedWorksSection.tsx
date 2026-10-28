@@ -23,6 +23,7 @@ import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
 import { CaseStudyQuickModal } from "@/components/ui/CaseStudyQuickModal";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 
 type CategoryFilter =
   | "ALL"
@@ -247,23 +248,29 @@ export function SelectedWorksSection() {
         {/* Section Heading */}
         <div className="mb-8 flex flex-col justify-between gap-4 border-b border-border-subtle pb-5 md:flex-row md:items-end">
           <div>
-            <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
-              <Award className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>{"SYS.HUD // 03 — HONORS & NATIONAL RECOGNITION"}</span>
-            </div>
-            <div className="overflow-hidden">
-              <h2
-                id="achievements-heading"
-                className="achieve-kinetic-title mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
-              >
-                ACHIEVEMENTS
-              </h2>
+            <KineticBlockReveal delay={0.05} blockColor="bg-[#0e7c86]">
+              <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
+                <Award className="h-3.5 w-3.5 text-[#0e7c86]" aria-hidden="true" />
+                <span>{"SYS.HUD // 03 — HONORS & NATIONAL RECOGNITION"}</span>
+              </div>
+            </KineticBlockReveal>
+            <div className="overflow-hidden mt-1">
+              <KineticBlockReveal delay={0.15} blockColor="bg-[#0e7c86]">
+                <h2
+                  id="achievements-heading"
+                  className="font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+                >
+                  ACHIEVEMENTS
+                </h2>
+              </KineticBlockReveal>
             </div>
           </div>
 
-          <p className="font-mono text-xs text-text-secondary">
-            {"[ NATIONAL COMPETITION CHAMPIONSHIP · REPRESENTING IPB UNIVERSITY ]"}
-          </p>
+          <KineticBlockReveal delay={0.25} blockColor="bg-[#14b8a6]">
+            <p className="font-mono text-xs text-text-secondary">
+              {"[ NATIONAL COMPETITION CHAMPIONSHIP · REPRESENTING IPB UNIVERSITY ]"}
+            </p>
+          </KineticBlockReveal>
         </div>
 
         {/* Featured Achievement HUD Card */}
@@ -294,12 +301,18 @@ export function SelectedWorksSection() {
 
               {/* Display Title & Product Name */}
               <div>
-                <h3 className="font-display text-[clamp(2.1rem,3.6vw,3.25rem)] leading-[0.95] tracking-wide text-accent-primary">
-                  {featuredAchievement.title}
-                </h3>
-                <p className="mt-2 font-mono text-sm font-medium text-text-primary">
-                  {featuredAchievement.subtitle}
-                </p>
+                <KineticBlockReveal delay={0.15} blockColor="bg-[#0e7c86]">
+                  <h3 className="font-display text-[clamp(2.1rem,3.6vw,3.25rem)] leading-[0.95] tracking-wide text-accent-primary">
+                    {featuredAchievement.title}
+                  </h3>
+                </KineticBlockReveal>
+                <div className="mt-2">
+                  <KineticBlockReveal delay={0.25} blockColor="bg-[#14b8a6]">
+                    <p className="font-mono text-sm font-medium text-text-primary">
+                      {featuredAchievement.subtitle}
+                    </p>
+                  </KineticBlockReveal>
+                </div>
               </div>
 
               {/* Story Summary */}
@@ -415,22 +428,21 @@ export function SelectedWorksSection() {
         {/* Section Heading & Controls Toolbar */}
         <div className="mb-8 flex flex-col justify-between gap-4 border-b border-border-subtle pb-5 md:flex-row md:items-end">
           <div>
-            <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
-              <span className="h-2 w-2 bg-accent-primary" aria-hidden="true" />
-              <span>{"SYS.HUD // 04 — PRODUCTION ENGINEERING PORTFOLIO"}</span>
-            </div>
-            <div className="overflow-hidden py-1">
-              <h2
-                id="projects-heading"
-                className="mt-2 font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
-              >
-                <span className="projects-title-selected inline-block mr-[0.25em]">
-                  SELECTED
-                </span>
-                <span className="projects-title-projects inline-block">
-                  PROJECTS
-                </span>
-              </h2>
+            <KineticBlockReveal delay={0.05} blockColor="bg-[#0e7c86]">
+              <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
+                <span className="h-2 w-2 bg-[#0e7c86]" aria-hidden="true" />
+                <span>{"SYS.HUD // 04 — PRODUCTION ENGINEERING PORTFOLIO"}</span>
+              </div>
+            </KineticBlockReveal>
+            <div className="overflow-hidden py-1 mt-1">
+              <KineticBlockReveal delay={0.15} blockColor="bg-[#0e7c86]">
+                <h2
+                  id="projects-heading"
+                  className="font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+                >
+                  SELECTED PROJECTS
+                </h2>
+              </KineticBlockReveal>
             </div>
           </div>
 
