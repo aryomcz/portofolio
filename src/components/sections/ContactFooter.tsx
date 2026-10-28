@@ -1,18 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+import { useCallback, useRef, useState } from "react";
+import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 import { ArrowUpRight, FileText } from "lucide-react";
 import { PORTFOLIO_DATA } from "@/data/portfolio";
 import { useBogorClock } from "@/hooks/useBogorClock";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { CopyEmailButton } from "@/components/ui/CopyEmailButton";
 import { cn } from "@/lib/utils";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
 
 export function ContactFooter() {
   const { owner } = PORTFOLIO_DATA;
@@ -50,39 +45,20 @@ export function ContactFooter() {
       .to(headingEl, { x: 0, skewX: 0, duration: 0.05, ease: "power1.inOut" });
   }, [isReducedMotion]);
 
-  useEffect(() => {
-    if (isReducedMotion) return;
+  useGSAP(
+    () => {
+      if (isReducedMotion) return;
 
-    // 1. ScrollTrigger untuk trigger saat footer di-scroll masuk/keluar
-    const ctx = gsap.context(() => {
+      // Single-shot entrance trigger (removes onEnterBack fatigue per MOTION_SPEC §3.7)
       ScrollTrigger.create({
         trigger: footerRef.current,
-        start: "top 90%",
+        start: "top 85%",
+        once: true,
         onEnter: () => runGlitch(),
-        onEnterBack: () => runGlitch(),
       });
-    }, footerRef);
-
-    // 2. Initial trigger jika halaman dibuka atau di-refresh langsung pada posisi footer
-    const initialTimer = setTimeout(() => {
-      if (footerRef.current) {
-        const rect = footerRef.current.getBoundingClientRect();
-        if (rect.top < window.innerHeight && rect.bottom > 0) {
-          runGlitch();
-        }
-      }
-    }, 250);
-
-    return () => {
-      clearTimeout(initialTimer);
-      if (tlRef.current) {
-        tlRef.current.kill();
-        tlRef.current = null;
-      }
-      setIsGlitching(false);
-      ctx.revert();
-    };
-  }, [isReducedMotion, runGlitch]);
+    },
+    { scope: footerRef, dependencies: [isReducedMotion, runGlitch] }
+  );
 
   const contactItems = [
     {

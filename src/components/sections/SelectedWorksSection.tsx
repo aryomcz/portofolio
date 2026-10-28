@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+import { useRef, useState, useMemo, useCallback } from "react";
+import { gsap, useGSAP, GSAP_MEDIA_QUERIES, SplitText, refreshScrollTrigger } from "@/lib/gsap";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -22,14 +21,8 @@ import { TechBracketCard } from "@/components/ui/TechBracketCard";
 import { ProjectVisualPreview } from "@/components/ui/ProjectVisualPreview";
 import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
 import { CaseStudyQuickModal } from "@/components/ui/CaseStudyQuickModal";
-import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion-tokens";
+import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import SplitText from "gsap/dist/SplitText";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, SplitText);
-  
-}
 
 type CategoryFilter =
   | "ALL"
@@ -70,120 +63,149 @@ export function SelectedWorksSection() {
   const handleCategorySelect = (category: CategoryFilter) => {
     setSelectedCategory(category);
     setActiveIndex(0);
+    refreshScrollTrigger();
   };
 
+  const handleToggleViewMode = (mode: "carousel" | "grid") => {
+    setViewMode(mode);
+    refreshScrollTrigger();
+  };
 
-  useEffect(() => {
-    if (isReducedMotion || !containerRef.current) return;
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
 
-    const ctx = gsap.context(() => {
-      // 1. Achievements Section Kinetic Title Reveal
-      gsap.fromTo(
-        ".achieve-kinetic-title",
-        { yPercent: 105, opacity: 0 },
+      mm.add(
         {
-          yPercent: 0,
-          opacity: 1,
-          duration: 1.1,
-          ease: "power3.out",
-          clearProps: "transform",
-          scrollTrigger: {
-            trigger: "#achievements",
-            start: "top 85%",
-            toggleActions: "play none none none",
-          },
+          isDesktop: GSAP_MEDIA_QUERIES.isDesktop,
+          isMobile: GSAP_MEDIA_QUERIES.isMobile,
+          reduceMotion: GSAP_MEDIA_QUERIES.reduceMotion,
+        },
+        (context) => {
+          const { reduceMotion } = context.conditions as {
+            isDesktop: boolean;
+            isMobile: boolean;
+            reduceMotion: boolean;
+          };
+
+          if (reduceMotion) {
+            gsap.set(
+              [
+                ".achieve-kinetic-title",
+                ".hud-achievement-card",
+                ".hud-achievement-card .hud-corner-ornament",
+                ".projects-title-selected",
+                ".projects-title-projects",
+              ],
+              {
+                autoAlpha: 1,
+                scale: 1,
+                y: 0,
+                yPercent: 0,
+                clearProps: "transform,opacity,visibility",
+              }
+            );
+            return;
+          }
+
+          // 1. Achievements Section Kinetic Title Reveal
+          gsap.fromTo(
+            ".achieve-kinetic-title",
+            { yPercent: 105, autoAlpha: 0 },
+            {
+              yPercent: 0,
+              autoAlpha: 1,
+              duration: 0.9,
+              ease: "power3.out",
+              clearProps: "transform",
+              scrollTrigger: {
+                trigger: "#achievements",
+                start: "top 78%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
+
+          // 2. Featured Achievement Card: graceful spring scale & glide
+          gsap.fromTo(
+            ".hud-achievement-card",
+            { scale: 0.96, y: 28, autoAlpha: 0 },
+            {
+              scale: 1,
+              y: 0,
+              autoAlpha: 1,
+              duration: 0.85,
+              ease: "power3.out",
+              clearProps: "transform,opacity,visibility",
+              scrollTrigger: {
+                trigger: "#achievements",
+                start: "top 75%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
+
+          // 3. Featured Achievement HUD Corner Ornaments
+          gsap.fromTo(
+            ".hud-achievement-card .hud-corner-ornament",
+            { scale: 0.8, autoAlpha: 0 },
+            {
+              scale: 1,
+              autoAlpha: 1,
+              duration: 0.5,
+              stagger: 0.04,
+              ease: "power2.out",
+              clearProps: "transform,opacity,visibility",
+              scrollTrigger: {
+                trigger: "#achievements",
+                start: "top 75%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
+
+          // 4. Projects Section Kinetic Title: Staggered Letters Reveal
+          const split1 = SplitText.create(".projects-title-selected", {
+            type: "chars",
+          });
+          const split2 = SplitText.create(".projects-title-projects", {
+            type: "chars",
+          });
+
+          // Animation: "SELECTED" & "PROJECTS" synchronized with power3.out
+          gsap.from(split1.chars, {
+            y: 35,
+            autoAlpha: 0,
+            stagger: 0.03,
+            duration: 0.8,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: "#projects",
+              start: "top 78%",
+              toggleActions: "play none none none",
+            },
+          });
+
+          gsap.from(split2.chars, {
+            autoAlpha: 0.1,
+            scale: 0.9,
+            stagger: {
+              each: 0.04,
+              from: "start",
+            },
+            duration: 0.8,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: "#projects",
+              start: "top 78%",
+              toggleActions: "play none none none",
+            },
+          });
         }
       );
-
-      // 2. Featured Achievement Card: graceful spring scale & glide
-      gsap.fromTo(
-        ".hud-achievement-card",
-        { scale: 0.94, y: 40, opacity: 0 },
-        {
-          scale: 1,
-          y: 0,
-          opacity: 1,
-          duration: 1.05,
-          ease: "power3.out",
-          clearProps: "transform,opacity",
-          scrollTrigger: {
-            trigger: "#achievements",
-            start: "top 82%",
-            toggleActions: "play none none none",
-          },
-        }
-      );
-
-      // 3. Featured Achievement HUD Corner Ornaments
-      gsap.fromTo(
-        ".hud-achievement-card .hud-corner-ornament",
-        { scale: 0.6, opacity: 0 },
-        {
-          scale: 1,
-          opacity: 1,
-          duration: 0.75,
-          stagger: 0.05,
-          ease: "power2.out",
-          clearProps: "transform,opacity",
-          scrollTrigger: {
-            trigger: "#achievements",
-            start: "top 82%",
-            toggleActions: "play none none none",
-          },
-        }
-      );
-
-      // 4. Projects Section Kinetic Title: Staggered Letters Reveal
-      const split1 = SplitText.create(".projects-title-selected", {
-        type: "chars",
-      });
-      const split2 = SplitText.create(".projects-title-projects", {
-        type: "chars",
-      });
-
-      // Animasi 1: "SELECTED" (Bounce / Slide up)
-      gsap.from(split1.chars, {
-        y: 50,
-        opacity: 0,
-        stagger: 0.03,
-        duration: 1,
-        ease: "back.out(1.7)",
-        scrollTrigger: {
-          trigger: "#projects",
-          start: "top 85%",
-          toggleActions: "play none none none",
-        },
-      });
-
-      // Animasi 2: "PROJECTS" (Blur, Scale & Opacity)
-      gsap.from(split2.chars, {
-        opacity: 0.1,
-        scale: 0.8,
-        filter: "blur(4px)",
-        stagger: {
-          each: 0.06,
-          from: "start",
-        },
-        duration: 1,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: "#projects",
-          start: "top 85%",
-          toggleActions: "play none none none",
-        },
-      });
-      
-      // Cleanup SplitText saat context di-revert
-      return () => {
-        split1.revert();
-        split2.revert();
-      };
-    }, containerRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, [isReducedMotion]);
+    },
+    { scope: containerRef }
+  );
 
   // Navigate carousel
   const handlePrev = useCallback(() => {
@@ -407,7 +429,7 @@ export function SelectedWorksSection() {
             <div className="flex items-center rounded-full border border-border-subtle bg-bg-elevated p-1">
               <button
                 type="button"
-                onClick={() => setViewMode("carousel")}
+                onClick={() => handleToggleViewMode("carousel")}
                 className={cn(
                   "press-scale relative flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-xs transition-colors",
                   viewMode === "carousel"
@@ -430,7 +452,7 @@ export function SelectedWorksSection() {
 
               <button
                 type="button"
-                onClick={() => setViewMode("grid")}
+                onClick={() => handleToggleViewMode("grid")}
                 className={cn(
                   "press-scale relative flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-xs transition-colors",
                   viewMode === "grid"

@@ -116,7 +116,6 @@ export function CaseStudyQuickModal({
                 : { opacity: 0, scale: 0.96, y: 8 }
             }
             transition={isReducedMotion ? EASE_REDUCED : SPRING_MODAL}
-            data-lenis-prevent
             data-project-theme={study.themeColor}
             style={{ maxHeight: "84dvh" }}
             className="relative z-10 my-auto flex w-full max-w-4xl flex-col overflow-hidden border border-accent-primary/60 bg-bg-primary text-text-primary shadow-2xl"
@@ -147,7 +146,6 @@ export function CaseStudyQuickModal({
 
             {/* Scrollable Modal Body */}
             <div
-              data-lenis-prevent
               className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-7 space-y-6"
             >
               <div>

@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+import { useRef, useState } from "react";
+import { gsap, useGSAP, GSAP_MEDIA_QUERIES } from "@/lib/gsap";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import {
@@ -10,18 +9,12 @@ import {
   getCaseStudyBySlug,
   type ProjectSlug,
 } from "@/data/portfolio";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { TechBracketCard } from "@/components/ui/TechBracketCard";
 import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
 import { cn } from "@/lib/utils";
 
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
-
 export function CapabilitiesSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const isReducedMotion = useReducedMotion();
   const [highlightedSlugs, setHighlightedSlugs] = useState<
     readonly ProjectSlug[]
   >([]);
@@ -29,72 +22,102 @@ export function CapabilitiesSection() {
 
   const { capabilityDomains } = PORTFOLIO_DATA;
 
-  useEffect(() => {
-    if (isReducedMotion || !sectionRef.current) return;
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
 
-    const ctx = gsap.context(() => {
-      // 1. Text Header Reveal: masked kinetic slide-up for SKILLS
-      gsap.fromTo(
-        ".skills-kinetic-title",
-        { yPercent: 105, opacity: 0 },
+      mm.add(
         {
-          yPercent: 0,
-          opacity: 1,
-          duration: 1.1,
-          ease: "power3.out",
-          clearProps: "transform",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 85%",
-            toggleActions: "play none none none",
-          },
+          isDesktop: GSAP_MEDIA_QUERIES.isDesktop,
+          isMobile: GSAP_MEDIA_QUERIES.isMobile,
+          reduceMotion: GSAP_MEDIA_QUERIES.reduceMotion,
+        },
+        (context) => {
+          const { reduceMotion } = context.conditions as {
+            isDesktop: boolean;
+            isMobile: boolean;
+            reduceMotion: boolean;
+          };
+
+          if (reduceMotion) {
+            gsap.set(
+              [
+                ".skills-kinetic-title",
+                ".skill-domain-card",
+                ".skill-domain-card .hud-corner-ornament",
+              ],
+              {
+                autoAlpha: 1,
+                scale: 1,
+                y: 0,
+                yPercent: 0,
+                clearProps: "transform,opacity,visibility",
+              }
+            );
+            return;
+          }
+
+          // 1. Text Header Reveal: masked kinetic slide-up for SKILLS
+          gsap.fromTo(
+            ".skills-kinetic-title",
+            { yPercent: 105, autoAlpha: 0 },
+            {
+              yPercent: 0,
+              autoAlpha: 1,
+              duration: 0.9,
+              ease: "power3.out",
+              clearProps: "transform",
+              scrollTrigger: {
+                trigger: sectionRef.current,
+                start: "top 75%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
+
+          // 2. Bento Skill Cards: graceful spring scale and upward glide
+          gsap.fromTo(
+            ".skill-domain-card",
+            { scale: 0.96, y: 24, autoAlpha: 0 },
+            {
+              scale: 1,
+              y: 0,
+              autoAlpha: 1,
+              duration: 0.8,
+              stagger: 0.12,
+              ease: "power3.out",
+              clearProps: "transform,opacity,visibility",
+              scrollTrigger: {
+                trigger: sectionRef.current,
+                start: "top 75%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
+
+          // 3. Reveal corner bracket ornaments (┌ ┐ └ ┘)
+          gsap.fromTo(
+            ".skill-domain-card .hud-corner-ornament",
+            { scale: 0.8, autoAlpha: 0 },
+            {
+              scale: 1,
+              autoAlpha: 1,
+              duration: 0.5,
+              stagger: 0.04,
+              ease: "power2.out",
+              clearProps: "transform,opacity,visibility",
+              scrollTrigger: {
+                trigger: sectionRef.current,
+                start: "top 75%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
         }
       );
-
-      // 2. Bento Skill Cards: graceful spring scale and upward glide
-      gsap.fromTo(
-        ".skill-domain-card",
-        { scale: 0.94, y: 36, opacity: 0 },
-        {
-          scale: 1,
-          y: 0,
-          opacity: 1,
-          duration: 1.0,
-          stagger: 0.16,
-          ease: "power3.out",
-          clearProps: "transform,opacity",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 80%",
-            toggleActions: "play none none none",
-          },
-        }
-      );
-
-      // 3. Reveal corner bracket ornaments (┌ ┐ └ ┘)
-      gsap.fromTo(
-        ".skill-domain-card .hud-corner-ornament",
-        { scale: 0.6, opacity: 0 },
-        {
-          scale: 1,
-          opacity: 1,
-          duration: 0.75,
-          stagger: 0.05,
-          ease: "power2.out",
-          clearProps: "transform,opacity",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 80%",
-            toggleActions: "play none none none",
-          },
-        }
-      );
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, [isReducedMotion]);
+    },
+    { scope: sectionRef }
+  );
 
   return (
     <section

@@ -1,16 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { gsap, useGSAP, GSAP_MEDIA_QUERIES, refreshScrollTrigger } from "@/lib/gsap";
 import { motion } from "motion/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { EASE_REDUCED, SPRING_SNAPPY } from "@/lib/motion-tokens";
+import { EASE_REDUCED, SPRING_SNAPPY } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
 
 export type ExperienceTrackId = "work" | "organization";
 
@@ -48,32 +43,58 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
     tracks[0]?.id ?? "work"
   );
 
-  useEffect(() => {
-    if (isReducedMotion || !sectionRef.current) return;
+  const handleSelectTrack = (id: ExperienceTrackId) => {
+    setActiveId(id);
+    refreshScrollTrigger();
+  };
 
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        ".experience-kinetic-title",
-        { yPercent: 105, opacity: 0 },
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+
+      mm.add(
         {
-          yPercent: 0,
-          opacity: 1,
-          duration: 1.1,
-          ease: "power3.out",
-          clearProps: "transform",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 85%",
-            toggleActions: "play none none none",
-          },
+          isDesktop: GSAP_MEDIA_QUERIES.isDesktop,
+          isMobile: GSAP_MEDIA_QUERIES.isMobile,
+          reduceMotion: GSAP_MEDIA_QUERIES.reduceMotion,
+        },
+        (context) => {
+          const { reduceMotion } = context.conditions as {
+            isDesktop: boolean;
+            isMobile: boolean;
+            reduceMotion: boolean;
+          };
+
+          if (reduceMotion) {
+            gsap.set(".experience-kinetic-title", {
+              autoAlpha: 1,
+              yPercent: 0,
+              clearProps: "transform,opacity,visibility",
+            });
+            return;
+          }
+
+          gsap.fromTo(
+            ".experience-kinetic-title",
+            { yPercent: 105, autoAlpha: 0 },
+            {
+              yPercent: 0,
+              autoAlpha: 1,
+              duration: 0.9,
+              ease: "power3.out",
+              clearProps: "transform",
+              scrollTrigger: {
+                trigger: sectionRef.current,
+                start: "top 78%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
         }
       );
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, [isReducedMotion]);
+    },
+    { scope: sectionRef }
+  );
 
   // WAI-ARIA tabs pattern: arrows / Home / End move focus and activate.
   const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -138,7 +159,7 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
                 aria-controls={`experience-panel-${track.id}`}
                 aria-label={`${track.label} (${track.count} ${track.count === 1 ? "entry" : "entries"})`}
                 tabIndex={isActive ? 0 : -1}
-                onClick={() => setActiveId(track.id)}
+                onClick={() => handleSelectTrack(track.id)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
                 className={cn(
                   "press-scale relative flex min-h-11 items-center justify-center gap-1.5 px-3 font-mono text-[11px] whitespace-nowrap sm:px-4 sm:text-xs",

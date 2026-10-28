@@ -11,13 +11,9 @@ import {
   type ReactNode,
 } from "react";
 import Lenis from "lenis";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+import { gsap, ScrollTrigger, refreshScrollTrigger } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
+import { editorialScrollEasing } from "@/lib/motion";
 
 export interface ScrollToOptions {
   readonly offset?: number;
@@ -25,22 +21,31 @@ export interface ScrollToOptions {
   readonly immediate?: boolean;
 }
 
-export interface SmoothScrollContextValue {
+export interface LenisContextValue {
+  readonly lenis: Lenis | null;
   readonly isLocked: boolean;
   readonly isReducedMotion: boolean;
+  readonly stop: () => void;
+  readonly start: () => void;
   readonly stopScroll: () => void;
   readonly startScroll: () => void;
-  readonly scrollTo: (target: string | number | HTMLElement, options?: ScrollToOptions) => void;
+  readonly scrollTo: (
+    target: string | number | HTMLElement,
+    options?: ScrollToOptions
+  ) => void;
 }
 
-const SmoothScrollContext = createContext<SmoothScrollContextValue | null>(null);
+export type SmoothScrollContextValue = LenisContextValue;
 
-// Precision exponential out easing (Emil Kowalski / Swiss editorial feel — NEVER linear)
-const editorialScrollEasing = (t: number): number =>
-  Math.min(1, 1.001 - Math.pow(2, -10 * t));
+const SmoothScrollContext = createContext<LenisContextValue | null>(null);
 
-export function SmoothScrollProvider({ children }: { readonly children: ReactNode }) {
+export function SmoothScrollProvider({
+  children,
+}: {
+  readonly children: ReactNode;
+}) {
   const lenisRef = useRef<Lenis | null>(null);
+  const [lenisInstance, setLenisInstance] = useState<Lenis | null>(null);
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const isReducedMotion = useReducedMotion();
 
@@ -50,12 +55,13 @@ export function SmoothScrollProvider({ children }: { readonly children: ReactNod
       if (lenisRef.current) {
         lenisRef.current.destroy();
         lenisRef.current = null;
+        setLenisInstance(null);
       }
       ScrollTrigger.refresh();
       return;
     }
 
-    // 2. Instantiate Lenis with autoRaf: false so GSAP ticker is the single clock source
+    // 2. Instantiate Lenis with autoRaf: false so gsap.ticker is the single clock source
     const lenis = new Lenis({
       duration: 1.15,
       easing: editorialScrollEasing,
@@ -68,6 +74,9 @@ export function SmoothScrollProvider({ children }: { readonly children: ReactNod
     });
 
     lenisRef.current = lenis;
+    queueMicrotask(() => {
+      setLenisInstance(lenis);
+    });
 
     // 3. Synchronize Lenis scroll events with GSAP ScrollTrigger
     lenis.on("scroll", ScrollTrigger.update);
@@ -80,24 +89,50 @@ export function SmoothScrollProvider({ children }: { readonly children: ReactNod
     gsap.ticker.add(updateLenis);
     gsap.ticker.lagSmoothing(0);
 
-    // 5. Refresh ScrollTrigger measurements after initialization
+    // 5. Initial refresh
     ScrollTrigger.refresh();
 
-    // 6. Strict Lifecycle Cleanup on unmount
+    // 6. Task 9: Refresh ScrollTrigger when document fonts and images finish loading
+    if (typeof document !== "undefined" && "fonts" in document) {
+      document.fonts.ready.then(() => {
+        refreshScrollTrigger();
+      });
+    }
+
+    const handleWindowLoad = () => {
+      refreshScrollTrigger(true);
+    };
+
+    if (document.readyState === "complete") {
+      refreshScrollTrigger();
+    } else {
+      window.addEventListener("load", handleWindowLoad);
+    }
+
+    // Custom event listener for components undergoing layout changes
+    const handleCustomRefresh = () => {
+      refreshScrollTrigger();
+    };
+    window.addEventListener("hud:refresh-scroll", handleCustomRefresh);
+
+    // 7. Strict Lifecycle Cleanup on unmount
     return () => {
+      window.removeEventListener("load", handleWindowLoad);
+      window.removeEventListener("hud:refresh-scroll", handleCustomRefresh);
       gsap.ticker.remove(updateLenis);
       lenis.off("scroll", ScrollTrigger.update);
       lenis.destroy();
       lenisRef.current = null;
+      setLenisInstance(null);
     };
   }, [isReducedMotion]);
 
-  const stopScroll = useCallback(() => {
+  const stop = useCallback(() => {
     lenisRef.current?.stop();
     setIsLocked(true);
   }, []);
 
-  const startScroll = useCallback(() => {
+  const start = useCallback(() => {
     lenisRef.current?.start();
     setIsLocked(false);
   }, []);
@@ -106,19 +141,26 @@ export function SmoothScrollProvider({ children }: { readonly children: ReactNod
     (target: string | number | HTMLElement, options?: ScrollToOptions) => {
       if (isReducedMotion || !lenisRef.current) {
         if (typeof target === "number") {
-          window.scrollTo({ top: target, behavior: "auto" });
+          window.scrollTo({
+            top: target,
+            behavior: options?.immediate ? "auto" : "smooth",
+          });
         } else if (typeof target === "string") {
           const el = document.querySelector(target);
-          el?.scrollIntoView({ behavior: "auto" });
+          el?.scrollIntoView({
+            behavior: options?.immediate ? "auto" : "smooth",
+          });
         } else {
-          target.scrollIntoView({ behavior: "auto" });
+          target.scrollIntoView({
+            behavior: options?.immediate ? "auto" : "smooth",
+          });
         }
         return;
       }
 
       lenisRef.current.scrollTo(target, {
         offset: options?.offset ?? 0,
-        duration: options?.immediate ? 0 : (options?.duration ?? 1.1),
+        duration: options?.immediate ? 0 : (options?.duration ?? 1.15),
         immediate: options?.immediate ?? false,
         easing: editorialScrollEasing,
       });
@@ -126,15 +168,18 @@ export function SmoothScrollProvider({ children }: { readonly children: ReactNod
     [isReducedMotion]
   );
 
-  const value = useMemo<SmoothScrollContextValue>(
+  const value = useMemo<LenisContextValue>(
     () => ({
+      lenis: lenisInstance,
       isLocked,
       isReducedMotion,
-      stopScroll,
-      startScroll,
+      stop,
+      start,
+      stopScroll: stop,
+      startScroll: start,
       scrollTo,
     }),
-    [isLocked, isReducedMotion, stopScroll, startScroll, scrollTo]
+    [lenisInstance, isLocked, isReducedMotion, stop, start, scrollTo]
   );
 
   return (
@@ -144,25 +189,43 @@ export function SmoothScrollProvider({ children }: { readonly children: ReactNod
   );
 }
 
-const DEFAULT_SMOOTH_SCROLL_CONTEXT: SmoothScrollContextValue = {
+const DEFAULT_LENIS_CONTEXT: LenisContextValue = {
+  lenis: null,
   isLocked: false,
   isReducedMotion: false,
+  stop: () => {},
+  start: () => {},
   stopScroll: () => {},
   startScroll: () => {},
   scrollTo: (target, options) => {
     if (typeof window === "undefined") return;
     if (typeof target === "number") {
-      window.scrollTo({ top: target, behavior: options?.immediate ? "auto" : "smooth" });
+      window.scrollTo({
+        top: target,
+        behavior: options?.immediate ? "auto" : "smooth",
+      });
     } else if (typeof target === "string") {
       const el = document.querySelector(target);
-      el?.scrollIntoView({ behavior: options?.immediate ? "auto" : "smooth" });
+      el?.scrollIntoView({
+        behavior: options?.immediate ? "auto" : "smooth",
+      });
     } else if (target instanceof HTMLElement) {
-      target.scrollIntoView({ behavior: options?.immediate ? "auto" : "smooth" });
+      target.scrollIntoView({
+        behavior: options?.immediate ? "auto" : "smooth",
+      });
     }
   },
 };
 
-export function useSmoothScroll(): SmoothScrollContextValue {
+/**
+ * Primary hook for controlling Lenis smooth scrolling (start, stop, scrollTo, lenis instance).
+ */
+export function useLenis(): LenisContextValue {
   const context = useContext(SmoothScrollContext);
-  return context ?? DEFAULT_SMOOTH_SCROLL_CONTEXT;
+  return context ?? DEFAULT_LENIS_CONTEXT;
 }
+
+/**
+ * Backward compatibility alias for existing components.
+ */
+export const useSmoothScroll = useLenis;

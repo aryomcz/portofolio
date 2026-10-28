@@ -290,4 +290,33 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  /* Critical HUD elements visible and un-transformed for reduced-motion accessibility */
+  .hero-hud-reveal,
+  .skills-kinetic-title,
+  .skill-domain-card,
+  .hud-achievement-card,
+  .achieve-kinetic-title,
+  .projects-title-selected,
+  .projects-title-projects,
+  .experience-kinetic-title,
+  .github-kinetic-title,
+  .github-telemetry-card,
+  .hud-corner-ornament,
+  .hud-bracket-tick {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Fallback: Ensure content is immediately visible if JavaScript is disabled or fails to load */
+@media (scripting: none) {
+  *,
+  *::before,
+  *::after {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
 }

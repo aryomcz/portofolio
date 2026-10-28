@@ -5,11 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, FileText, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { useSmoothScroll } from "@/hooks/useSmoothScroll";
+import { useLenis } from "@/hooks/useLenis";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { PORTFOLIO_DATA } from "@/data/portfolio";
-import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion-tokens";
+import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -36,7 +36,7 @@ const SPLIT_SPRING = {
 export function AdaptiveNavbar() {
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const { scrollTo } = useSmoothScroll();
+  const { scrollTo } = useLenis();
   const isReducedMotion = useReducedMotion();
   const [activeSection, setActiveSection] = useState<string>("hero");
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
@@ -52,6 +52,16 @@ export function AdaptiveNavbar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Close mobile drawer on Escape key
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsMobileMenuOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
     if (!isHome) return;
@@ -95,7 +105,8 @@ export function AdaptiveNavbar() {
     event.preventDefault();
     setActiveSection(id);
     setIsMobileMenuOpen(false);
-    scrollTo(href, { offset: -88 });
+    const targetOffset = id === "hero" ? 0 : -88;
+    scrollTo(href, { offset: targetOffset, duration: 1.15 });
   };
 
   const springTransition = isReducedMotion ? EASE_REDUCED : SPLIT_SPRING;
@@ -278,6 +289,7 @@ export function AdaptiveNavbar() {
       <AnimatePresence>
         {isHome && isMobileMenuOpen ? (
           <motion.div
+            data-lenis-prevent
             initial={{ opacity: 0, y: -8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}

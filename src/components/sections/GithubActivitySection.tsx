@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink, GitCommit } from "lucide-react";
 import { motion } from "motion/react";
+import { gsap, useGSAP, GSAP_MEDIA_QUERIES } from "@/lib/gsap";
 import { PORTFOLIO_DATA, type GithubContributionDay } from "@/data/portfolio";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion-tokens";
@@ -109,6 +110,7 @@ const LEVEL_BG_CLASSES: Record<0 | 1 | 2 | 3 | 4, string> = {
 };
 
 export function GithubActivitySection() {
+  const sectionRef = useRef<HTMLElement | null>(null);
   const { githubTelemetry } = PORTFOLIO_DATA;
   const isReducedMotion = useReducedMotion();
   const [selectedYear, setSelectedYear] = useState<number>(
@@ -120,11 +122,83 @@ export function GithubActivitySection() {
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+
+      mm.add(
+        {
+          isDesktop: GSAP_MEDIA_QUERIES.isDesktop,
+          isMobile: GSAP_MEDIA_QUERIES.isMobile,
+          reduceMotion: GSAP_MEDIA_QUERIES.reduceMotion,
+        },
+        (context) => {
+          const { reduceMotion } = context.conditions as {
+            isDesktop: boolean;
+            isMobile: boolean;
+            reduceMotion: boolean;
+          };
+
+          if (reduceMotion) {
+            gsap.set([".github-kinetic-title", ".github-telemetry-card"], {
+              autoAlpha: 1,
+              y: 0,
+              yPercent: 0,
+              clearProps: "all",
+            });
+            return;
+          }
+
+          // 1. Heading Kinetic Reveal: masked upward slide with power3.out
+          gsap.fromTo(
+            ".github-kinetic-title",
+            { yPercent: 105, autoAlpha: 0 },
+            {
+              yPercent: 0,
+              autoAlpha: 1,
+              duration: 0.9,
+              ease: "power3.out",
+              clearProps: "all",
+              scrollTrigger: {
+                trigger: sectionRef.current,
+                start: "top 85%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
+
+          // 2. Contribution Card: smooth entrance
+          gsap.fromTo(
+            ".github-telemetry-card",
+            { y: 28, autoAlpha: 0 },
+            {
+              y: 0,
+              autoAlpha: 1,
+              duration: 0.85,
+              ease: "power3.out",
+              clearProps: "all",
+              scrollTrigger: {
+                trigger: sectionRef.current,
+                start: "top 85%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
+        }
+      );
+    },
+    { scope: sectionRef }
+  );
+
   useEffect(() => {
     if (liveCache[selectedYear]) return;
 
     let isCancelled = false;
-    setIsLoading(true);
+    queueMicrotask(() => {
+      if (!isCancelled) {
+        setIsLoading(true);
+      }
+    });
 
     async function loadYearTelemetry() {
       const username = githubTelemetry.username;
@@ -220,6 +294,7 @@ export function GithubActivitySection() {
   return (
     <section
       id="github"
+      ref={sectionRef}
       aria-labelledby="github-heading"
       className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16"
     >
@@ -230,16 +305,12 @@ export function GithubActivitySection() {
             <span>{"SYS.HUD // 06 — OPEN SOURCE & COMMIT TELEMETRY"}</span>
           </div>
           <div className="overflow-hidden">
-            <motion.h2
+            <h2
               id="github-heading"
-              initial={isReducedMotion ? false : { y: "100%", opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true, margin: "-10%" }}
-              transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-2 font-display text-[clamp(2.75rem,5.5vw,4.5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+              className="github-kinetic-title mt-2 font-display text-[clamp(2.75rem,5.5vw,4.5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
             >
               GITHUB TELEMETRY
-            </motion.h2>
+            </h2>
           </div>
         </div>
 
@@ -278,12 +349,7 @@ export function GithubActivitySection() {
         </div>
       </div>
 
-      <motion.div
-        initial={isReducedMotion ? false : { opacity: 0, y: 32 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-8%" }}
-        transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
-      >
+      <div className="github-telemetry-card">
         <TechBracketCard bracketSize="lg" className="p-5 sm:p-7">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
           <div className="flex items-center gap-2.5">
@@ -316,7 +382,9 @@ export function GithubActivitySection() {
         </div>
 
         {/* 52-Week Contribution Heatmap Grid */}
-        <div className="overflow-x-auto border border-border-subtle bg-bg-primary/90 p-4 sm:p-5">
+        <div
+          className="overflow-x-auto border border-border-subtle bg-bg-primary/90 p-4 sm:p-5"
+        >
           <div className="flex min-w-[680px] justify-between gap-1">
             {heatmapWeeks.map((week, wIdx) => (
               <div key={wIdx} className="flex flex-col gap-1">
@@ -433,7 +501,7 @@ export function GithubActivitySection() {
           </div>
         </div>
       </TechBracketCard>
-      </motion.div>
+      </div>
     </section>
   );
 }

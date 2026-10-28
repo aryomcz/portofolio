@@ -3,6 +3,7 @@ import "./globals.css";
 import { SmoothScrollProvider } from "@/hooks/useSmoothScroll";
 import { AdaptiveNavbar } from "@/components/ui/AdaptiveNavbar";
 import { TopographicBg } from "@/components/ui/TopographicBg";
+import { Preloader } from "@/components/ui/Preloader";
 import { PORTFOLIO_DATA } from "@/data/portfolio";
 
 export const metadata: Metadata = {
@@ -56,6 +57,7 @@ export default function RootLayout({
       <body className="relative min-h-screen flex flex-col bg-bg-primary text-text-primary">
         <TopographicBg />
         <SmoothScrollProvider>
+          <Preloader />
           <AdaptiveNavbar />
           <div className="relative z-10 flex-1">{children}</div>
         </SmoothScrollProvider>

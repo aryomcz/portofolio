@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import gsap from "gsap";
+import { useRef, useState, type ReactNode } from "react";
+import { gsap, useGSAP, GSAP_MEDIA_QUERIES } from "@/lib/gsap";
 import {
   ArrowLeftRight,
   ArrowUpRight,
@@ -9,8 +9,7 @@ import {
   GraduationCap,
   MapPin,
 } from "lucide-react";
-import { useSmoothScroll } from "@/hooks/useSmoothScroll";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useLenis } from "@/hooks/useLenis";
 import { PortraitAuraCanvas } from "@/components/ui/PortraitAuraCanvas";
 
 /**
@@ -47,35 +46,55 @@ function OpenHudCorners({ children }: { readonly children: ReactNode }) {
 
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const { scrollTo } = useSmoothScroll();
-  const isReducedMotion = useReducedMotion();
+  const { scrollTo } = useLenis();
   const [isAuraForced, setIsAuraForced] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (isReducedMotion || !sectionRef.current) return;
+  // Set initial state synchronously before paint (Anti-FOUC) and manage media queries
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
 
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        ".hero-hud-reveal",
-        { y: 18, opacity: 0 },
+      mm.add(
         {
-          y: 0,
-          opacity: 1,
-          duration: 0.65,
-          stagger: 0.07,
-          ease: "power3.out",
+          isDesktop: GSAP_MEDIA_QUERIES.isDesktop,
+          isMobile: GSAP_MEDIA_QUERIES.isMobile,
+          reduceMotion: GSAP_MEDIA_QUERIES.reduceMotion,
+        },
+        (context) => {
+          const { reduceMotion } = context.conditions as {
+            isDesktop: boolean;
+            isMobile: boolean;
+            reduceMotion: boolean;
+          };
+
+          if (reduceMotion) {
+            gsap.set(".hero-hud-reveal", {
+              autoAlpha: 1,
+              y: 0,
+              clearProps: "transform,opacity,visibility",
+            });
+            return;
+          }
+
+          // Initial pre-paint setup to prevent any FOUC flash
+          gsap.set(".hero-hud-reveal", { autoAlpha: 0, y: 18 });
+
+          gsap.to(".hero-hud-reveal", {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.65,
+            stagger: 0.07,
+            ease: "power3.out",
+          });
         }
       );
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-    };
-  }, [isReducedMotion]);
+    },
+    { scope: sectionRef }
+  );
 
   const handleViewProjects = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    scrollTo("#projects", { offset: -80 });
+    scrollTo("#projects", { offset: -88, duration: 1.15 });
   };
 
   return (
