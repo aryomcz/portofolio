@@ -105,13 +105,14 @@ export function AdaptiveNavbar() {
       });
 
       // 2. Link aktif mengikuti section (ScrollTrigger section spy)
+      const spyTriggers: ScrollTrigger[] = [];
       if (isHome) {
         const sectionIds = [...NAV_ITEMS.map((item) => item.id), "contact"];
         sectionIds.forEach((id) => {
           const el = document.getElementById(id);
           if (!el) return;
 
-          ScrollTrigger.create({
+          const st = ScrollTrigger.create({
             trigger: el,
             start: "top 35%",
             end: "bottom 35%",
@@ -119,11 +120,13 @@ export function AdaptiveNavbar() {
             onEnterBack: () =>
               setActiveSection(id === "contact" ? "timeline" : id),
           });
+          spyTriggers.push(st);
         });
       }
 
       return () => {
         navTrigger.kill();
+        spyTriggers.forEach((st) => st.kill());
       };
     },
     { dependencies: [isHome, isReducedMotion], scope: headerRef }

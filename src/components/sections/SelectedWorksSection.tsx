@@ -201,6 +201,11 @@ export function SelectedWorksSection() {
               toggleActions: "play none none none",
             },
           });
+
+          return () => {
+            split1.revert();
+            split2.revert();
+          };
         }
       );
     },
@@ -216,14 +221,17 @@ export function SelectedWorksSection() {
     setActiveIndex((prev) => Math.min(filteredProjects.length - 1, prev + 1));
   }, [filteredProjects.length]);
 
-  // Calculate carousel slide offset
-  // Card width is ~560px on desktop + 24px gap = 584px
-  const getCardOffset = () => {
-    if (typeof window === "undefined") return 0;
+  // Calculate carousel slide offset dynamically with resize awareness
+  const getCardStep = useCallback(() => {
+    if (typeof window === "undefined") return 584;
     const isMobile = window.innerWidth < 640;
     const cardWidth = isMobile ? window.innerWidth * 0.85 : 560;
     const gap = 24;
-    return -(activeIndex * (cardWidth + gap));
+    return cardWidth + gap;
+  }, []);
+
+  const getCardOffset = () => {
+    return -(activeIndex * getCardStep());
   };
 
   return (
@@ -560,7 +568,7 @@ export function SelectedWorksSection() {
               drag="x"
               dragConstraints={{
                 right: 0,
-                left: -(Math.max(0, filteredProjects.length - 1) * 584),
+                left: -(Math.max(0, filteredProjects.length - 1) * getCardStep()),
               }}
               dragElastic={0.12}
               onDragEnd={(_e, info) => {

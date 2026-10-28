@@ -126,7 +126,28 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   overflow-x: clip;
-  scroll-behavior: smooth;
+}
+
+/* Lenis Virtual Scroll Recommended Rules (prevents native smooth-scroll collision) */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 
 ::selection {

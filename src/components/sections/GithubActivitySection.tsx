@@ -111,12 +111,12 @@ const LEVEL_BG_CLASSES: Record<0 | 1 | 2 | 3 | 4, string> = {
 
 export function GithubActivitySection() {
   const sectionRef = useRef<HTMLElement | null>(null);
+  const statusTextRef = useRef<HTMLSpanElement | null>(null);
   const { githubTelemetry } = PORTFOLIO_DATA;
   const isReducedMotion = useReducedMotion();
   const [selectedYear, setSelectedYear] = useState<number>(
     githubTelemetry.availableYears[0] ?? 2026
   );
-  const [hoveredCellInfo, setHoveredCellInfo] = useState<string | null>(null);
   const [liveCache, setLiveCache] = useState<Record<number, LiveYearTelemetry>>(
     {}
   );
@@ -283,13 +283,19 @@ export function GithubActivitySection() {
     [currentLiveYear, selectedYear]
   );
 
-  const summaryStatusText = useMemo(() => {
-    if (hoveredCellInfo) return hoveredCellInfo;
+  const defaultSummaryText = useMemo(() => {
     if (currentLiveYear) {
       return `${currentLiveYear.totalContributions.toLocaleString("en-US")} Contributions in ${selectedYear}`;
     }
     return githubTelemetry.summaryStats.totalContributionsLabel;
-  }, [currentLiveYear, githubTelemetry.summaryStats.totalContributionsLabel, hoveredCellInfo, selectedYear]);
+  }, [currentLiveYear, githubTelemetry.summaryStats.totalContributionsLabel, selectedYear]);
+
+  // Synchronize static status text whenever year changes or data arrives
+  useEffect(() => {
+    if (statusTextRef.current) {
+      statusTextRef.current.textContent = defaultSummaryText;
+    }
+  }, [defaultSummaryText]);
 
   return (
     <section
@@ -376,8 +382,8 @@ export function GithubActivitySection() {
               )}
             </span>
           </div>
-          <span className="tabular-nums text-text-secondary">
-            {summaryStatusText}
+          <span ref={statusTextRef} className="tabular-nums text-text-secondary">
+            {defaultSummaryText}
           </span>
         </div>
 
@@ -413,10 +419,26 @@ export function GithubActivitySection() {
                       key={`${wIdx}-${dIdx}`}
                       type="button"
                       aria-label={label}
-                      onMouseEnter={() => setHoveredCellInfo(label)}
-                      onFocus={() => setHoveredCellInfo(label)}
-                      onMouseLeave={() => setHoveredCellInfo(null)}
-                      onBlur={() => setHoveredCellInfo(null)}
+                      onMouseEnter={() => {
+                        if (statusTextRef.current) {
+                          statusTextRef.current.textContent = label;
+                        }
+                      }}
+                      onFocus={() => {
+                        if (statusTextRef.current) {
+                          statusTextRef.current.textContent = label;
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        if (statusTextRef.current) {
+                          statusTextRef.current.textContent = defaultSummaryText;
+                        }
+                      }}
+                      onBlur={() => {
+                        if (statusTextRef.current) {
+                          statusTextRef.current.textContent = defaultSummaryText;
+                        }
+                      }}
                       className={cn(
                         "h-3 w-3 border border-border-subtle/40 transition-transform duration-150 ease-out hover:scale-125",
                         LEVEL_BG_CLASSES[day.level]

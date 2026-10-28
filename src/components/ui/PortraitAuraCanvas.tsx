@@ -358,11 +358,23 @@ export function PortraitAuraCanvas({
 
     window.addEventListener("resize", handleResize);
 
+    let isVisible = true;
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry?.isIntersecting ?? false;
+      },
+      { threshold: 0 }
+    );
+    visibilityObserver.observe(container);
+
     let rafId = 0;
     const mountTime = performance.now();
 
     const animate = (now: number) => {
       rafId = window.requestAnimationFrame(animate);
+
+      // Suspend WebGL compute and rendering when hero is outside viewport
+      if (!isVisible) return;
 
       const totalElapsed = (now - mountTime) * 0.001;
       uniforms.uTime.value = isReducedMotion ? 0.0 : totalElapsed;
@@ -417,6 +429,7 @@ export function PortraitAuraCanvas({
 
     return () => {
       disposed = true;
+      visibilityObserver.disconnect();
       window.cancelAnimationFrame(rafId);
       window.removeEventListener("resize", handleResize);
       container.removeEventListener("pointermove", handlePointerMove);
