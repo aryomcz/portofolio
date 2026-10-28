@@ -17,11 +17,26 @@ export type SkillDomainId =
   | "fullstack-development"
   | "tools-devops";
 
-export type TimelineCategory =
-  | "TECHNICAL LEADERSHIP"
-  | "COMPETITION GOVERNANCE"
-  | "ACADEMIC & HONORS"
-  | "INDUSTRY INTERNSHIP";
+/** Calendar month in `YYYY-MM` form, e.g. `"2023-07"`. */
+export type YearMonth = `${number}-${| "01"
+  | "02"
+  | "03"
+  | "04"
+  | "05"
+  | "06"
+  | "07"
+  | "08"
+  | "09"
+  | "10"
+  | "11"
+  | "12"}`;
+
+export type EmploymentType = "Internship" | "Part-time" | "Full-time" | "Freelance";
+
+export type OrganizationType =
+  | "Student Developer Community"
+  | "Campus Tech Festival"
+  | "Student Association";
 
 export interface QuickStatItem {
   readonly id: string;
@@ -153,17 +168,35 @@ export interface CapabilityDomain {
   readonly productionProofSummary: string;
 }
 
-export interface TimelineEntry {
+export interface ExperienceTenure {
+  readonly start: YearMonth;
+  /** `null` while the role is still active. */
+  readonly end: YearMonth | null;
+}
+
+interface ExperienceEntryBase {
   readonly id: string;
-  readonly period: string;
-  readonly category: TimelineCategory;
   readonly role: string;
   readonly organization: string;
   readonly location: string;
-  readonly metricBadge?: string;
-  readonly bullets: readonly string[];
-  readonly tags: readonly string[];
+  readonly tenure: ExperienceTenure;
+  /** Impact statements; numeric figures (15+, 25%) are highlighted in the UI. */
+  readonly highlights: readonly string[];
+  /** Technologies and competencies exercised in the role. */
+  readonly skills: readonly string[];
 }
+
+export interface WorkExperience extends ExperienceEntryBase {
+  readonly kind: "work";
+  readonly employmentType: EmploymentType;
+}
+
+export interface OrganizationalExperience extends ExperienceEntryBase {
+  readonly kind: "organization";
+  readonly organizationType: OrganizationType;
+}
+
+export type ExperienceEntry = WorkExperience | OrganizationalExperience;
 
 export interface GithubContributionDay {
   readonly date: string;
@@ -230,7 +263,10 @@ export interface PortfolioData {
   readonly githubTelemetry: GithubTelemetryConfig;
   readonly projects: readonly ProjectCaseStudy[];
   readonly featuredAchievement: ProjectCaseStudy;
-  readonly timeline: readonly TimelineEntry[];
+  /** Paid industry roles, newest first. */
+  readonly workExperiences: readonly WorkExperience[];
+  /** Campus organizations, committees and leadership roles, newest first. */
+  readonly organizationalExperiences: readonly OrganizationalExperience[];
 }
 
 export const PORTFOLIO_DATA: PortfolioData = {
@@ -1219,65 +1255,53 @@ export const PORTFOLIO_DATA: PortfolioData = {
       ],
     },
   },
-  timeline: [
+  workExperiences: [
     {
-      id: "exp-gdgoc-ipb",
-      period: "OCT 2025 — PRESENT",
-      category: "TECHNICAL LEADERSHIP",
-      role: "Technical Core Team",
-      organization: "Google Developer Group on Campus (GDGoC) — IPB University",
-      location: "Bogor, Indonesia",
-      metricBadge: "Software Dev Track Lead & Catalyst Mentor",
-      bullets: [
-        "Spearheaded the Software Development learning path, delivering hands-on Study Jam workshops covering Frontend, Backend, RESTful APIs, Git, and Cloud technologies.",
-        "Mentored aspiring software engineers (Hacker Track) in the GDGoC Catalyst bootcamp via live coding, system design guidance, and detailed code reviews for capstone applications.",
-        "Engineered technical assessment rubrics and code evaluation criteria for the Tech League national software competition.",
-      ],
-      tags: ["Software Development", "System Design", "RESTful APIs", "Git & Cloud", "Technical Mentorship"],
-    },
-    {
-      id: "exp-itfest-ipb",
-      period: "FEB 2025 — SEP 2025",
-      category: "COMPETITION GOVERNANCE",
-      role: "Vice Head of Competition",
-      organization: "IT Festival 2025 — Micro IT IPB",
-      location: "Bogor, Indonesia",
-      metricBadge: "150+ Teams · 10+ Industry & Academic Judges",
-      bullets: [
-        "Authored the official competition guidebook and facilitated technical briefing sessions for 150+ participating teams, ensuring full alignment on rules, criteria, and competition workflows.",
-        "Identified, contacted, and onboarded 10+ industry experts and academic professionals to serve as national competition mentors and judges.",
-        "Designed and managed the end-to-end participant registration and verification workflow, and served as dedicated Liaison Officer for finalist teams during final evaluation.",
-      ],
-      tags: ["Competition Governance", "Technical Operations", "Stakeholder Management", "Workflow Design"],
-    },
-    {
-      id: "exp-ipb-rpl",
-      period: "AUG 2024 — JUN 2028 (EXPECTED)",
-      category: "ACADEMIC & HONORS",
-      role: "Undergraduate in Software Engineering (Rekayasa Perangkat Lunak)",
-      organization: "IPB University",
-      location: "Bogor, Indonesia",
-      metricBadge: "GPA: 3.83 / 4.00 · 1st Winner Prisma Fest 2025",
-      bullets: [
-        "Honors: 1st Winner at Prisma Fest Web Design Competition (2025) — UIN Sunan Ampel Surabaya (Project: Lumind).",
-        "Relevant Coursework: Data Structures & Algorithms, Database Systems & Architecture, Web & Mobile Application Development, Software Engineering Principles, Software Quality Assurance, and AR Systems.",
-      ],
-      tags: ["GPA 3.83/4.00", "Software Engineering", "Database Architecture", "SQA", "Web & Mobile Dev"],
-    },
-    {
-      id: "exp-matra-hillindo",
-      period: "JUL 2023 — DEC 2023",
-      category: "INDUSTRY INTERNSHIP",
+      kind: "work",
+      id: "work-matra-hillindo",
       role: "Front-End Developer & IT Support Intern",
       organization: "Matra Hillindo",
       location: "Bogor, Indonesia",
-      metricBadge: "15+ Web Templates · 25% Faster Client Onboarding",
-      bullets: [
+      employmentType: "Internship",
+      tenure: { start: "2023-07", end: "2023-12" },
+      highlights: [
         "Developed 15+ responsive front-end website templates integrated with RESTful APIs, accelerating client onboarding speed by 25%.",
         "Engineered an automated invitation forwarding module leveraging the WhatsApp API to auto-fill dynamic guest names, significantly reducing manual messaging efforts and improving delivery speed.",
         "Assisted with backend configuration, functional QA testing, and internal/external network infrastructure setup.",
       ],
-      tags: ["Front-End Development", "RESTful APIs", "WhatsApp API", "QA Testing", "Network Infrastructure"],
+      skills: ["RESTful APIs", "WhatsApp API", "Responsive Front-End", "Backend Configuration", "System Testing", "Network Setup"],
+    },
+  ],
+  organizationalExperiences: [
+    {
+      kind: "organization",
+      id: "org-gdgoc-ipb",
+      role: "Technical Core Team",
+      organization: "Google Developer Groups on Campus (GDGoC) IPB",
+      location: "Bogor, Indonesia",
+      organizationType: "Student Developer Community",
+      tenure: { start: "2026-10", end: null },
+      highlights: [
+        "Spearheaded the Software Development learning path, delivering hands-on Study Jam workshops covering Frontend, Backend, RESTful APIs, Git, and Cloud technologies.",
+        "Mentored aspiring software engineers (Hacker Track) in the GDGoC Catalyst bootcamp via live coding, system design guidance, and detailed code reviews for capstone applications.",
+        "Engineered technical assessment rubrics and code evaluation criteria for the Tech League national software competition.",
+      ],
+      skills: ["Technical Mentorship", "Curriculum Design", "Code Review", "Git & Cloud", "Assessment Rubrics"],
+    },
+    {
+      kind: "organization",
+      id: "org-itfest-ipb",
+      role: "Vice Head of Competition",
+      organization: "IT Festival 2025 Micro IT IPB",
+      location: "Bogor, Indonesia",
+      organizationType: "Campus Tech Festival",
+      tenure: { start: "2025-02", end: "2025-09" },
+      highlights: [
+        "Authored the official competition guidebook and facilitated technical briefing sessions for 150+ participating teams, ensuring full alignment on rules, criteria, and competition workflows.",
+        "Identified, contacted, and onboarded 10+ industry experts and academic professionals to serve as national competition mentors and judges.",
+        "Designed and managed the end-to-end participant registration and verification workflow, and served as dedicated Liaison Officer for finalist teams during final evaluation.",
+      ],
+      skills: ["Competition Management", "Technical Briefing", "Stakeholder Relations", "Registration Workflow"],
     },
   ],
 };
