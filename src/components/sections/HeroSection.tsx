@@ -137,7 +137,7 @@ export function HeroSection() {
           </div>
 
           {/* 3. RIGHT COLUMN (4 Cols): Open Corner-Bracket HUD Telemetry Blocks */}
-          <div className="z-20 flex flex-col items-end justify-center pb-8 lg:col-span-4 lg:pb-0">
+          <div className="z-20 flex flex-col items-center sm:items-end justify-center pb-8 lg:col-span-4 lg:pb-0">
             <div className="hero-hud-reveal w-full max-w-[300px] space-y-5">
               {/* Block 1: CURRENTLY */}
               <OpenHudCorners>

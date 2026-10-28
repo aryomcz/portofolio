@@ -126,6 +126,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   overflow-x: clip;
+  scroll-behavior: smooth;
 }
 
 ::selection {
@@ -165,6 +166,7 @@ body {
 }
 
 @media (hover: hover) and (pointer: fine) {
+
   .group:hover .arrow-drift,
   .hover-arrow:hover .arrow-drift {
     transform: translate(3px, -3px);

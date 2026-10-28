@@ -247,7 +247,7 @@ export function GithubActivitySection() {
         <div
           role="group"
           aria-label="Filter GitHub contributions by year"
-          className="flex items-center gap-1 border border-border-subtle bg-bg-elevated p-1"
+          className="ml-auto flex w-fit justify-end items-center gap-1 border border-border-subtle bg-bg-elevated p-1"
         >
           {githubTelemetry.availableYears.map((year) => {
             const isActive = selectedYear === year;
