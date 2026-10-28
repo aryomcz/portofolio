@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { SmoothScrollProvider } from "@/hooks/useSmoothScroll";
 import { PageTransitionProvider } from "@/components/ui/PageTransition";
+import { ScrollProgressBar } from "@/components/ui/ScrollProgressBar";
 import { AdaptiveNavbar } from "@/components/ui/AdaptiveNavbar";
 import { TopographicBg } from "@/components/ui/TopographicBg";
 import { Preloader } from "@/components/ui/Preloader";
@@ -56,6 +57,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="relative min-h-screen flex flex-col bg-bg-primary text-text-primary">
+        <ScrollProgressBar />
         <TopographicBg />
         <SmoothScrollProvider>
           <Preloader />

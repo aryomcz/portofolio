@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TransitionLink } from "@/components/ui/TransitionLink";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, FileText, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 import { useLenis } from "@/hooks/useLenis";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -34,24 +35,16 @@ const SPLIT_SPRING = {
 };
 
 export function AdaptiveNavbar() {
+  const headerRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
   const isHome = pathname === "/";
   const { scrollTo } = useLenis();
   const isReducedMotion = useReducedMotion();
+
   const [activeSection, setActiveSection] = useState<string>("hero");
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   // Close mobile drawer on Escape key
   useEffect(() => {
@@ -63,38 +56,78 @@ export function AdaptiveNavbar() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isMobileMenuOpen]);
 
-  useEffect(() => {
-    if (!isHome) return;
+  // Batch [3A] Navbar Orchestration: Smart hide/show & ScrollTrigger section spy
+  useGSAP(
+    () => {
+      let lastScrollY = window.scrollY;
 
-    const sectionIds = [...NAV_ITEMS.map((item) => item.id), "contact"];
-    const elements = sectionIds
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => el !== null);
+      // 1. Smart hide on scroll down, show on scroll up
+      const navTrigger = ScrollTrigger.create({
+        start: "top top",
+        end: "max",
+        onUpdate: (self) => {
+          const currentScrollY = self.scroll();
+          const delta = currentScrollY - lastScrollY;
 
-    if (elements.length === 0) return;
+          // Update island split state
+          setIsScrolled(currentScrollY > 50);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
+          if (isReducedMotion || !headerRef.current) return;
+
+          if (currentScrollY <= 40) {
+            // Always fully visible near top
+            gsap.to(headerRef.current, {
+              y: 0,
+              duration: 0.28,
+              ease: "power3.out",
+              overwrite: "auto",
+            });
+          } else if (delta > 6 && currentScrollY > 100) {
+            // Scrolling down -> hide navbar smoothly
+            gsap.to(headerRef.current, {
+              y: -100,
+              duration: 0.32,
+              ease: "power3.out",
+              overwrite: "auto",
+            });
+          } else if (delta < -6) {
+            // Scrolling up -> reveal navbar instantly
+            gsap.to(headerRef.current, {
+              y: 0,
+              duration: 0.28,
+              ease: "power3.out",
+              overwrite: "auto",
+            });
           }
-        }
-      },
-      {
-        rootMargin: "-25% 0px -55% 0px",
-        threshold: 0,
+
+          lastScrollY = currentScrollY;
+        },
+      });
+
+      // 2. Link aktif mengikuti section (ScrollTrigger section spy)
+      if (isHome) {
+        const sectionIds = [...NAV_ITEMS.map((item) => item.id), "contact"];
+        sectionIds.forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+
+          ScrollTrigger.create({
+            trigger: el,
+            start: "top 35%",
+            end: "bottom 35%",
+            onEnter: () => setActiveSection(id === "contact" ? "timeline" : id),
+            onEnterBack: () =>
+              setActiveSection(id === "contact" ? "timeline" : id),
+          });
+        });
       }
-    );
 
-    for (const el of elements) {
-      observer.observe(el);
-    }
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [isHome]);
+      return () => {
+        navTrigger.kill();
+      };
+    },
+    { dependencies: [isHome, isReducedMotion], scope: headerRef }
+  );
 
   const handleNavClick = (
     event: React.MouseEvent<HTMLAnchorElement>,
@@ -116,7 +149,10 @@ export function AdaptiveNavbar() {
     "pointer-events-auto flex h-13 shrink-0 items-center border border-border-subtle bg-bg-glass shadow-[0_8px_28px_rgba(10,17,32,0.06)] backdrop-blur-md";
 
   return (
-    <header className="pointer-events-none fixed top-5 right-0 left-0 z-40 flex flex-col items-center px-4 sm:px-8">
+    <header
+      ref={headerRef}
+      className="pointer-events-none fixed top-5 right-0 left-0 z-40 flex flex-col items-center px-4 sm:px-8 will-change-transform"
+    >
       {/* Transparent layout track — zero background, zero border, zero shadow */}
       <div
         className={cn(
@@ -185,7 +221,7 @@ export function AdaptiveNavbar() {
                   onClick={(e) => handleNavClick(e, item.href, item.id)}
                   onMouseEnter={() => setHoveredSection(item.id)}
                   className={cn(
-                    "press-scale relative rounded-full px-3.5 py-1.5 text-[13px] font-medium",
+                    "press-scale group relative rounded-full px-3.5 py-1.5 text-[13px] font-medium",
                     isActive
                       ? "font-semibold text-text-primary"
                       : "text-text-secondary hover:text-text-primary"
@@ -215,7 +251,18 @@ export function AdaptiveNavbar() {
                     />
                   ) : null}
 
-                  <span className="relative z-10">{item.label}</span>
+                  {/* Batch [3A]: Emil Kowalski Text-Roll Hover Effect */}
+                  <span className="relative z-10 inline-flex h-[1.3em] overflow-hidden leading-tight">
+                    <span className="transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:-translate-y-full">
+                      {item.label}
+                    </span>
+                    <span
+                      className="absolute top-0 left-0 transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-full group-hover:translate-y-0 text-accent-primary"
+                      aria-hidden="true"
+                    >
+                      {item.label}
+                    </span>
+                  </span>
                 </a>
               );
             })}

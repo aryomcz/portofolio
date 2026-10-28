@@ -124,7 +124,7 @@ export function CapabilitiesSection() {
       id="skills"
       ref={sectionRef}
       aria-labelledby="skills-heading"
-      className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24"
+      className="relative z-20 bg-bg-primary mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24"
     >
       {/* Section Header */}
       <div className="mb-10 flex flex-col justify-between gap-4 border-b border-border-subtle pb-6 md:flex-row md:items-end">
