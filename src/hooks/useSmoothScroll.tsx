@@ -19,6 +19,7 @@ export interface ScrollToOptions {
   readonly offset?: number;
   readonly duration?: number;
   readonly immediate?: boolean;
+  readonly force?: boolean;
 }
 
 export interface LenisContextValue {
@@ -162,6 +163,7 @@ export function SmoothScrollProvider({
         offset: options?.offset ?? 0,
         duration: options?.immediate ? 0 : (options?.duration ?? 1.15),
         immediate: options?.immediate ?? false,
+        force: options?.force ?? false,
         easing: editorialScrollEasing,
       });
     },

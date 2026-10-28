@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { TransitionLink } from "@/components/ui/TransitionLink";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, FileText, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -146,8 +146,9 @@ export function AdaptiveNavbar() {
               ARYO
             </a>
           ) : (
-            <Link
+            <TransitionLink
               href="/"
+              label="ROOT // MAIN ARCHITECTURE"
               className="press-scale group inline-flex items-center gap-1.5 font-mono text-xs font-medium text-text-primary hover:text-accent-primary"
             >
               <ArrowLeft
@@ -155,7 +156,7 @@ export function AdaptiveNavbar() {
                 aria-hidden="true"
               />
               <span>ARYO</span>
-            </Link>
+            </TransitionLink>
           )}
         </motion.div>
 

@@ -302,6 +302,9 @@ body {
   .experience-kinetic-title,
   .github-kinetic-title,
   .github-telemetry-card,
+  .project-detail-title,
+  .project-detail-meta,
+  .project-hero-clip,
   .hud-corner-ornament,
   .hud-bracket-tick {
     visibility: visible !important;

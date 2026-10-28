@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
+import { TransitionLink } from "@/components/ui/TransitionLink";
 import { X, ArrowUpRight, ExternalLink, Layers } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import type { ProjectCaseStudy } from "@/data/portfolio";
@@ -244,14 +244,15 @@ export function CaseStudyQuickModal({
                   </a>
                 ) : null}
 
-                <Link
+                <TransitionLink
                   href={`/projects/${study.slug}`}
+                  label={`DOSSIER // ${study.shortTitle.toUpperCase()}`}
                   onClick={onClose}
                   className="press-scale inline-flex items-center gap-1.5 bg-accent-primary px-4 py-2 font-mono text-xs font-semibold text-white hover:opacity-90"
                 >
                   <span>Open Full Case Study Page</span>
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
+                </TransitionLink>
               </div>
             </div>
           </motion.div>

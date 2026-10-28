@@ -2,7 +2,7 @@
 
 import { useRef, useState, useMemo, useCallback } from "react";
 import { gsap, useGSAP, GSAP_MEDIA_QUERIES, SplitText, refreshScrollTrigger } from "@/lib/gsap";
-import Link from "next/link";
+import { TransitionLink } from "@/components/ui/TransitionLink";
 import {
   ArrowUpRight,
   Award,
@@ -343,8 +343,9 @@ export function SelectedWorksSection() {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Link
+                <TransitionLink
                   href={`/projects/${featuredAchievement.slug}`}
+                  label={`ACHIEVEMENT // ${featuredAchievement.shortTitle.toUpperCase()}`}
                   className="press-scale group inline-flex min-h-11 items-center gap-2 bg-accent-primary px-5 py-2.5 font-mono text-xs font-semibold tracking-wider text-white shadow-xs hover:opacity-90"
                 >
                   <span>VIEW FULL CASE STUDY</span>
@@ -352,7 +353,7 @@ export function SelectedWorksSection() {
                     className="arrow-drift h-4 w-4"
                     aria-hidden="true"
                   />
-                </Link>
+                </TransitionLink>
 
                 <button
                   type="button"
@@ -379,13 +380,14 @@ export function SelectedWorksSection() {
 
             {/* Right 6 Cols: Visual Preview Frame */}
             <div className="lg:col-span-6">
-              <Link
+              <TransitionLink
                 href={`/projects/${featuredAchievement.slug}`}
+                label={`ACHIEVEMENT // ${featuredAchievement.shortTitle.toUpperCase()}`}
                 aria-label={`Open full case study for ${featuredAchievement.title}`}
                 className="block"
               >
                 <ProjectVisualPreview study={featuredAchievement} />
-              </Link>
+              </TransitionLink>
             </div>
           </div>
         </TechBracketCard>
@@ -616,13 +618,14 @@ export function SelectedWorksSection() {
                         </div>
 
                         {/* Sharp Visual Preview Frame */}
-                        <Link
+                        <TransitionLink
                           href={`/projects/${project.slug}`}
+                          label={`PROJECT // ${project.shortTitle.toUpperCase()}`}
                           aria-label={`Open full case study for ${project.title}`}
                           className="block"
                         >
                           <ProjectVisualPreview study={project} />
-                        </Link>
+                        </TransitionLink>
 
                         {/* Project Title & Solution Summary */}
                         <div>
@@ -666,8 +669,9 @@ export function SelectedWorksSection() {
                       {/* Card Footer Links */}
                       <div className="mt-7 flex flex-wrap items-center justify-between gap-2.5 border-t border-accent-primary/35 pt-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <Link
+                          <TransitionLink
                             href={`/projects/${project.slug}`}
+                            label={`PROJECT // ${project.shortTitle.toUpperCase()}`}
                             className="press-scale group inline-flex min-h-10 items-center gap-1.5 bg-accent-primary px-4 py-2 font-mono text-xs font-semibold text-white hover:opacity-90"
                           >
                             <span>CASE STUDY</span>
@@ -675,7 +679,7 @@ export function SelectedWorksSection() {
                               className="arrow-drift h-3.5 w-3.5"
                               aria-hidden="true"
                             />
-                          </Link>
+                          </TransitionLink>
 
                           <button
                             type="button"
@@ -773,13 +777,14 @@ export function SelectedWorksSection() {
                       </div>
 
                       {/* Sharp Visual Preview Frame */}
-                      <Link
+                      <TransitionLink
                         href={`/projects/${project.slug}`}
+                        label={`PROJECT // ${project.shortTitle.toUpperCase()}`}
                         aria-label={`Open full case study for ${project.title}`}
                         className="block"
                       >
                         <ProjectVisualPreview study={project} />
-                      </Link>
+                      </TransitionLink>
 
                       {/* Project Title & Solution Summary */}
                       <div>
@@ -823,8 +828,9 @@ export function SelectedWorksSection() {
                     {/* Card Footer Links */}
                     <div className="mt-7 flex flex-wrap items-center justify-between gap-2.5 border-t border-accent-primary/35 pt-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Link
+                        <TransitionLink
                           href={`/projects/${project.slug}`}
+                          label={`PROJECT // ${project.shortTitle.toUpperCase()}`}
                           className="press-scale group inline-flex min-h-10 items-center gap-1.5 bg-accent-primary px-4 py-2 font-mono text-xs font-semibold text-white hover:opacity-90"
                         >
                           <span>CASE STUDY</span>
@@ -832,7 +838,7 @@ export function SelectedWorksSection() {
                             className="arrow-drift h-3.5 w-3.5"
                             aria-hidden="true"
                           />
-                        </Link>
+                        </TransitionLink>
 
                         <button
                           type="button"

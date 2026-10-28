@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SmoothScrollProvider } from "@/hooks/useSmoothScroll";
+import { PageTransitionProvider } from "@/components/ui/PageTransition";
 import { AdaptiveNavbar } from "@/components/ui/AdaptiveNavbar";
 import { TopographicBg } from "@/components/ui/TopographicBg";
 import { Preloader } from "@/components/ui/Preloader";
@@ -58,8 +59,10 @@ export default function RootLayout({
         <TopographicBg />
         <SmoothScrollProvider>
           <Preloader />
-          <AdaptiveNavbar />
-          <div className="relative z-10 flex-1">{children}</div>
+          <PageTransitionProvider>
+            <AdaptiveNavbar />
+            <div className="relative z-10 flex-1">{children}</div>
+          </PageTransitionProvider>
         </SmoothScrollProvider>
       </body>
     </html>

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { gsap, useGSAP, GSAP_MEDIA_QUERIES } from "@/lib/gsap";
-import Link from "next/link";
+import { TransitionLink } from "@/components/ui/TransitionLink";
 import { ArrowUpRight } from "lucide-react";
 import {
   PORTFOLIO_DATA,
@@ -244,9 +244,10 @@ export function CapabilitiesSection() {
                   if (!study) return null;
                   const isHighlighted = highlightedSlugs.includes(slug);
                   return (
-                    <Link
+                    <TransitionLink
                       key={slug}
                       href={`/projects/${slug}`}
+                      label={`DOSSIER // ${study.shortTitle.toUpperCase()}`}
                       className={cn(
                         "press-scale group inline-flex items-center gap-1 border px-2.5 py-1 font-mono text-[11px] transition-colors duration-150",
                         isHighlighted
@@ -256,7 +257,7 @@ export function CapabilitiesSection() {
                     >
                       <span>{study.shortTitle}</span>
                       <ArrowUpRight className="arrow-drift h-3 w-3" aria-hidden="true" />
-                    </Link>
+                    </TransitionLink>
                   );
                 })}
               </div>

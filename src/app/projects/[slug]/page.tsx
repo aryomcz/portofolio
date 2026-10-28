@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { TransitionLink } from "@/components/ui/TransitionLink";
+import { ProjectDetailEntrance } from "@/components/sections/ProjectDetailEntrance";
 import {
   ArrowLeft,
   ArrowRight,
@@ -70,8 +71,9 @@ export default async function ProjectCaseStudyPage({
         {/* 1. Top Breadcrumb & Case Study HUD Header */}
         <header className="space-y-8">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border-subtle pb-4">
-            <Link
+            <TransitionLink
               href={isAchievement ? "/#achievements" : "/#projects"}
+              label={isAchievement ? "ROOT // ACHIEVEMENTS" : "ROOT // SELECTED PROJECTS"}
               className="press-scale group inline-flex items-center gap-2 border border-border-strong bg-bg-elevated px-4 py-2 font-mono text-xs text-text-primary hover:border-accent-primary"
             >
               <ArrowLeft
@@ -81,7 +83,7 @@ export default async function ProjectCaseStudyPage({
               <span>
                 {isAchievement ? "BACK TO ACHIEVEMENTS" : "BACK TO PROJECTS"}
               </span>
-            </Link>
+            </TransitionLink>
 
             <div className="flex items-center gap-2.5 font-mono text-xs">
               {isAchievement ? (
@@ -98,111 +100,118 @@ export default async function ProjectCaseStudyPage({
             </div>
           </div>
 
-          {/* Display Title & Summary */}
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-end">
-            <div className="space-y-4 lg:col-span-8">
-              <p className="font-mono text-xs text-accent-emerald">
-                ● {study.heroMetricPill}
-              </p>
+          <ProjectDetailEntrance>
+            {/* Display Title & Summary */}
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-end">
+              <div className="space-y-4 lg:col-span-8">
+                <p className="font-mono text-xs text-accent-emerald">
+                  ● {study.heroMetricPill}
+                </p>
 
-              <h1 className="font-display text-[clamp(3.2rem,7vw,5.75rem)] leading-[0.9] tracking-wide text-text-primary">
-                {study.title}
-              </h1>
+                <div className="overflow-hidden">
+                  <h1 className="project-detail-title font-display text-[clamp(3.2rem,7vw,5.75rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform">
+                    {study.title}
+                  </h1>
+                </div>
 
-              <p className="font-mono text-sm font-medium text-accent-primary sm:text-base">
-                {study.subtitle}
-              </p>
+                <p className="font-mono text-sm font-medium text-accent-primary sm:text-base">
+                  {study.subtitle}
+                </p>
 
-              <p className="max-w-[65ch] text-base leading-relaxed text-text-secondary">
-                {study.cardSummary}
-              </p>
+                <p className="max-w-[65ch] text-base leading-relaxed text-text-secondary">
+                  {study.cardSummary}
+                </p>
+              </div>
+
+              {/* Right 4 Cols: HUD Metadata & Live Site CTA */}
+              <div className="project-detail-meta lg:col-span-4">
+                <TechBracketCard
+                  bracketSize="md"
+                  activeAccent
+                  themeColor={study.themeColor}
+                  className="flex flex-col justify-between p-6"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between font-mono text-[11px] text-text-muted">
+                      <span>[ DEPLOYMENT DOSSIER ]</span>
+                      <span className="text-accent-emerald">VERIFIED</span>
+                    </div>
+                    <dl className="space-y-2 border-t border-border-subtle pt-3 text-xs">
+                      <div className="flex justify-between gap-2">
+                        <dt className="font-mono text-text-muted">ROLE:</dt>
+                        <dd className="text-right font-medium text-text-primary">
+                          {study.role}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <dt className="font-mono text-text-muted">CONTEXT:</dt>
+                        <dd className="text-right font-medium text-text-primary">
+                          {study.clientOrContext}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <dt className="font-mono text-text-muted">YEAR:</dt>
+                        <dd className="tabular-nums font-mono text-text-primary">
+                          {study.year}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+
+                  <div className="mt-6">
+                    {study.liveUrl ? (
+                      <a
+                        href={study.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="press-scale flex w-full items-center justify-between bg-accent-primary px-4 py-3 font-mono text-xs font-semibold text-white hover:opacity-95"
+                      >
+                        <span>VISIT LIVE PRODUCTION SITE</span>
+                        <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                      </a>
+                    ) : (
+                      <div className="border border-border-subtle bg-bg-primary px-4 py-3 text-center font-mono text-xs text-text-secondary">
+                        INTERNAL / CLIENT PRODUCTION SYSTEM
+                      </div>
+                    )}
+                  </div>
+                </TechBracketCard>
+              </div>
             </div>
 
-            {/* Right 4 Cols: HUD Metadata & Live Site CTA */}
-            <TechBracketCard
-              bracketSize="md"
-              activeAccent
-              themeColor={study.themeColor}
-              className="flex flex-col justify-between p-6 lg:col-span-4"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between font-mono text-[11px] text-text-muted">
-                  <span>[ DEPLOYMENT DOSSIER ]</span>
-                  <span className="text-accent-emerald">VERIFIED</span>
-                </div>
-                <dl className="space-y-2 border-t border-border-subtle pt-3 text-xs">
-                  <div className="flex justify-between gap-2">
-                    <dt className="font-mono text-text-muted">ROLE:</dt>
-                    <dd className="text-right font-medium text-text-primary">
-                      {study.role}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt className="font-mono text-text-muted">CONTEXT:</dt>
-                    <dd className="text-right font-medium text-text-primary">
-                      {study.clientOrContext}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt className="font-mono text-text-muted">YEAR:</dt>
-                    <dd className="tabular-nums font-mono text-text-primary">
-                      {study.year}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-
-              <div className="mt-6">
-                {study.liveUrl ? (
-                  <a
-                    href={study.liveUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="press-scale flex w-full items-center justify-between bg-accent-primary px-4 py-3 font-mono text-xs font-semibold text-white hover:opacity-95"
+            {/* 3-Column Verified Metrics HUD Cards */}
+            <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+              {study.verifiedMetrics.map((metric, idx) => (
+                <div key={idx} className="project-detail-meta">
+                  <TechBracketCard
+                    bracketSize="sm"
+                    activeAccent
+                    themeColor={study.themeColor}
+                    className="p-5"
                   >
-                    <span>VISIT LIVE PRODUCTION SITE</span>
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  </a>
-                ) : (
-                  <div className="border border-border-subtle bg-bg-primary px-4 py-3 text-center font-mono text-xs text-text-secondary">
-                    INTERNAL / CLIENT PRODUCTION SYSTEM
-                  </div>
-                )}
-              </div>
-            </TechBracketCard>
-          </div>
-
-          {/* 3-Column Verified Metrics HUD Cards */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {study.verifiedMetrics.map((metric, idx) => (
-              <TechBracketCard
-                key={idx}
-                bracketSize="sm"
-                activeAccent
-                themeColor={study.themeColor}
-                className="p-5"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[11px] text-text-muted">
-                    {`METRIC // 0${idx + 1}`}
-                  </span>
-                  <CheckCircle2
-                    className="h-4 w-4 text-accent-emerald"
-                    aria-hidden="true"
-                  />
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[11px] text-text-muted">
+                        {`METRIC // 0${idx + 1}`}
+                      </span>
+                      <CheckCircle2
+                        className="h-4 w-4 text-accent-emerald"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <p className="tabular-nums mt-2 font-display text-4xl tracking-wide text-accent-primary sm:text-5xl">
+                      {metric.value}
+                    </p>
+                    <h2 className="mt-1 font-mono text-xs font-semibold text-text-primary">
+                      {metric.label}
+                    </h2>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                      {metric.detail}
+                    </p>
+                  </TechBracketCard>
                 </div>
-                <p className="tabular-nums mt-2 font-display text-4xl tracking-wide text-accent-primary sm:text-5xl">
-                  {metric.value}
-                </p>
-                <h2 className="mt-1 font-mono text-xs font-semibold text-text-primary">
-                  {metric.label}
-                </h2>
-                <p className="mt-1 text-xs leading-relaxed text-text-secondary">
-                  {metric.detail}
-                </p>
-              </TechBracketCard>
-            ))}
-          </div>
+              ))}
+            </div>
+          </ProjectDetailEntrance>
         </header>
 
         {/* 2. DUMMY PHOTO & INTERFACE GALLERY SECTION (Requested for /projects/[slug]) */}
@@ -220,32 +229,34 @@ export default async function ProjectCaseStudyPage({
             </span>
           </div>
 
-          {/* Hero Banner Showcase Photo (Full 16:9 Uncropped) */}
-          <TechBracketCard
-            bracketSize="lg"
-            activeAccent
-            themeColor={study.themeColor}
-            className="overflow-hidden p-3 sm:p-4"
-          >
-            <div className="relative aspect-[16/9] w-full overflow-hidden border border-border-subtle bg-bg-primary">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={study.previewImage.src}
-                alt={study.previewImage.alt}
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-accent-primary/35 pt-3">
-              <div>
-                <p className="font-mono text-[10px] font-semibold text-accent-primary">
-                  PRIMARY SYSTEM SHOWCASE // {study.shortTitle.toUpperCase()}
-                </p>
-                <p className="text-xs font-medium text-text-primary sm:text-sm">
-                  {study.previewImage.alt}
-                </p>
+          {/* Hero Banner Showcase Photo (Full 16:9 Uncropped) with Aperture Clip Reveal */}
+          <div className="project-hero-clip">
+            <TechBracketCard
+              bracketSize="lg"
+              activeAccent
+              themeColor={study.themeColor}
+              className="overflow-hidden p-3 sm:p-4"
+            >
+              <div className="relative aspect-[16/9] w-full overflow-hidden border border-border-subtle bg-bg-primary">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={study.previewImage.src}
+                  alt={study.previewImage.alt}
+                  className="h-full w-full object-cover"
+                />
               </div>
-            </div>
-          </TechBracketCard>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-accent-primary/35 pt-3">
+                <div>
+                  <p className="font-mono text-[10px] font-semibold text-accent-primary">
+                    PRIMARY SYSTEM SHOWCASE // {study.shortTitle.toUpperCase()}
+                  </p>
+                  <p className="text-xs font-medium text-text-primary sm:text-sm">
+                    {study.previewImage.alt}
+                  </p>
+                </div>
+              </div>
+            </TechBracketCard>
+          </div>
 
           {/* Gallery Photo Cards Grid */}
           <div
@@ -545,7 +556,11 @@ export default async function ProjectCaseStudyPage({
           aria-label="Adjacent case studies"
           className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2"
         >
-          <Link href={`/projects/${prev.slug}`} className="press-scale block">
+          <TransitionLink
+            href={`/projects/${prev.slug}`}
+            label={`DOSSIER // ${prev.slug.toUpperCase()}`}
+            className="press-scale block"
+          >
             <TechBracketCard
               bracketSize="md"
               themeColor={prev.themeColor}
@@ -562,9 +577,13 @@ export default async function ProjectCaseStudyPage({
                 {prev.subtitle}
               </p>
             </TechBracketCard>
-          </Link>
+          </TransitionLink>
 
-          <Link href={`/projects/${next.slug}`} className="press-scale block">
+          <TransitionLink
+            href={`/projects/${next.slug}`}
+            label={`DOSSIER // ${next.slug.toUpperCase()}`}
+            className="press-scale block"
+          >
             <TechBracketCard
               bracketSize="md"
               themeColor={next.themeColor}
@@ -581,7 +600,7 @@ export default async function ProjectCaseStudyPage({
                 {next.subtitle}
               </p>
             </TechBracketCard>
-          </Link>
+          </TransitionLink>
         </nav>
       </article>
 

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TransitionLink } from "@/components/ui/TransitionLink";
 import { ArrowLeft } from "lucide-react";
 
 export default function ProjectNotFound() {
@@ -14,13 +14,14 @@ export default function ProjectNotFound() {
         The case study slug you requested could not be located in the portfolio
         registry.
       </p>
-      <Link
+      <TransitionLink
         href="/"
+        label="ROOT // MAIN ARCHITECTURE"
         className="press-scale mt-6 inline-flex items-center gap-2 bg-text-primary px-5 py-2.5 font-mono text-xs font-medium text-bg-primary hover:bg-accent-primary hover:text-text-primary"
       >
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
         <span>Return to Portfolio Index</span>
-      </Link>
+      </TransitionLink>
     </main>
   );
 }
