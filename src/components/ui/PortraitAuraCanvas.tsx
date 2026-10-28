@@ -158,7 +158,7 @@ const FRAGMENT_SHADER = `
     float silhouetteMask = clamp(max(baseCol.a, auraCol.a), 0.0, 1.0);
     float glowAlpha = clamp((coreLine * 1.15 + softHalo * 0.42) * silhouetteMask, 0.0, 1.0);
 
-    vec3 glowColor = mix(vec3(0.96, 0.78, 0.16), vec3(1.0, 0.96, 0.68), coreLine);
+    vec3 glowColor = mix(vec3(0.83, 1.0, 0.0), vec3(0.08, 0.95, 0.75), coreLine);
 
     // Alpha-over compositing for the neon rim
     float outAlpha = mixedAlpha + glowAlpha * (1.0 - mixedAlpha);
@@ -245,13 +245,27 @@ export function PortraitAuraCanvas({
     const camera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0.1, 10);
     camera.position.z = 1;
 
+    const isSoftwareGl = (() => {
+      try {
+        const gl = document.createElement("canvas").getContext("webgl2");
+        if (!gl) return true;
+        const ext = gl.getExtension("WEBGL_debug_renderer_info");
+        const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
+        const gpu = String(gl.getParameter(param));
+        gl.getExtension("WEBGL_lose_context")?.loseContext();
+        return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
+      } catch {
+        return false;
+      }
+    })();
+
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
-      antialias: true,
+      antialias: !isSoftwareGl,
       powerPreference: "high-performance",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
     container.innerHTML = "";
     container.appendChild(renderer.domElement);
 

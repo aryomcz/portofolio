@@ -1,7 +1,9 @@
 import { useId } from "react";
+import { InteractiveTopographyCanvas } from "./InteractiveTopographyCanvas";
 
 /**
- * Subtle SVG Topographic Contour Lines background ornament.
+ * Interactive WebGL Topographic Contour Lines background with GLSL shader
+ * and static SVG fallback.
  * Gives the canvas an authentic Creative Tech / Modern HUD terrain feel
  * without interfering with text contrast or pointer interactions.
  */
@@ -9,10 +11,12 @@ export function TopographicBg() {
   const patternId = useId();
 
   return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden opacity-[0.055] dark:opacity-[0.07]"
-    >
+    <>
+      <InteractiveTopographyCanvas />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-0 overflow-hidden opacity-[0.035] dark:opacity-[0.045]"
+      >
       <svg
         className="h-full w-full text-text-primary"
          xmlns="http://www.w3.org/2000/svg"
@@ -124,5 +128,6 @@ export function TopographicBg() {
         <rect width="100%" height="100%" fill={`url(#${patternId})`} />
       </svg>
     </div>
+    </>
   );
 }
