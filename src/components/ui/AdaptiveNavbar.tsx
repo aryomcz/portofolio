@@ -208,7 +208,7 @@ export function AdaptiveNavbar() {
             onMouseLeave={() => setHoveredSection(null)}
             className={cn(
               islandSurfaceClass,
-              "hidden gap-1 md:flex lg:gap-1.5",
+              "hidden gap-1 lg:flex lg:gap-1.5",
               isScrolled
                 ? "rounded-full px-5"
                 : "rounded-none border-x-0 px-3"
@@ -324,7 +324,7 @@ export function AdaptiveNavbar() {
                 isMobileMenuOpen ? "Close menu" : "Open navigation menu"
               }
               aria-expanded={isMobileMenuOpen}
-              className="press-scale flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-elevated text-text-primary md:hidden"
+              className="press-scale flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-elevated text-text-primary lg:hidden"
             >
               {isMobileMenuOpen ? (
                 <X className="h-4 w-4" aria-hidden="true" />
@@ -349,7 +349,7 @@ export function AdaptiveNavbar() {
                 ? EASE_REDUCED
                 : { duration: 0.18, ease: [0.23, 1, 0.32, 1] }
             }
-            className="pointer-events-auto mt-2 w-full max-w-sm origin-top rounded-2xl border border-border-subtle bg-bg-glass p-3 shadow-2xl backdrop-blur-xl md:hidden"
+            className="pointer-events-auto mt-2 w-full max-w-sm origin-top rounded-2xl border border-border-subtle bg-bg-glass p-3 shadow-2xl backdrop-blur-xl lg:hidden"
           >
             <nav className="flex flex-col space-y-1">
               {NAV_ITEMS.map((item) => {

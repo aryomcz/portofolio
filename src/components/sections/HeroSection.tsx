@@ -303,7 +303,7 @@ export function HeroSection() {
       {/* Scalable Hero Stage (Controlled by ScrollTrigger Scrub) */}
       <div
         ref={heroStageRef}
-        className="relative mx-auto flex w-full flex-1 flex-col justify-between px-5 sm:px-10 lg:px-14 will-change-transform"
+        className="relative mx-auto flex w-full flex-1 flex-col justify-between px-5 sm:px-9 lg:px-11 will-change-transform"
       >
         {/* Main 3-Column Hero Stage */}
         <div className="relative grid flex-1 grid-cols-1 items-center gap-8 lg:grid-cols-12">
