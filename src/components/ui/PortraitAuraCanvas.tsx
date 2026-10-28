@@ -13,6 +13,7 @@ interface PortraitAuraCanvasProps {
 const TEX_WIDTH = 1240;
 const TEX_HEIGHT = 1000;
 const TEX_ASPECT = TEX_WIDTH / TEX_HEIGHT;
+const TRAIL_LENGTH = 8;
 
 const VERTEX_SHADER = `
   varying vec2 vUv;
@@ -25,11 +26,13 @@ const VERTEX_SHADER = `
 const FRAGMENT_SHADER = `
   uniform sampler2D uBaseTex;
   uniform sampler2D uAuraTex;
-  uniform vec2 uMouse;
-  uniform vec2 uTrailMouse;
+  uniform vec2 uTrail[${TRAIL_LENGTH}];
+  uniform vec2 uMouseParallax;
+  uniform float uParallaxStrength;
   uniform float uHover;
   uniform float uToggleMode;
   uniform float uIntroAura;
+  uniform float uIntroReveal;
   uniform float uTime;
   uniform float uContainerAspect;
   uniform float uTexAspect;
@@ -69,6 +72,12 @@ const FRAGMENT_SHADER = `
     return 130.0 * dot(m, g);
   }
 
+  // Smooth minimum (polynomial smin) for fluid metaball trail fusion
+  float smin(float a, float b, float k) {
+    float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(b, a, h) - k * h * (1.0 - h);
+  }
+
   vec2 toTexUv(vec2 inUv) {
     if (uContainerAspect >= uTexAspect) {
       float scaleX = uContainerAspect / uTexAspect;
@@ -91,80 +100,142 @@ const FRAGMENT_SHADER = `
       return;
     }
 
-    vec4 baseCol = texture2D(uBaseTex, uv);
-    vec4 auraCol = texture2D(uAuraTex, uv);
+    // Sample undisplaced base & aura to lock silhouette boundaries (zero ghosting while preserving full Cyber-Wolf)
+    vec4 rawBase = texture2D(uBaseTex, uv);
+    vec4 rawAura = texture2D(uAuraTex, uv);
+    float combinedRawAlpha = max(rawBase.a, rawAura.a);
 
-    vec2 mPrimary = toTexUv(uMouse);
-    vec2 mTrail = toTexUv(uTrailMouse);
-
-    // Aspect-scaled coordinates for vertical oval liquid metaball (like rinlayheang.me)
-    vec2 metric = vec2(uTexAspect * 1.15, 0.88);
-    float d1 = length((uv - mPrimary) * metric);
-    float d2 = length((uv - mTrail) * metric) * 1.18;
-
-    // Smooth metaball union (smin) between primary cursor and lagged trail
-    float k = 0.08;
-    float h = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
-    float rawDist = mix(d2, d1, h) - k * h * (1.0 - h);
-
-    // Multi-layered animated noise for liquid energy contour
-    float n1 = snoise(uv * 4.2 + vec2(uTime * 0.45, -uTime * 0.35));
-    float n2 = snoise(uv * 8.5 - vec2(uTime * 0.6, uTime * 0.5)) * 0.42;
-    float noiseVal = (n1 + n2) * 0.022;
-
-    float dist = rawDist + noiseVal;
-    float radius = 0.215 * uHover;
-
-    // Hover lens mask: 1.0 inside cursor lens, 0.0 outside
-    float lensMask = uHover * (1.0 - smoothstep(radius - 0.018, radius + 0.018, dist));
-
-    // Smooth manual toggle mode with zero-endpoint organic dispersion envelope
-    float toggleEnvelope = 4.0 * uToggleMode * (1.0 - uToggleMode);
-    float toggleNoise = snoise(uv * 6.5 + vec2(uTime * 0.25, -uTime * 0.25)) * 0.12 * toggleEnvelope;
-    float smoothToggle = clamp(uToggleMode + toggleNoise, 0.0, 1.0);
-
-    // - Normal Mode (smoothToggle = 0.0): default is Base (0.0), hovering reveals Aura (1.0)
-    // - Switched Mode (smoothToggle = 1.0): default is Aura (1.0), hovering reveals Base (0.0)
-    float baseAuraMix = mix(lensMask, 1.0 - lensMask, smoothToggle);
-
-    // Initial 0.5s Aura hold -> 0.8s dispersion dissolve into high-res portrait underneath.
-    // Envelope 4*x*(1-x) guarantees introFade is strictly 1.0 at start and strictly 0.0 at end.
-    float introEnvelope = 4.0 * uIntroAura * (1.0 - uIntroAura);
-    float dissolveNoise = snoise(uv * 6.5 + vec2(uTime * 0.25, -uTime * 0.25)) * 0.14 * introEnvelope;
-    float introFade = clamp(uIntroAura + dissolveNoise, 0.0, 1.0);
-
-    float auraMix = clamp(max(baseAuraMix, introFade), 0.0, 1.0);
-
-    // Premultiplied alpha compositing so transparent pixels NEVER bleed background RGB
-    float wBase = baseCol.a * (1.0 - auraMix);
-    float wAura = auraCol.a * auraMix;
-    float mixedAlpha = wBase + wAura;
-
-    if (mixedAlpha < 0.005) {
+    // If completely outside portrait/wolf silhouette AND cursor hover is inactive, skip work early
+    if (combinedRawAlpha <= 0.005 && uHover <= 0.005) {
       gl_FragColor = vec4(0.0);
       return;
     }
 
-    vec3 mixedRgb = (baseCol.rgb * wBase + auraCol.rgb * wAura) / max(mixedAlpha, 0.0001);
+    // Boundary feather: strictly fades 3D parallax to 0 at silhouette edges so no double image ever appears
+    float edgeMask = smoothstep(0.01, 0.45, combinedRawAlpha);
 
-    // Thin, crisp electric-gold neon contour along the active hover lens boundary
-    float coreLine = uHover
-      * smoothstep(radius - 0.012, radius - 0.001, dist)
-      * (1.0 - smoothstep(radius - 0.001, radius + 0.010, dist));
-    float softHalo = uHover
-      * smoothstep(radius - 0.028, radius - 0.001, dist)
-      * (1.0 - smoothstep(radius - 0.001, radius + 0.026, dist));
+    // Anatomical convex cranial & torso depth profile (3D effect preserved)
+    vec2 headCenter = vec2(0.50, 0.55);
+    vec2 d = (uv - headCenter) / vec2(0.26, 0.36);
+    float cranial = sqrt(clamp(1.0 - dot(d, d), 0.0, 1.0));
+    float lum = dot(rawBase.rgb, vec3(0.299, 0.587, 0.114));
+    float nose = clamp(1.0 - length((uv - vec2(0.50, 0.54)) / vec2(0.06, 0.09)), 0.0, 1.0);
 
-    float silhouetteMask = clamp(max(baseCol.a, auraCol.a), 0.0, 1.0);
-    float glowAlpha = clamp((coreLine * 1.15 + softHalo * 0.42) * silhouetteMask, 0.0, 1.0);
+    float depth = (cranial * 0.65 + lum * 0.20 + nose * 0.15) * edgeMask;
 
-    vec3 glowColor = mix(vec3(0.83, 1.0, 0.0), vec3(0.08, 0.95, 0.75), coreLine);
+    // Smooth, calibrated 3D parallax displacement shared identically between Base and Aura
+    vec2 parallaxOffset = uMouseParallax * depth * uParallaxStrength;
+    vec2 displacedUv = clamp(uv + parallaxOffset, 0.0, 1.0);
 
-    // Alpha-over compositing for the neon rim
-    float outAlpha = mixedAlpha + glowAlpha * (1.0 - mixedAlpha);
-    vec3 outRgb = (mixedRgb * mixedAlpha * (1.0 - glowAlpha) + glowColor * glowAlpha) / max(outAlpha, 0.0001);
+    vec4 baseCol = texture2D(uBaseTex, displacedUv);
+    vec4 auraCol = texture2D(uAuraTex, displacedUv);
 
-    gl_FragColor = vec4(outRgb, outAlpha);
+    // Lock each layer's alpha to its own undisplaced silhouette to eliminate double edges while keeping Cyber-Wolf intact
+    baseCol.a = min(baseCol.a, rawBase.a);
+    auraCol.a = min(auraCol.a, rawAura.a);
+
+    float unionAlpha = max(baseCol.a, auraCol.a);
+
+    // =========================================================================
+    // 1. MULTI-NODE FLUID CURSOR TRAIL (Matches rinlayheang.me ribbon stroke)
+    // =========================================================================
+    vec2 metric = vec2(uTexAspect * 1.05, 0.92);
+    float baseRadius = 0.145 * uHover;
+
+    // Evaluate distance field to the 8-node spring trail chain using smooth minimum (smin)
+    float trailField = 10.0;
+    for (int i = 0; i < ${TRAIL_LENGTH}; i++) {
+      float fi = float(i) / float(${TRAIL_LENGTH - 1});
+      vec2 nodeUv = toTexUv(uTrail[i]);
+      // Tapering radius from cursor head (1.0) to tail (0.38)
+      float nodeRadius = baseRadius * mix(1.0, 0.38, fi);
+      float nodeDist = length((displacedUv - nodeUv) * metric) - nodeRadius;
+      trailField = (i == 0) ? nodeDist : smin(trailField, nodeDist, 0.055);
+    }
+
+    // Multi-layered animated simplex noise for organic liquid boundary ripple
+    float n1 = snoise(uv * 4.8 + vec2(uTime * 0.55, -uTime * 0.42));
+    float n2 = snoise(uv * 9.5 - vec2(uTime * 0.75, uTime * 0.60)) * 0.45;
+    float cursorNoise = (n1 + n2) * 0.024 * uHover;
+
+    // Signed distance to cursor liquid blob boundary (< 0 is inside blob, > 0 is outside)
+    float signedDist = trailField + cursorNoise;
+
+    // Smooth hover lens mask: 1.0 inside liquid trail, 0.0 outside
+    float lensMask = uHover * (1.0 - smoothstep(-0.016, 0.016, signedDist));
+
+    // Glowing energy rim around the cursor liquid trail
+    float hoverCore = uHover * (1.0 - smoothstep(0.0, 0.011, abs(signedDist)));
+    float hoverHalo = uHover * (1.0 - smoothstep(0.0, 0.038, abs(signedDist)));
+
+    // =========================================================================
+    // 2. ORGANIC NOISE BURN DISSOLVE (Intro Animation & Show Aura Switch)
+    // =========================================================================
+    // Multi-octave FBM noise field in [0.0, 1.0] for island/patch dissolve
+    float fn1 = snoise(uv * 2.8 + vec2(0.12, -uTime * 0.10));
+    float fn2 = snoise(uv * 5.8 - vec2(uTime * 0.14, 0.22)) * 0.50;
+    float fn3 = snoise(uv * 11.5 + vec2(uTime * 0.20, uTime * 0.18)) * 0.25;
+    float fbm = (fn1 + fn2 + fn3) / 1.75;
+    // Slight vertical/center bias so chest & face break through organically like the reference video
+    float centerDist = length((uv - vec2(0.5, 0.45)) * vec2(1.0, 0.85));
+    float dissolveField = clamp((fbm * 0.5 + 0.5) * 0.82 + centerDist * 0.18, 0.0, 1.0);
+
+    // Combined global Aura level from Intro Animation (1 -> 0) and Manual Toggle (0 <-> 1)
+    float globalAuraProgress = clamp(max(uIntroAura, uToggleMode), 0.0, 1.0);
+
+    // Map globalAuraProgress (1.0 = full Aura, 0.0 = full Base) to noise threshold
+    float burnMargin = 0.09;
+    float thresh = mix(-burnMargin, 1.0 + burnMargin, 1.0 - globalAuraProgress);
+
+    // Pixels where dissolveField > thresh remain Aura; < thresh become Base
+    float globalAuraMask = smoothstep(thresh - 0.022, thresh + 0.022, dissolveField);
+
+    // Active burn rim along the eroding noise boundary during Intro or Toggle transition
+    float isTransitioning = smoothstep(0.0, 0.03, globalAuraProgress) * smoothstep(1.0, 0.97, globalAuraProgress);
+    float burnDist = abs(dissolveField - thresh);
+    float burnCore = isTransitioning * (1.0 - smoothstep(0.0, 0.024, burnDist));
+    float burnHalo = isTransitioning * (1.0 - smoothstep(0.0, 0.085, burnDist));
+
+    // =========================================================================
+    // 3. COMPOSITING BASE vs AURA + ELECTRIC ENERGY RIM
+    // =========================================================================
+    // When globalAuraMask is 0 (normal state), lensMask reveals Aura (1).
+    // When globalAuraMask is 1 (Aura state), lensMask reveals Base (0) when toggled, or stays 1 during intro.
+    float targetHoverAura = mix(lensMask, 1.0 - lensMask, uToggleMode);
+    float auraMix = mix(targetHoverAura, 1.0, uIntroAura > 0.001 ? globalAuraMask : 0.0);
+    if (uIntroAura <= 0.001) {
+      auraMix = mix(lensMask, 1.0 - lensMask, globalAuraMask);
+    }
+    auraMix = clamp(auraMix, 0.0, 1.0);
+
+    // Premultiplied alpha compositing so transparent background around Cyber-Wolf never bleeds dark RGB
+    float wBase = baseCol.a * (1.0 - auraMix);
+    float wAura = auraCol.a * auraMix;
+    float mixedAlpha = wBase + wAura;
+
+    vec3 mixedRgb = (mixedAlpha > 0.0001)
+      ? (baseCol.rgb * wBase + auraCol.rgb * wAura) / mixedAlpha
+      : vec3(0.0);
+
+    // Combine Cursor Rim (continuous closed liquid contour) + Intro/Toggle Dissolve Burn Rim (clipped to portrait & Cyber-Wolf silhouette)
+    float silhouetteMask = smoothstep(0.005, 0.18, unionAlpha);
+    float hoverGlow = clamp(hoverCore * 1.25 + hoverHalo * 0.58, 0.0, 1.0);
+    float burnGlow = clamp((burnCore * 1.30 + burnHalo * 0.62) * silhouetteMask, 0.0, 1.0);
+    float glowStrength = clamp(max(hoverGlow, burnGlow), 0.0, 1.0);
+    float coreWeight = clamp(max(hoverCore, burnCore * silhouetteMask), 0.0, 1.0);
+
+    // Electric-gold plasma rim with white-hot inner core (exact match to reference video)
+    vec3 glowColor = mix(vec3(0.83, 1.0, 0.0), vec3(0.08, 0.95, 0.75), coreWeight);
+
+
+    // Alpha-over compositing for the glowing rim
+    float outAlpha = clamp(mixedAlpha + glowStrength * (1.0 - mixedAlpha), 0.0, 1.0);
+    vec3 outRgb = (outAlpha > 0.0001)
+      ? (mixedRgb * mixedAlpha * (1.0 - glowStrength * 0.85) + glowColor * glowStrength) / outAlpha
+      : vec3(0.0);
+
+    // Apply smooth intro entrance fade-in
+    gl_FragColor = vec4(outRgb, outAlpha * uIntroReveal);
   }
 `;
 
@@ -202,7 +273,7 @@ function createCubicBezier(p1x: number, p1y: number, p2x: number, p2y: number) {
   };
 }
 
-const easeDissolve = createCubicBezier(0.16, 1.0, 0.3, 1.0);
+const easeDissolve = createCubicBezier(0.22, 1.0, 0.36, 1.0);
 
 export function PortraitAuraCanvas({
   baseImageSrc,
@@ -269,14 +340,21 @@ export function PortraitAuraCanvas({
     container.innerHTML = "";
     container.appendChild(renderer.domElement);
 
+    const initialTrail = Array.from(
+      { length: TRAIL_LENGTH },
+      () => new THREE.Vector2(0.5, 0.55)
+    );
+
     const uniforms = {
       uBaseTex: { value: new THREE.Texture() },
       uAuraTex: { value: new THREE.Texture() },
-      uMouse: { value: new THREE.Vector2(0.5, 0.55) },
-      uTrailMouse: { value: new THREE.Vector2(0.5, 0.55) },
+      uTrail: { value: initialTrail },
+      uMouseParallax: { value: new THREE.Vector2(0.0, 0.0) },
+      uParallaxStrength: { value: 0.012 },
       uHover: { value: 0.0 },
       uToggleMode: { value: isAuraForcedRef.current ? 1.0 : 0.0 },
       uIntroAura: { value: isReducedMotion ? 0.0 : 1.0 },
+      uIntroReveal: { value: isReducedMotion ? 1.0 : 0.0 },
       uTime: { value: 0.0 },
       uContainerAspect: { value: width / Math.max(1, height) },
       uTexAspect: { value: TEX_ASPECT },
@@ -295,7 +373,37 @@ export function PortraitAuraCanvas({
     scene.add(mesh);
 
     let disposed = false;
+    let texturesLoaded = false;
+    let preloaderDone = false;
     let introStartTime: number | null = null;
+
+    // Check if Preloader has already finished in this session
+    try {
+      if (window.sessionStorage.getItem("aryo_hud_preloader_seen") === "true") {
+        preloaderDone = true;
+      }
+    } catch {
+      preloaderDone = true;
+    }
+
+    const tryStartIntro = () => {
+      if (texturesLoaded && preloaderDone && introStartTime === null) {
+        introStartTime = performance.now();
+      }
+    };
+
+    const handlePreloaderComplete = () => {
+      preloaderDone = true;
+      tryStartIntro();
+    };
+
+    window.addEventListener("hud:preloader-complete", handlePreloaderComplete);
+
+    // Fallback in case event fired just before listener attached
+    const fallbackIntroTimer = window.setTimeout(() => {
+      preloaderDone = true;
+      tryStartIntro();
+    }, 1250);
 
     const textureLoader = new THREE.TextureLoader();
     const loadTex = (src: string): Promise<THREE.Texture> =>
@@ -326,17 +434,20 @@ export function PortraitAuraCanvas({
         uniforms.uAuraTex.value = auraTex;
         uniforms.uReady.value = 1.0;
 
-        // Start the 500ms Aura hold timer ONLY once both textures are ready on GPU
-        introStartTime = performance.now();
+        texturesLoaded = true;
+        tryStartIntro();
       })
       .catch(() => {
         // Fallback if image load fails
       });
 
-    // Spring-interpolated pointer & trail state
+    // 8-node spring chain for fluid ribbon cursor trail
     const targetMouse = { x: 0.5, y: 0.58 };
-    const currentMouse = { x: 0.5, y: 0.58 };
-    const trailMouse = { x: 0.5, y: 0.58 };
+    const trailNodes = Array.from({ length: TRAIL_LENGTH }, () => ({
+      x: 0.5,
+      y: 0.58,
+    }));
+    const currentParallax = { x: 0.0, y: 0.0 };
     let targetHover = 0.0;
     let currentHover = 0.0;
 
@@ -347,8 +458,15 @@ export function PortraitAuraCanvas({
       targetMouse.x = Math.max(0.0, Math.min(1.0, nx));
       targetMouse.y = Math.max(0.0, Math.min(1.0, ny));
 
-      // Gate hover lens to the central silhouette area so moving cursor up to the navbar never leaves a stray rim
-      if (nx >= 0.14 && nx <= 0.86 && ny >= 0.02 && ny <= 0.92) {
+      // Snap trail nodes to entry point when entering from cold state so no streak jumps across screen
+      if (currentHover < 0.02) {
+        for (let i = 0; i < TRAIL_LENGTH; i++) {
+          trailNodes[i].x = targetMouse.x;
+          trailNodes[i].y = targetMouse.y;
+        }
+      }
+
+      if (nx >= 0.08 && nx <= 0.92 && ny >= 0.02 && ny <= 0.95) {
         targetHover = 1.0;
       } else {
         targetHover = 0.0;
@@ -387,23 +505,36 @@ export function PortraitAuraCanvas({
     const animate = (now: number) => {
       rafId = window.requestAnimationFrame(animate);
 
-      // Suspend WebGL compute and rendering when hero is outside viewport
       if (!isVisible) return;
 
       const totalElapsed = (now - mountTime) * 0.001;
       uniforms.uTime.value = isReducedMotion ? 0.0 : totalElapsed;
 
-      // 0.5s full metallic Aura hold -> 0.8s smooth dissolve via cubic-bezier(0.16, 1, 0.3, 1)
+      // Choreographed Intro Sequence (Matches rinlayheang.me video):
+      // 0.00s - 0.40s: Full Metallic Cyber-Wolf Aura fades in smoothly
+      // 0.40s - 0.85s: Full Aura holds clearly
+      // 0.85s - 1.95s: Organic Simplex Noise Burn Dissolve with blazing gold rim reveals Base portrait
       if (isReducedMotion) {
+        uniforms.uIntroReveal.value = 1.0;
         uniforms.uIntroAura.value = 0.0;
       } else if (introStartTime === null) {
+        uniforms.uIntroReveal.value = 0.0;
         uniforms.uIntroAura.value = 1.0;
       } else {
         const introElapsed = (now - introStartTime) * 0.001;
-        if (introElapsed < 0.5) {
+
+        // 1. Entrance fade-in (0.0s -> 0.40s)
+        if (introElapsed < 0.4) {
+          uniforms.uIntroReveal.value = easeDissolve(introElapsed / 0.4);
+        } else {
+          uniforms.uIntroReveal.value = 1.0;
+        }
+
+        // 2. Aura hold (0.0s -> 0.85s) then Organic Noise Burn Dissolve (0.85s -> 1.95s)
+        if (introElapsed < 1.1) {
           uniforms.uIntroAura.value = 1.0;
-        } else if (introElapsed < 1.3) {
-          const rawProgress = (introElapsed - 0.5) / 0.8;
+        } else if (introElapsed < 2.1) {
+          const rawProgress = (introElapsed - 1.1) / 1.35;
           const easedProgress = easeDissolve(rawProgress);
           uniforms.uIntroAura.value = 1.0 - easedProgress;
         } else {
@@ -411,14 +542,14 @@ export function PortraitAuraCanvas({
         }
       }
 
-      // Smooth manual toggle transition using the same 0.8s cubic-bezier(0.16, 1, 0.3, 1) curve
+      // Smooth manual toggle transition ("SHOW AURA") using the same 0.95s organic burn curve
       const toggleAnim = toggleAnimRef.current;
       if (isReducedMotion || toggleAnim.startTime === 0) {
         uniforms.uToggleMode.value = toggleAnim.to;
       } else {
         const toggleElapsed = (now - toggleAnim.startTime) * 0.001;
-        if (toggleElapsed < 0.8) {
-          const t = easeDissolve(toggleElapsed / 0.8);
+        if (toggleElapsed < 0.95) {
+          const t = easeDissolve(toggleElapsed / 0.95);
           uniforms.uToggleMode.value =
             toggleAnim.from + (toggleAnim.to - toggleAnim.from) * t;
         } else {
@@ -426,15 +557,39 @@ export function PortraitAuraCanvas({
         }
       }
 
-      currentMouse.x += (targetMouse.x - currentMouse.x) * 0.16;
-      currentMouse.y += (targetMouse.y - currentMouse.y) * 0.16;
-      trailMouse.x += (currentMouse.x - trailMouse.x) * 0.075;
-      trailMouse.y += (currentMouse.y - trailMouse.y) * 0.075;
-      currentHover += (targetHover - currentHover) * 0.14;
+      // Update 8-node spring chain for fluid liquid cursor trail
+      trailNodes[0].x += (targetMouse.x - trailNodes[0].x) * 0.22;
+      trailNodes[0].y += (targetMouse.y - trailNodes[0].y) * 0.22;
+      uniforms.uTrail.value[0].set(trailNodes[0].x, trailNodes[0].y);
 
-      uniforms.uMouse.value.set(currentMouse.x, currentMouse.y);
-      uniforms.uTrailMouse.value.set(trailMouse.x, trailMouse.y);
+      for (let i = 1; i < TRAIL_LENGTH; i++) {
+        const prev = trailNodes[i - 1];
+        const curr = trailNodes[i];
+        curr.x += (prev.x - curr.x) * 0.28;
+        curr.y += (prev.y - curr.y) * 0.28;
+        uniforms.uTrail.value[i].set(curr.x, curr.y);
+      }
+
+      currentHover += (targetHover - currentHover) * 0.14;
       uniforms.uHover.value = currentHover;
+
+      // 3D Depth Map Parallax vector with buttery spring damping (Preserved unchanged)
+      const targetParallaxX = targetMouse.x - 0.5;
+      const targetParallaxY = targetMouse.y - 0.55;
+      currentParallax.x += (targetParallaxX - currentParallax.x) * 0.07;
+      currentParallax.y += (targetParallaxY - currentParallax.y) * 0.07;
+
+      uniforms.uMouseParallax.value.set(
+        isReducedMotion ? 0.0 : currentParallax.x,
+        isReducedMotion ? 0.0 : currentParallax.y
+      );
+      uniforms.uParallaxStrength.value = isReducedMotion ? 0.0 : 0.012;
+
+      // Subtle 3D physical perspective tilt on portrait mesh
+      if (!isReducedMotion) {
+        mesh.rotation.y = currentParallax.x * 0.08;
+        mesh.rotation.x = -currentParallax.y * 0.06;
+      }
 
       renderer.render(scene, camera);
     };
@@ -443,6 +598,8 @@ export function PortraitAuraCanvas({
 
     return () => {
       disposed = true;
+      window.clearTimeout(fallbackIntroTimer);
+      window.removeEventListener("hud:preloader-complete", handlePreloaderComplete);
       visibilityObserver.disconnect();
       window.cancelAnimationFrame(rafId);
       window.removeEventListener("resize", handleResize);
@@ -463,7 +620,7 @@ export function PortraitAuraCanvas({
     <div
       ref={containerRef}
       aria-label="Interactive 3D Shader Portrait of Aryo Ristiawan Machfudz — hover or click Show Aura to switch between Normal Portrait and Cyber-Wolf Aura"
-      className="relative h-full w-full cursor-crosshair select-none drop-shadow-[0_18px_28px_rgba(10,17,32,0.22)]"
+      className="relative h-full w-full cursor-default select-none drop-shadow-[0_18px_28px_rgba(10,17,32,0.22)]"
     />
   );
 }
