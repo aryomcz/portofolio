@@ -24,6 +24,7 @@ import { CaseStudyQuickModal } from "@/components/ui/CaseStudyQuickModal";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
+import { InteractiveArtifactShowcase } from "../ui/InteractiveArtifactShowcase";
 
 type CategoryFilter =
   | "ALL"
@@ -413,6 +414,12 @@ export function SelectedWorksSection() {
           </div>
         </TechBracketCard>
       </section>
+
+      <section id="artifacts" className="relative py-20 px-4 md:px-8 border-b border-slate-800">
+  <div className="max-w-7xl mx-auto">
+    <InteractiveArtifactShowcase />
+  </div>
+</section>
 
       {/* =====================================================================
           SECTION: PROJECTS (Interactive Carousel / Bento Showcase)
