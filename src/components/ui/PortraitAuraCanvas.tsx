@@ -336,7 +336,7 @@ export function PortraitAuraCanvas({
       powerPreference: "high-performance",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 1.5));
     container.innerHTML = "";
     container.appendChild(renderer.domElement);
 
@@ -619,6 +619,7 @@ export function PortraitAuraCanvas({
   return (
     <div
       ref={containerRef}
+      role="img"
       aria-label="Interactive 3D Shader Portrait of Aryo Ristiawan Machfudz — hover or click Show Aura to switch between Normal Portrait and Cyber-Wolf Aura"
       className="relative h-full w-full cursor-default select-none drop-shadow-[0_18px_28px_rgba(10,17,32,0.22)]"
     />

@@ -207,7 +207,7 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
                 role="tab"
                 aria-selected={isActive}
                 aria-controls={`experience-panel-${track.id}`}
-                aria-label={`${track.label} (${track.count} ${track.count === 1 ? "entry" : "entries"})`}
+                aria-label={`${track.shortLabel} — ${track.label} (${track.count} ${track.count === 1 ? "entry" : "entries"})`}
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => handleSelectTrack(track.id)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}

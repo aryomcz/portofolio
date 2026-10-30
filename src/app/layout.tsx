@@ -65,6 +65,13 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <link
+          rel="preload"
+          as="image"
+          href="/images/profile/aryo-base-aligned.webp"
+          type="image/webp"
+          fetchPriority="high"
+        />
       </head>
       <body className="relative min-h-screen flex flex-col bg-bg-primary text-text-primary">
         <SmoothScrollProvider>

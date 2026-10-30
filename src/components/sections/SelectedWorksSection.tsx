@@ -18,15 +18,40 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { PORTFOLIO_DATA, type ProjectCaseStudy } from "@/data/portfolio";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import dynamic from "next/dynamic";
 import { TechBracketCard } from "@/components/ui/TechBracketCard";
 import { ProjectVisualPreview } from "@/components/ui/ProjectVisualPreview";
 import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
-import { CaseStudyQuickModal } from "@/components/ui/CaseStudyQuickModal";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { TechMetropolisTelemetry } from "@/components/ui/TechMetropolisTelemetry";
 import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 import { SectionNextTeaser } from "@/components/ui/SectionNextTeaser";
+
+const TechMetropolisTelemetry = dynamic(
+  () =>
+    import("@/components/ui/TechMetropolisTelemetry").then(
+      (mod) => mod.TechMetropolisTelemetry
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="relative mx-auto my-8 flex min-h-[480px] w-full flex-col items-center justify-center rounded-2xl border border-border-subtle bg-bg-elevated/40 p-8 backdrop-blur-md">
+        <div className="mb-4 h-10 w-10 animate-spin rounded-full border-2 border-accent-primary border-t-transparent" />
+        <span className="font-mono text-xs uppercase tracking-widest text-text-muted">
+          SYS.TELEMETRY // MOUNTING 3D METROPOLIS RUNTIME...
+        </span>
+      </div>
+    ),
+  }
+);
+
+const CaseStudyQuickModal = dynamic(
+  () =>
+    import("@/components/ui/CaseStudyQuickModal").then(
+      (mod) => mod.CaseStudyQuickModal
+    ),
+  { ssr: false }
+);
 
 type CategoryFilter =
   | "ALL"
@@ -444,7 +469,7 @@ export function SelectedWorksSection() {
                     ? "font-semibold text-text-primary"
                     : "text-text-muted hover:text-text-primary"
                 )}
-                aria-label="Stacking cards view"
+                aria-label="STACK view — Stacking cards"
               >
                 {viewMode === "stack" ? (
                   <motion.span
@@ -467,7 +492,7 @@ export function SelectedWorksSection() {
                     ? "font-semibold text-text-primary"
                     : "text-text-muted hover:text-text-primary"
                 )}
-                aria-label="Carousel view"
+                aria-label="CAROUSEL view — Interactive carousel"
               >
                 {viewMode === "carousel" ? (
                   <motion.span
@@ -490,7 +515,7 @@ export function SelectedWorksSection() {
                     ? "font-semibold text-text-primary"
                     : "text-text-muted hover:text-text-primary"
                 )}
-                aria-label="Grid view"
+                aria-label="GRID view — Bento grid"
               >
                 {viewMode === "grid" ? (
                   <motion.span

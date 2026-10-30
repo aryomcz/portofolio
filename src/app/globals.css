@@ -12,10 +12,10 @@
 
   --text-primary: #0a1120;
   --text-secondary: #475569;
-  --text-muted: #64748b;
+  --text-muted: #475569;
 
   --border-subtle: #cbd5e1;
-  --border-strong: #64748b;
+  --border-strong: #475569;
 
   --accent-primary: #0e7c86;
   --accent-emerald: #0d9488;
@@ -44,7 +44,7 @@
 
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-muted: #94a3b8;
 
   --border-subtle: #1e293b;
   --border-strong: #475569;

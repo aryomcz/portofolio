@@ -1572,19 +1572,22 @@ export function TechMetropolisTelemetry() {
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
   const [wireframe, setWireframe] = useState<boolean>(false);
   const [isDockCollapsed, setIsDockCollapsed] = useState<boolean>(false);
-  const [isInViewport, setIsInViewport] = useState<boolean>(true);
+  const [isInViewport, setIsInViewport] = useState<boolean>(false);
   const [isSoftwareGl] = useState<boolean>(() => detectSoftwareWebGL());
 
   // Pause rendering when scrolled completely out of viewport
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setIsInViewport(true);
+      return;
+    }
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
         if (entry) setIsInViewport(entry.isIntersecting);
       },
-      { threshold: 0.04 }
+      { rootMargin: "300px 0px 300px 0px", threshold: 0.01 }
     );
     observer.observe(el);
     return () => observer.disconnect();
