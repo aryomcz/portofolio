@@ -92,7 +92,7 @@ export function SmoothScrollProvider({
     };
 
     gsap.ticker.add(updateLenis);
-    gsap.ticker.lagSmoothing(0);
+     gsap.ticker.lagSmoothing(500, 33);
 
     // Prevent Lenis wheel inertia from fighting native browser middle-click auto-scroll
     const handleMouseDown = (e: MouseEvent) => {

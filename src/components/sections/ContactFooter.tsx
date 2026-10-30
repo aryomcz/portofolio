@@ -87,13 +87,13 @@ export function ContactFooter() {
       value: `linkedin.com/${owner.contacts.linkedinHandle}`,
       href: owner.contacts.linkedinUrl,
     },
-    {
-      id: "whatsapp",
-      code: "CH // 04",
-      label: "WHATSAPP",
-      value: owner.contacts.phoneDisplay,
-      href: owner.contacts.whatsappUrl,
-    },
+    // {
+    //   id: "whatsapp",
+    //   code: "CH // 04",
+    //   label: "WHATSAPP",
+    //   value: owner.contacts.phoneDisplay,
+    //   href: owner.contacts.whatsappUrl,
+    // },
   ];
 
   return (

@@ -130,7 +130,7 @@ export function HeroSection() {
       {/* Scalable Hero Stage (Controlled by ScrollTrigger Scrub) */}
       <div
         ref={heroStageRef}
-        className="relative mx-auto flex w-full flex-1 flex-col justify-between px-5 sm:px-9 lg:px-11 lg:pb-20 will-change-transform"
+        className="relative mx-auto flex w-full flex-1 flex-col justify-between px-5 sm:px-9 lg:px-8 lg:pb-20 will-change-transform"
       >
         {/* Main 3-Column Hero Stage */}
         <div className="relative grid flex-1 grid-cols-1 items-center gap-8 lg:grid-cols-12">
@@ -142,7 +142,7 @@ export function HeroSection() {
             <h1
               id="hero-display-name"
               aria-label="ARYO MACHFUDZ"
-              className="lg:text-shadow-md text-shadow-accent-primary font-display text-[clamp(4.25rem,7.2vw,6.75rem)] leading-[0.94] tracking-[0.01em] text-text-primary select-none"
+              className="lg:text-shadow-md text-shadow-accent-primary font-display text-[clamp(4.25rem,7vw,6.5rem)] leading-[0.94] tracking-[0.01em] text-text-primary select-none"
             >
               <span className="block overflow-hidden" aria-hidden="true">
                 <span className="hero-name-line inline-block">
