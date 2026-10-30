@@ -57,9 +57,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="relative min-h-screen flex flex-col bg-bg-primary text-text-primary">
+        <SmoothScrollProvider>
         <ScrollProgressBar />
         <TopographicBg />
-        <SmoothScrollProvider>
           <Preloader />
           <PageTransitionProvider>
             <AdaptiveNavbar />

@@ -11,6 +11,7 @@ import {
   Eye,
   ExternalLink,
   GalleryHorizontal,
+  Layers,
   LayoutGrid,
   UserCheck,
 } from "lucide-react";
@@ -23,8 +24,9 @@ import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
 import { CaseStudyQuickModal } from "@/components/ui/CaseStudyQuickModal";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { InteractiveArtifactShowcase } from "@/components/ui/InteractiveArtifactShowcase";
 import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
-import { InteractiveArtifactShowcase } from "../ui/InteractiveArtifactShowcase";
+import { SectionNextTeaser } from "@/components/ui/SectionNextTeaser";
 
 type CategoryFilter =
   | "ALL"
@@ -52,7 +54,7 @@ export function SelectedWorksSection() {
   const isReducedMotion = useReducedMotion();
   const [previewStudy, setPreviewStudy] = useState<ProjectCaseStudy | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("ALL");
-  const [viewMode, setViewMode] = useState<"carousel" | "grid">("carousel");
+  const [viewMode, setViewMode] = useState<"stack" | "carousel" | "grid">("stack");
   const [activeIndex, setActiveIndex] = useState<number>(0);
 
   const { projects, featuredAchievement } = PORTFOLIO_DATA;
@@ -68,7 +70,7 @@ export function SelectedWorksSection() {
     refreshScrollTrigger();
   };
 
-  const handleToggleViewMode = (mode: "carousel" | "grid") => {
+  const handleToggleViewMode = (mode: "stack" | "carousel" | "grid") => {
     setViewMode(mode);
     refreshScrollTrigger();
   };
@@ -214,6 +216,35 @@ export function SelectedWorksSection() {
     { scope: containerRef }
   );
 
+  // Scroll-driven Stacking Cards scale & depth scrub
+  useGSAP(
+    () => {
+      if (isReducedMotion || viewMode !== "stack") return;
+
+      const cards = gsap.utils.toArray<HTMLElement>(".project-stack-card");
+      cards.forEach((card, idx) => {
+        if (idx === cards.length - 1) return;
+        const targetScale = Math.max(0.9, 1 - (cards.length - 1 - idx) * 0.028);
+
+        gsap.fromTo(
+          card,
+          { scale: 1 },
+          {
+            scale: targetScale,
+            ease: "none",
+            scrollTrigger: {
+              trigger: card,
+              start: "top 16%",
+              end: "bottom 12%",
+              scrub: 0.35,
+            },
+          }
+        );
+      });
+    },
+    { scope: containerRef, dependencies: [viewMode, selectedCategory, isReducedMotion] }
+  );
+
   // Navigate carousel
   const handlePrev = useCallback(() => {
     setActiveIndex((prev) => Math.max(0, prev - 1));
@@ -292,17 +323,17 @@ export function SelectedWorksSection() {
                 </span>
 
                 <span className="border border-accent-primary/50 bg-bg-primary px-3 py-1 font-mono text-xs text-accent-primary">
-                  JUARA {featuredAchievement.podium} · {featuredAchievement.year}
+                  JUARA 1 NASIONAL · {featuredAchievement.year}
                 </span>
 
                 <span className="border border-accent-primary/35 bg-bg-primary px-3 py-1 font-mono text-xs text-accent-primary">
-                 {featuredAchievement.univ}
+                  UIN Sunan Ampel Surabaya
                 </span>
               </div>
 
               {/* Display Title & Product Name */}
               <div>
-                 <KineticBlockReveal delay={0.15} themeColor={featuredAchievement.themeColor}>
+                <KineticBlockReveal delay={0.15} themeColor={featuredAchievement.themeColor}>
                   <h3 className="font-display text-[clamp(2.1rem,3.6vw,3.25rem)] leading-[0.95] tracking-wide text-accent-primary">
                     {featuredAchievement.title}
                   </h3>
@@ -415,14 +446,26 @@ export function SelectedWorksSection() {
         </TechBracketCard>
       </section>
 
-      <section id="artifacts" className="relative py-20 px-4 md:px-8 border-b border-slate-800">
-  <div className="max-w-7xl mx-auto">
-    <InteractiveArtifactShowcase />
-  </div>
-</section>
+      {/* =====================================================================
+          SECTION: 3D ARTIFACT SHOWCASE (Inspired by Lando Norris 3D Showcase)
+      ====================================================================== */}
+      <section
+        id="artifacts"
+        aria-label="Interactive 3D Hardware Telemetry Showcase"
+        className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+      >
+        <InteractiveArtifactShowcase />
+
+        <SectionNextTeaser
+          currentCode="03"
+          nextCode="04"
+          nextLabel="SELECTED PROJECTS"
+          targetSelector="#projects"
+        />
+      </section>
 
       {/* =====================================================================
-          SECTION: PROJECTS (Interactive Carousel / Bento Showcase)
+          SECTION: PROJECTS (Stacking Cards / Interactive Carousel / Bento Grid)
       ====================================================================== */}
       <section
         id="projects"
@@ -438,7 +481,7 @@ export function SelectedWorksSection() {
             <KineticBlockReveal delay={0.05} blockColor="bg-[#0e7c86]">
               <div className="flex items-center gap-2 font-mono text-xs text-accent-primary">
                 <span className="h-2 w-2 bg-[#0e7c86]" aria-hidden="true" />
-                <span>{"SYS.HUD // 04 — PRODUCTION ENGINEERING PORTFOLIO"}</span>
+                <span>{"SYS.HUD // 04 — PRODUCTION ENGINEERING PORTFOLIO (STACKING DECK)"}</span>
               </div>
             </KineticBlockReveal>
             <div className="overflow-hidden py-1 mt-1">
@@ -453,14 +496,37 @@ export function SelectedWorksSection() {
             </div>
           </div>
 
-          {/* Right Toolbar: View Switcher (Carousel vs Grid) */}
+          {/* Right Toolbar: View Switcher (Stack vs Carousel vs Grid) */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center rounded-full border border-border-subtle bg-bg-elevated p-1">
+            <div className="flex items-center border border-border-subtle bg-bg-elevated p-1">
+              <button
+                type="button"
+                onClick={() => handleToggleViewMode("stack")}
+                className={cn(
+                  "press-scale relative flex items-center gap-1.5 px-3 py-1.5 font-mono text-xs transition-colors",
+                  viewMode === "stack"
+                    ? "font-semibold text-text-primary"
+                    : "text-text-muted hover:text-text-primary"
+                )}
+                aria-label="Stacking cards view"
+              >
+                {viewMode === "stack" ? (
+                  <motion.span
+                    layoutId="project-view-mode-pill"
+                    transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
+                    className="absolute inset-0 bg-bg-subtle shadow-xs"
+                    aria-hidden="true"
+                  />
+                ) : null}
+                <Layers className="relative z-10 h-3.5 w-3.5" />
+                <span className="relative z-10">STACK</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => handleToggleViewMode("carousel")}
                 className={cn(
-                  "press-scale relative flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-xs transition-colors",
+                  "press-scale relative flex items-center gap-1.5 px-3 py-1.5 font-mono text-xs transition-colors",
                   viewMode === "carousel"
                     ? "font-semibold text-text-primary"
                     : "text-text-muted hover:text-text-primary"
@@ -471,7 +537,7 @@ export function SelectedWorksSection() {
                   <motion.span
                     layoutId="project-view-mode-pill"
                     transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
-                    className="absolute inset-0 rounded-full bg-bg-subtle shadow-xs"
+                    className="absolute inset-0 bg-bg-subtle shadow-xs"
                     aria-hidden="true"
                   />
                 ) : null}
@@ -483,7 +549,7 @@ export function SelectedWorksSection() {
                 type="button"
                 onClick={() => handleToggleViewMode("grid")}
                 className={cn(
-                  "press-scale relative flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-xs transition-colors",
+                  "press-scale relative flex items-center gap-1.5 px-3 py-1.5 font-mono text-xs transition-colors",
                   viewMode === "grid"
                     ? "font-semibold text-text-primary"
                     : "text-text-muted hover:text-text-primary"
@@ -494,7 +560,7 @@ export function SelectedWorksSection() {
                   <motion.span
                     layoutId="project-view-mode-pill"
                     transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
-                    className="absolute inset-0 rounded-full bg-bg-subtle shadow-xs"
+                    className="absolute inset-0 bg-bg-subtle shadow-xs"
                     aria-hidden="true"
                   />
                 ) : null}
@@ -518,7 +584,7 @@ export function SelectedWorksSection() {
                   type="button"
                   onClick={() => handleCategorySelect(cat)}
                   className={cn(
-                    "press-scale relative rounded-full border px-3.5 py-1.5 font-mono text-xs transition-colors",
+                    "press-scale relative border px-3.5 py-1.5 font-mono text-xs transition-colors",
                     isSelected
                       ? "border-accent-primary bg-accent-primary/10 font-semibold text-accent-primary"
                       : "border-border-subtle bg-bg-elevated/80 text-text-secondary hover:border-accent-primary/50 hover:text-text-primary"
@@ -528,7 +594,7 @@ export function SelectedWorksSection() {
                     <motion.span
                       layoutId="project-cat-pill"
                       transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
-                      className="absolute inset-0 rounded-full bg-accent-primary/15"
+                      className="absolute inset-0 bg-accent-primary/15"
                       aria-hidden="true"
                     />
                   ) : null}
@@ -555,7 +621,7 @@ export function SelectedWorksSection() {
                   type="button"
                   onClick={handlePrev}
                   disabled={activeIndex === 0}
-                  className="press-scale flex h-8 w-8 items-center justify-center rounded-full border border-border-subtle bg-bg-elevated text-text-primary transition-opacity hover:border-accent-primary hover:text-accent-primary disabled:cursor-not-allowed disabled:opacity-30"
+                  className="press-scale flex h-8 w-8 items-center justify-center border border-border-subtle bg-bg-elevated text-text-primary transition-opacity hover:border-accent-primary hover:text-accent-primary disabled:cursor-not-allowed disabled:opacity-30"
                   aria-label="Previous project"
                 >
                   <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -565,7 +631,7 @@ export function SelectedWorksSection() {
                   type="button"
                   onClick={handleNext}
                   disabled={activeIndex >= filteredProjects.length - 1}
-                  className="press-scale flex h-8 w-8 items-center justify-center rounded-full border border-border-subtle bg-bg-elevated text-text-primary transition-opacity hover:border-accent-primary hover:text-accent-primary disabled:cursor-not-allowed disabled:opacity-30"
+                  className="press-scale flex h-8 w-8 items-center justify-center border border-border-subtle bg-bg-elevated text-text-primary transition-opacity hover:border-accent-primary hover:text-accent-primary disabled:cursor-not-allowed disabled:opacity-30"
                   aria-label="Next project"
                 >
                   <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -576,9 +642,151 @@ export function SelectedWorksSection() {
         </div>
 
         {/* =================================================================
-            VIEW A: INTERACTIVE CAROUSEL VIEW (Swipe / Drag Momentum)
+            VIEW 0 (DEFAULT): SCROLL-DRIVEN STACKING CARDS
         ================================================================== */}
-        {viewMode === "carousel" ? (
+        {viewMode === "stack" ? (
+          <div
+            data-testid="projects-stacking-cards"
+            className="relative flex flex-col gap-10 pb-6"
+          >
+            {filteredProjects.map((project, idx) => (
+              <div
+                key={`stack-${project.slug}`}
+                style={{
+                  top: `calc(5.25rem + ${idx * 1.4}rem)`,
+                  zIndex: 10 + idx,
+                }}
+                className="project-stack-card sticky origin-top will-change-transform"
+              >
+                <TechBracketCard
+                  as="article"
+                  bracketSize="lg"
+                  activeAccent
+                  themeColor={project.themeColor}
+                  className="hud-project-card bg-bg-elevated p-5 shadow-[0_-10px_36px_rgba(10,17,32,0.16)] sm:p-8"
+                >
+                  {/* Top Bar: Stack Order, Index & Category */}
+                  <div className="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-accent-primary/35 pb-3 font-mono text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <span className="border border-accent-primary bg-accent-primary/15 px-2 py-0.5 font-bold text-accent-primary tabular-nums">
+                        {`STACK ${String(idx + 1).padStart(2, "0")}/${String(
+                          filteredProjects.length
+                        ).padStart(2, "0")}`}
+                      </span>
+                      <span className="font-semibold text-accent-primary">
+                        {`PROJECT // ${project.index} · ${project.year}`}
+                      </span>
+                    </div>
+                    <span className="border border-accent-primary/45 bg-bg-primary px-2.5 py-0.5 text-[11px] text-accent-primary">
+                      {project.category}
+                    </span>
+                  </div>
+
+                  {/* 2-Column Horizontal Split Inside Stacked Card */}
+                  <div className="grid grid-cols-1 gap-7 lg:grid-cols-12 lg:items-center">
+                    {/* Left 6 Cols: Visual Preview Frame */}
+                    <div className="lg:col-span-6">
+                      <TransitionLink
+                        href={`/projects/${project.slug}`}
+                        label={`PROJECT // ${project.shortTitle.toUpperCase()}`}
+                        aria-label={`Open full case study for ${project.title}`}
+                        className="block"
+                      >
+                        <ProjectVisualPreview study={project} />
+                      </TransitionLink>
+                    </div>
+
+                    {/* Right 6 Cols: Narrative, Impact, Tech Stack & Actions */}
+                    <div className="flex flex-col justify-between space-y-5 lg:col-span-6">
+                      <div>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h3 className="font-display text-3xl tracking-wide text-accent-primary sm:text-4xl">
+                            {project.title}
+                          </h3>
+                          <span className="font-mono text-[11px] text-accent-primary">
+                            {project.clientOrContext}
+                          </span>
+                        </div>
+
+                        <p className="mt-2.5 text-sm leading-relaxed text-text-secondary sm:text-base">
+                          {project.cardSummary}
+                        </p>
+                      </div>
+
+                      {/* Impact Strip */}
+                      <div className="border border-accent-primary/35 bg-bg-primary/90 px-4 py-2.5 font-mono text-xs text-text-primary">
+                        <span className="font-semibold text-accent-primary">
+                          IMPACT //{" "}
+                        </span>
+                        <span>{project.heroMetricPill}</span>
+                      </div>
+
+                      {/* Tech Stack Modules */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {project.techStack.map((tech) => (
+                          <span
+                            key={tech.name}
+                            className="badge-spring inline-flex items-center gap-1.5 border border-accent-primary/45 bg-bg-primary px-3 py-1 font-mono text-[11px] text-accent-primary"
+                          >
+                            <BrandTechIcon
+                              name={tech.name}
+                              className="text-accent-primary"
+                            />
+                            <span>{tech.name}</span>
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Footer Action Buttons */}
+                      <div className="flex flex-wrap items-center justify-between gap-2.5 border-t border-accent-primary/35 pt-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <TransitionLink
+                            href={`/projects/${project.slug}`}
+                            label={`PROJECT // ${project.shortTitle.toUpperCase()}`}
+                            className="press-scale group inline-flex min-h-10 items-center gap-1.5 bg-accent-primary px-4 py-2 font-mono text-xs font-semibold text-white hover:opacity-90"
+                          >
+                            <span>CASE STUDY</span>
+                            <ArrowUpRight
+                              className="arrow-drift h-3.5 w-3.5"
+                              aria-hidden="true"
+                            />
+                          </TransitionLink>
+
+                          <button
+                            type="button"
+                            onClick={() => setPreviewStudy(project)}
+                            className="press-scale inline-flex min-h-10 items-center gap-1.5 border border-accent-primary/60 bg-bg-primary px-3.5 py-2 font-mono text-xs text-accent-primary hover:border-accent-primary"
+                          >
+                            <Eye
+                              className="h-3.5 w-3.5 text-accent-primary"
+                              aria-hidden="true"
+                            />
+                            <span>PREVIEW</span>
+                          </button>
+                        </div>
+
+                        {project.liveUrl ? (
+                          <a
+                            href={project.liveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="press-scale inline-flex min-h-10 items-center gap-1.5 border border-accent-primary/45 bg-bg-primary px-3.5 py-2 font-mono text-xs text-accent-primary hover:border-accent-primary"
+                          >
+                            <span>LIVE SITE</span>
+                            <ExternalLink
+                              className="h-3.5 w-3.5"
+                              aria-hidden="true"
+                            />
+                          </a>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                </TechBracketCard>
+              </div>
+            ))}
+          </div>
+        ) : viewMode === "carousel" ? (
           <div
             ref={carouselContainerRef}
             className="relative w-full overflow-hidden py-2"
@@ -635,18 +843,13 @@ export function SelectedWorksSection() {
                               className="h-2 w-2 rounded-full bg-accent-primary"
                               aria-hidden="true"
                             />
-                            <KineticBlockReveal delay={0.1} themeColor={project.themeColor}>
                             <span className="font-semibold text-accent-primary">
                               {`PROJECT // ${project.index} · ${project.year}`}
                             </span>
-                            </KineticBlockReveal>
                           </div>
-                          <KineticBlockReveal delay={0.2} themeColor={project.themeColor}>
-
                           <span className="border border-accent-primary/45 bg-bg-primary px-2.5 py-0.5 text-[11px] text-accent-primary">
                             {project.category}
                           </span>
-                          </KineticBlockReveal>
                         </div>
 
                         {/* Sharp Visual Preview Frame */}
@@ -662,16 +865,12 @@ export function SelectedWorksSection() {
                         {/* Project Title & Solution Summary */}
                         <div>
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <KineticBlockReveal delay={0.3} themeColor={project.themeColor}>
                             <h3 className="font-display text-3xl tracking-wide text-accent-primary sm:text-4xl">
                               {project.title}
                             </h3>
-                            </KineticBlockReveal>
-                            <KineticBlockReveal delay={0.4} themeColor={project.themeColor}>
                             <span className="font-mono text-[11px] text-accent-primary">
                               ● {project.clientOrContext}
                             </span>
-                            </KineticBlockReveal>
                           </div>
 
                           <p className="mt-2 text-sm leading-relaxed text-text-secondary">

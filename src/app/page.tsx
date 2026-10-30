@@ -4,10 +4,12 @@ import { SelectedWorksSection } from "@/components/sections/SelectedWorksSection
 import { ExperienceSection } from "@/components/sections/ExperienceSection";
 import { GithubActivitySection } from "@/components/sections/GithubActivitySection";
 import { ContactFooter } from "@/components/sections/ContactFooter";
+import { SectionProgressHud } from "@/components/ui/SectionProgressHud";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen text-text-primary">
+    <main className="relative min-h-screen text-text-primary">
+      <SectionProgressHud/>
       <HeroSection />
       <CapabilitiesSection />
       <SelectedWorksSection />

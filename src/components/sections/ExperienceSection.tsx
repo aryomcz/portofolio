@@ -8,20 +8,29 @@ import {
 
 function TrackTimeline({ entries }: { readonly entries: readonly ExperienceEntry[] }) {
   return (
-    <ol className="relative space-y-8 pl-8 sm:pl-12">
-      {/* Vertical spine */}
+    <ol
+      data-testid="experience-timeline-list"
+      className="experience-timeline-list relative space-y-8 pl-8 sm:pl-12"
+    >
+      {/* Base Vertical Track Rail */}
       <span
-        className="absolute top-6 bottom-6 left-[7.5px] w-px bg-border-subtle"
+        className="absolute top-6 bottom-6 left-[7px] w-[2px] bg-border-subtle/75"
+        aria-hidden="true"
+      />
+      {/* Scroll-Drawn Active Progress Spine (Animated via GSAP ScrollTrigger scrub) */}
+      <span
+        style={{ transform: "scaleY(0)", transformOrigin: "top center" }}
+        className="experience-timeline-progress-line absolute top-6 bottom-6 left-[7px] w-[2px] bg-gradient-to-b from-accent-primary via-accent-emerald to-accent-primary shadow-[0_0_12px_rgba(14,124,134,0.65)] will-change-transform"
         aria-hidden="true"
       />
       {entries.map((entry) => (
-        <li key={entry.id} className="relative">
-          {/* Spine node */}
+        <li key={entry.id} className="experience-timeline-item relative">
+          {/* Spine Node Marker */}
           <span
-            className="absolute top-6 -left-8 flex h-4 w-4 items-center justify-center border border-accent-primary bg-bg-primary sm:-left-12"
+            className="experience-timeline-node absolute top-6 -left-8 flex h-4 w-4 items-center justify-center border border-accent-primary bg-bg-primary transition-transform duration-300 sm:-left-12"
             aria-hidden="true"
           >
-            <span className="h-2 w-2 bg-accent-primary" />
+            <span className="experience-timeline-node-dot h-2 w-2 bg-accent-primary" />
           </span>
           <ExperienceCard entry={entry} />
         </li>
@@ -33,7 +42,6 @@ function TrackTimeline({ entries }: { readonly entries: readonly ExperienceEntry
 /**
  * Experience section split into two explicit tracks:
  * Professional Work Experience and Organizational & Leadership Experience.
- * Cards render on the server; only the tab switcher ships as client JS.
  */
 export function ExperienceSection() {
   const { workExperiences, organizationalExperiences } = PORTFOLIO_DATA;

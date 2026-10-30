@@ -18,6 +18,7 @@ import {
 import { useLenis } from "@/hooks/useLenis";
 import { PortraitAuraCanvas } from "@/components/ui/PortraitAuraCanvas";
 import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
+import { SectionNextTeaser } from "@/components/ui/SectionNextTeaser";
 
 /**
  * Open, transparent corner-bracket frame (`┌ ┐ └ ┘`) matching rinlayheang.me's right HUD column.
@@ -502,22 +503,14 @@ export function HeroSection() {
       </div>
 
       {/* Architectural HUD Section Boundary Divider (Transition from Hero into Skills) */}
-      <div
-        aria-hidden="true"
-        className="relative z-20 flex w-full items-center justify-between border-t border-border-subtle bg-bg-primary/95 px-6 py-2.5 font-mono text-[10px] tracking-widest text-text-muted select-none backdrop-blur-xs"
-      >
-        <div className="flex items-center gap-2">
-          <span className="inline-block h-1.5 w-1.5 bg-accent-primary animate-pulse" />
-          <span>SYS.TELEMETRY // SEC.01 ➔ SEC.02</span>
-        </div>
-        <div className="hidden sm:flex items-center gap-4">
-          <span>LAT 6°35&apos;S LONG 106°47&apos;E</span>
-          <span>ENGINEERING CADENCE // NOMINAL</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span>INDEX // HERO</span>
-          <span className="text-accent-primary font-bold">▼</span>
-        </div>
+      <div className="relative z-20 mx-auto w-full max-w-7xl px-5 pb-4 sm:px-9 lg:px-11">
+        <SectionNextTeaser
+          currentCode="01"
+          nextCode="02"
+          nextLabel="TECHNICAL ARSENAL"
+          targetSelector="#skills"
+          className="mt-4"
+        />
       </div>
     </section>
   );

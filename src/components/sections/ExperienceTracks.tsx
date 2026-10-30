@@ -6,18 +6,16 @@ import { motion } from "motion/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { EASE_REDUCED, SPRING_SNAPPY } from "@/lib/motion";
 import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
+import { SectionNextTeaser } from "@/components/ui/SectionNextTeaser";
 import { cn } from "@/lib/utils";
 
 export type ExperienceTrackId = "work" | "organization";
 
 export interface ExperienceTrack {
   readonly id: ExperienceTrackId;
-  /** Full tab label, shown from the `sm` breakpoint up. */
   readonly label: string;
-  /** Compact tab label for narrow phones. */
   readonly shortLabel: string;
   readonly count: number;
-  /** Server-rendered panel content. */
   readonly panel: ReactNode;
 }
 
@@ -33,8 +31,7 @@ function padCount(count: number): string {
 
 /**
  * Dual-track HUD switcher: Work Experience vs Organizational Leadership.
- * Both panels stay in the HTML (inactive one is `hidden`) so every entry is
- * crawlable and the switch never waits on the network.
+ * Features a scroll-drawn vertical timeline spine synchronized via GSAP ScrollTrigger.
  */
 export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -72,6 +69,9 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
               yPercent: 0,
               clearProps: "transform,opacity,visibility",
             });
+            gsap.set(".experience-timeline-progress-line", {
+              scaleY: 1,
+            });
             return;
           }
 
@@ -91,10 +91,55 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
               },
             }
           );
+
+          // Scroll-drawn vertical timeline line for each track panel
+          const progressLines = gsap.utils.toArray<HTMLElement>(
+            ".experience-timeline-progress-line"
+          );
+          progressLines.forEach((line) => {
+            const listEl = line.closest(".experience-timeline-list") ?? sectionRef.current;
+            gsap.fromTo(
+              line,
+              { scaleY: 0 },
+              {
+                scaleY: 1,
+                ease: "none",
+                scrollTrigger: {
+                  trigger: listEl,
+                  start: "top 72%",
+                  end: "bottom 45%",
+                  scrub: 0.35,
+                },
+              }
+            );
+          });
+
+          // Activate & pulse timeline nodes as the scroll line reaches each item
+          const items = gsap.utils.toArray<HTMLElement>(".experience-timeline-item");
+          items.forEach((item) => {
+            const node = item.querySelector(".experience-timeline-node");
+            if (node) {
+              gsap.fromTo(
+                node,
+                { scale: 0.65, autoAlpha: 0.4 },
+                {
+                  scale: 1,
+                  autoAlpha: 1,
+                  duration: 0.4,
+                  ease: "back.out(2)",
+                  scrollTrigger: {
+                    trigger: item,
+                    start: "top 75%",
+                    toggleActions: "play none none reverse",
+                  },
+                }
+              );
+            }
+          });
         }
       );
     },
-    { scope: sectionRef }
+    { scope: sectionRef, dependencies: [activeId] }
   );
 
   // WAI-ARIA tabs pattern: arrows / Home / End move focus and activate.
@@ -135,7 +180,7 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
             <KineticBlockReveal delay={0.15} blockColor="bg-[#0e7c86]">
               <h2
                 id="experience-heading"
-                className="font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
+                className="experience-kinetic-title font-display text-[clamp(3rem,6vw,5rem)] leading-[0.9] tracking-wide text-text-primary will-change-transform"
               >
                 EXPERIENCE
               </h2>
@@ -242,6 +287,14 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
           </div>
         );
       })}
+
+      {/* End-of-Section HUD Velocity Teaser: Experience -> GitHub Telemetry */}
+      <SectionNextTeaser
+        currentCode="05"
+        nextCode="06"
+        nextLabel="GITHUB TELEMETRY"
+        targetSelector="#github"
+      />
     </section>
   );
 }

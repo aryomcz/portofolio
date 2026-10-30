@@ -50,6 +50,9 @@ export function Preloader() {
     };
 
     // 1. Point 3: Instantly bypass if prefers-reduced-motion is true
+    const isAutostart =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("autostart") === "1";
     if (isReducedMotion) {
       finishPreloader();
       return;

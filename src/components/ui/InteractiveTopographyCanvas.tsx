@@ -3,6 +3,11 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import {
+  useScrollCamera,
+  getGlobalScrollCameraState,
+} from "@/hooks/useScrollCamera";
+import { MAIN_PAGE_SECTIONS } from "@/lib/scrollNavigation";
 
 interface InteractiveTopographyCanvasProps {
   readonly className?: string;
@@ -12,7 +17,7 @@ const TOPOGRAPHY_VERTEX_SHADER = /* glsl */ `
   varying vec2 vUv;
   void main() {
     vUv = uv;
-    gl_Position = vec4(position.xy, 0.0, 1.0);
+    gl_Position = vec4(position.xy, 0.999, 1.0);
   }
 `;
 
@@ -26,6 +31,7 @@ const TOPOGRAPHY_FRAGMENT_SHADER = /* glsl */ `
   uniform float uMouseStrength;
   uniform float uScroll;
   uniform float uIsDark;
+  uniform vec3 uCamOffset;
 
   // 2D Simplex Noise by Ian McEwan, Ashima Arts
   vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -83,13 +89,13 @@ const TOPOGRAPHY_FRAGMENT_SHADER = /* glsl */ `
     float distToMouse = length(uv - mouseUv);
     float mouseWave = exp(-distToMouse * 3.8) * sin(distToMouse * 24.0 - uTime * 4.0) * 0.12 * uMouseStrength;
 
-    // Organic elevation map with subtle scroll velocity
-    vec2 p = uv * 1.8 + vec2(0.0, uScroll * 0.00035);
+    // Organic elevation map shifted by 3D scroll camera trajectory
+    vec2 p = uv * 1.8 + vec2(uCamOffset.x * 0.18, uScroll * 0.00035 + uCamOffset.y * 0.18);
     p += mouseWave * 0.6;
 
     float elevation = fbm(p + vec2(uTime * 0.035, -uTime * 0.025));
 
-    // Contour isoline quantization (Lando Norris topographic aesthetics)
+    // Contour isoline quantization
     float contourBands = 14.0;
     float val = elevation * contourBands;
     float lineDist = abs(fract(val) - 0.5);
@@ -99,11 +105,10 @@ const TOPOGRAPHY_FRAGMENT_SHADER = /* glsl */ `
     // Accentuate primary ridge rings every 4th band
     float majorLine = 1.0 - smoothstep(0.0, lineDeriv * 1.8, abs(fract(val / 4.0) - 0.5) - 0.02);
 
-    // Base contour color palette based on theme mode
-    vec3 darkBase = vec3(0.08, 0.72, 0.65); // Cyber-teal
-    vec3 darkAccent = vec3(0.83, 1.0, 0.0); // Neon-chartreuse (Lando Norris style)
-    vec3 lightBase = vec3(0.05, 0.48, 0.52); // Deep teal
-    vec3 lightAccent = vec3(0.12, 0.68, 0.45); // Emerald
+    vec3 darkBase = vec3(0.08, 0.72, 0.65);
+    vec3 darkAccent = vec3(0.055, 0.486, 0.525);
+    vec3 lightBase = vec3(0.05, 0.48, 0.52);
+    vec3 lightAccent = vec3(0.055, 0.486, 0.525);
 
     vec3 lineColor = uIsDark > 0.5 
       ? mix(darkBase, darkAccent, majorLine * 0.5)
@@ -111,7 +116,6 @@ const TOPOGRAPHY_FRAGMENT_SHADER = /* glsl */ `
 
     float alpha = (line * 0.075 + majorLine * 0.055) * (uIsDark > 0.5 ? 0.95 : 0.75);
 
-    // Mouse proximity highlight halo
     float hoverHalo = exp(-distToMouse * 2.5) * 0.04 * uMouseStrength;
     alpha += hoverHalo;
 
@@ -125,7 +129,11 @@ const TOPOGRAPHY_FRAGMENT_SHADER = /* glsl */ `
 
 export function InteractiveTopographyCanvas({ className }: InteractiveTopographyCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const isReducedMotion = useReducedMotion();
+
+  // Bind global Three.js camera to GSAP + Lenis scroll progress via useScrollCamera
+  useScrollCamera({ cameraRef });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -135,7 +143,16 @@ export function InteractiveTopographyCanvas({ className }: InteractiveTopography
     let height = window.innerHeight;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const camera = new THREE.PerspectiveCamera(
+      50,
+      width / Math.max(1, height),
+      0.1,
+      100
+    );
+    const initialState = getGlobalScrollCameraState();
+    camera.position.set(...initialState.pose.position);
+    camera.rotation.set(...initialState.pose.rotation);
+    cameraRef.current = camera;
 
     const isSoftwareGl = (() => {
       try {
@@ -153,7 +170,7 @@ export function InteractiveTopographyCanvas({ className }: InteractiveTopography
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
-      antialias: false,
+      antialias: !isSoftwareGl,
       powerPreference: "high-performance",
       precision: isSoftwareGl ? "mediump" : "highp",
     });
@@ -182,8 +199,10 @@ export function InteractiveTopographyCanvas({ className }: InteractiveTopography
       uMouseStrength: { value: 0.0 },
       uScroll: { value: window.scrollY },
       uIsDark: { value: checkIsDark() ? 1.0 : 0.0 },
+      uCamOffset: { value: new THREE.Vector3(0, 0, 6) },
     };
 
+    // 1. Background Topographic Shader Quad (Clips in NDC space)
     const geometry = new THREE.PlaneGeometry(2, 2);
     const material = new THREE.ShaderMaterial({
       vertexShader: TOPOGRAPHY_VERTEX_SHADER,
@@ -191,10 +210,56 @@ export function InteractiveTopographyCanvas({ className }: InteractiveTopography
       uniforms,
       transparent: true,
       depthWrite: false,
+      depthTest: false,
     });
 
     const quad = new THREE.Mesh(geometry, material);
+    quad.frustumCulled = false;
+    quad.renderOrder = -1;
     scene.add(quad);
+
+    // 2. 3D Spatial Telemetry Field (Perspective objects traversed by useScrollCamera)
+    const spatialGroup = new THREE.Group();
+    scene.add(spatialGroup);
+
+    const ringGeo = new THREE.RingGeometry(1.6, 1.615, 48);
+    const nodeGeo = new THREE.OctahedronGeometry(0.08, 0);
+    const wireMat = new THREE.MeshBasicMaterial({
+      color: 0x0e7c86,
+      transparent: true,
+      opacity: 0.09,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    const nodeMat = new THREE.MeshBasicMaterial({
+      color: 0x14b8a6,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.16,
+      depthWrite: false,
+    });
+
+    MAIN_PAGE_SECTIONS.forEach((sec, idx) => {
+      const anchorGroup = new THREE.Group();
+      anchorGroup.position.set(
+        sec.cameraPosition[0] * 0.75,
+        sec.cameraPosition[1] * 0.75,
+        (idx - 3) * -0.65
+      );
+      anchorGroup.rotation.set(
+        idx * 0.22,
+        idx * -0.18,
+        sec.cameraRotation[2]
+      );
+
+      const ringMesh = new THREE.Mesh(ringGeo, wireMat);
+      const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
+      nodeMesh.position.set(1.6, 0, 0);
+
+      anchorGroup.add(ringMesh);
+      anchorGroup.add(nodeMesh);
+      spatialGroup.add(anchorGroup);
+    });
 
     // Spring mouse kinematics state
     const targetMouse = { x: 0.5, y: 0.5 };
@@ -220,11 +285,12 @@ export function InteractiveTopographyCanvas({ className }: InteractiveTopography
     const handleResize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
+      camera.aspect = width / Math.max(1, height);
+      camera.updateProjectionMatrix();
       renderer.setSize(width, height);
       uniforms.uResolution.value.set(width, height);
     };
 
-    // Watch for theme changes (data-theme="dark" / "light")
     const themeObserver = new MutationObserver(() => {
       uniforms.uIsDark.value = checkIsDark() ? 1.0 : 0.0;
     });
@@ -240,6 +306,8 @@ export function InteractiveTopographyCanvas({ className }: InteractiveTopography
     window.addEventListener("resize", handleResize);
 
     let rafId = 0;
+    let timeoutId = 0;
+    let isDisposed = false;
     let isTabVisible = !document.hidden;
     const handleVisibility = () => {
       isTabVisible = !document.hidden;
@@ -248,15 +316,40 @@ export function InteractiveTopographyCanvas({ className }: InteractiveTopography
 
     const startTime = performance.now();
 
-    const renderLoop = (time: number) => {
-      rafId = requestAnimationFrame(renderLoop);
-      if (!isTabVisible) return;
+    function afterDraw(cb: () => void) {
+      if (isDisposed) return;
+      const gl = renderer.getContext() as WebGL2RenderingContext | null;
+      if (!gl || typeof gl.fenceSync !== "function") {
+        timeoutId = window.setTimeout(cb, 80);
+        return;
+      }
+      const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+      gl.flush();
+      const poll = () => {
+        if (isDisposed) return;
+        const state = sync && gl.getSyncParameter(sync, gl.SYNC_STATUS);
+        if (state === gl.UNSIGNALED) {
+          timeoutId = window.setTimeout(poll, 5);
+        } else {
+          if (sync) gl.deleteSync(sync);
+          timeoutId = window.setTimeout(cb, 80);
+        }
+      };
+      timeoutId = window.setTimeout(poll, 5);
+    }
 
-      const elapsed = (time - startTime) * 0.001;
+    const renderLoop = () => {
+      if (isDisposed) return;
+      if (!isTabVisible) {
+        timeoutId = window.setTimeout(renderLoop, 200);
+        return;
+      }
+
+      const elapsed = (performance.now() - startTime) * 0.001;
       uniforms.uTime.value = isReducedMotion ? 0.0 : elapsed;
       uniforms.uScroll.value = lastScrollY;
+      uniforms.uCamOffset.value.copy(camera.position);
 
-      // Spring-damped mouse tracking (frame-rate independent feel)
       const k = 0.12;
       currentMouse.x += (targetMouse.x - currentMouse.x) * k;
       currentMouse.y += (targetMouse.y - currentMouse.y) * k;
@@ -265,13 +358,26 @@ export function InteractiveTopographyCanvas({ className }: InteractiveTopography
       uniforms.uMouse.value.set(currentMouse.x, currentMouse.y);
       uniforms.uMouseStrength.value = isReducedMotion ? 0.0 : currentStrength;
 
+      if (!isReducedMotion) {
+        spatialGroup.rotation.z = elapsed * 0.04;
+      }
+
       renderer.render(scene, camera);
+
+      if (isSoftwareGl) {
+        afterDraw(renderLoop);
+      } else {
+        rafId = requestAnimationFrame(renderLoop);
+      }
     };
 
     rafId = requestAnimationFrame(renderLoop);
 
     return () => {
+      isDisposed = true;
       cancelAnimationFrame(rafId);
+      clearTimeout(timeoutId);
+      cameraRef.current = null;
       themeObserver.disconnect();
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("pointermove", handlePointerMove);
@@ -281,6 +387,10 @@ export function InteractiveTopographyCanvas({ className }: InteractiveTopography
 
       geometry.dispose();
       material.dispose();
+      ringGeo.dispose();
+      nodeGeo.dispose();
+      wireMat.dispose();
+      nodeMat.dispose();
       renderer.dispose();
       if (renderer.domElement.parentElement) {
         renderer.domElement.parentElement.removeChild(renderer.domElement);
@@ -292,7 +402,11 @@ export function InteractiveTopographyCanvas({ className }: InteractiveTopography
     <div
       ref={containerRef}
       aria-hidden="true"
-      className={`pointer-events-none fixed inset-0 z-0 overflow-hidden ${className ?? ""}`}
+      data-testid="global-three-scene"
+      className={`pointer-events-none fixed inset-0 z-0 overflow-hidden transition-colors duration-700 ${className ?? ""}`}
+      style={{
+        backgroundColor: "var(--section-ambient-tint, transparent)",
+      }}
     />
   );
 }

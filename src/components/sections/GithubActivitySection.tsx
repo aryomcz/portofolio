@@ -9,6 +9,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion-tokens";
 import { TechBracketCard } from "@/components/ui/TechBracketCard";
 import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
+import { SectionNextTeaser } from "@/components/ui/SectionNextTeaser";
 import { cn } from "@/lib/utils";
 
 interface LiveYearTelemetry {
@@ -529,6 +530,14 @@ export function GithubActivitySection() {
         </div>
       </TechBracketCard>
       </div>
+
+      {/* End-of-Section HUD Velocity Teaser: GitHub Telemetry -> Transmission */}
+      <SectionNextTeaser
+        currentCode="06"
+        nextCode="07"
+        nextLabel="TRANSMISSION"
+        targetSelector="#contact"
+      />
     </section>
   );
 }
