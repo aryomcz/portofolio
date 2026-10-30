@@ -54,13 +54,67 @@ export function ContactFooter() {
     () => {
       if (isReducedMotion) return;
 
-      // Single-shot entrance trigger (removes onEnterBack fatigue per MOTION_SPEC §3.7)
+      // 1. Single-shot glitch trigger for LET'S WORK heading
       ScrollTrigger.create({
         trigger: footerRef.current,
         start: "top 85%",
         once: true,
         onEnter: () => runGlitch(),
       });
+
+      // 2. Kinetic Card Wipe & Stagger entrance for contact channel cards
+      const cards = gsap.utils.toArray<HTMLElement>(".contact-channel-card");
+      if (cards.length > 0) {
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: cards[0],
+            start: "top 88%",
+            toggleActions: "play none none none",
+          },
+        });
+
+        cards.forEach((card, idx) => {
+          const beam = card.querySelector<HTMLElement>(".contact-card-beam");
+          const cardDelay = idx * 0.12;
+
+          // Animate card self-unmasking with horizontal clip-path wipe
+          tl.fromTo(
+            card,
+            {
+              clipPath: "inset(0% 100% 0% 0%)",
+              x: -18,
+              autoAlpha: 0,
+            },
+            {
+              clipPath: "inset(0% 0% 0% 0%)",
+              x: 0,
+              autoAlpha: 1,
+              duration: 0.65,
+              ease: "power3.out",
+              clearProps: "clipPath,transform",
+            },
+            cardDelay
+          );
+
+          // Synchronized kinetic laser beam traveling along the unmask edge
+          if (beam) {
+            tl.fromTo(
+              beam,
+              {
+                left: "0%",
+                autoAlpha: 1,
+              },
+              {
+                left: "100%",
+                autoAlpha: 0,
+                duration: 0.65,
+                ease: "power3.out",
+              },
+              cardDelay
+            );
+          }
+        });
+      }
     },
     { scope: footerRef, dependencies: [isReducedMotion, runGlitch] }
   );
@@ -200,8 +254,18 @@ export function ContactFooter() {
                 href={item.href}
                 target={item.id === "email" ? undefined : "_blank"}
                 rel={item.id === "email" ? undefined : "noopener noreferrer"}
-                className="press-scale group relative flex items-center justify-between border border-[#1D2738] bg-[#0F1520]/90 p-5 transition-colors duration-200 hover:border-accent-primary hover:bg-[#161F2E]"
+                className="contact-channel-card press-scale group relative flex items-center justify-between border border-[#1D2738] bg-[#0F1520]/90 p-5 transition-colors duration-200 hover:border-accent-primary hover:bg-[#161F2E]"
               >
+                {/* Kinetic Laser Beam leading edge (only active during stagger unmask) */}
+                {!isReducedMotion && (
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 overflow-hidden"
+                  >
+                    <span className="contact-card-beam pointer-events-none absolute inset-y-0 w-[2.5px] bg-accent-primary shadow-[0_0_14px_#0e7c86] z-30 opacity-0 will-change-transform" />
+                  </div>
+                )}
+
                 {/* Tech HUD Corner Brackets ┌ ┐ └ ┘ */}
                 <span
                   aria-hidden="true"
