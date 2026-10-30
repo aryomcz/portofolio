@@ -51,25 +51,29 @@ export function SmoothScrollProvider({
   const isReducedMotion = useReducedMotion();
 
   useEffect(() => {
-    // 1. Respect prefers-reduced-motion: bypass Lenis hijacking completely
-    if (isReducedMotion) {
+    const isTouchDevice =
+      typeof window !== "undefined" &&
+      (window.matchMedia?.("(pointer: coarse)").matches ?? false);
+
+    // 1. Respect prefers-reduced-motion or native touch scrolling: bypass Lenis wheel hijacking
+    if (isReducedMotion || isTouchDevice) {
       if (lenisRef.current) {
         lenisRef.current.destroy();
         lenisRef.current = null;
         setLenisInstance(null);
       }
-      ScrollTrigger.refresh();
       return;
     }
 
+    ScrollTrigger.config({ ignoreMobileResize: true });
+
     // 2. Instantiate Lenis with autoRaf: false so gsap.ticker is the single clock source
     const lenis = new Lenis({
-      duration: 1.15,
-      easing: editorialScrollEasing,
+      lerp: 0.11,
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 1,
+      wheelMultiplier: 0.95,
       touchMultiplier: 1.5,
       autoRaf: false,
     });
@@ -88,27 +92,28 @@ export function SmoothScrollProvider({
     };
 
     gsap.ticker.add(updateLenis);
-    // Allow standard lag smoothing to prevent stuttering during GC pauses
-    gsap.ticker.lagSmoothing(500, 33);
+    gsap.ticker.lagSmoothing(0);
 
-    // 5. Initial refresh
-    ScrollTrigger.refresh();
+    // Prevent Lenis wheel inertia from fighting native browser middle-click auto-scroll
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.button === 1 && lenisRef.current) {
+        lenisRef.current.scrollTo(window.scrollY, { immediate: true });
+      }
+    };
+    window.addEventListener("mousedown", handleMouseDown, { passive: true });
 
-    // 6. Task 9: Refresh ScrollTrigger when document fonts and images finish loading
-    if (typeof document !== "undefined" && "fonts" in document) {
-      document.fonts.ready.then(() => {
-        refreshScrollTrigger();
-      });
-    }
-
-    const handleWindowLoad = () => {
-      refreshScrollTrigger(true);
+    // 5. Coalesce ScrollTrigger refresh once after window load (only when not mid-scroll)
+    const safeRefresh = () => {
+      if (lenisRef.current && Math.abs(lenisRef.current.velocity) > 0.1) return;
+      refreshScrollTrigger();
     };
 
-    if (document.readyState === "complete") {
-      refreshScrollTrigger();
-    } else {
-      window.addEventListener("load", handleWindowLoad);
+    const handleWindowLoad = () => {
+      safeRefresh();
+    };
+
+    if (document.readyState !== "complete") {
+      window.addEventListener("load", handleWindowLoad, { once: true });
     }
 
     // Custom event listener for components undergoing layout changes
@@ -119,6 +124,7 @@ export function SmoothScrollProvider({
 
     // 7. Strict Lifecycle Cleanup on unmount
     return () => {
+      window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("load", handleWindowLoad);
       window.removeEventListener("hud:refresh-scroll", handleCustomRefresh);
       gsap.ticker.remove(updateLenis);

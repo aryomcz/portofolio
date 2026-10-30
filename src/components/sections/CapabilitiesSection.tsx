@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { gsap, useGSAP, GSAP_MEDIA_QUERIES } from "@/lib/gsap";
 import { TransitionLink } from "@/components/ui/TransitionLink";
 import { ArrowUpRight, Layers, Cpu, Sparkles } from "lucide-react";
 import {
@@ -31,100 +30,6 @@ export function CapabilitiesSection() {
 
   const { capabilityDomains, projects, featuredAchievement } = PORTFOLIO_DATA;
   const allDeployments = [featuredAchievement, ...projects];
-
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-
-      mm.add(
-        {
-          isDesktop: GSAP_MEDIA_QUERIES.isDesktop,
-          isMobile: GSAP_MEDIA_QUERIES.isMobile,
-          reduceMotion: GSAP_MEDIA_QUERIES.reduceMotion,
-        },
-        (context) => {
-          const { reduceMotion } = context.conditions as {
-            isDesktop: boolean;
-            isMobile: boolean;
-            reduceMotion: boolean;
-          };
-
-          if (reduceMotion) {
-            gsap.set(
-              [
-                ".skills-kinetic-title",
-                ".skill-domain-card",
-                ".skill-domain-card .hud-corner-ornament",
-              ],
-              {
-                autoAlpha: 1,
-                scale: 1,
-                y: 0,
-                yPercent: 0,
-                clearProps: "transform,opacity,visibility",
-              }
-            );
-            return;
-          }
-
-          gsap.fromTo(
-            ".skills-kinetic-title",
-            { yPercent: 105, autoAlpha: 0 },
-            {
-              yPercent: 0,
-              autoAlpha: 1,
-              duration: 0.9,
-              ease: "power3.out",
-              clearProps: "transform",
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                start: "top 75%",
-                toggleActions: "play none none none",
-              },
-            }
-          );
-
-          gsap.fromTo(
-            ".skill-domain-card",
-            { scale: 0.96, y: 24, autoAlpha: 0 },
-            {
-              scale: 1,
-              y: 0,
-              autoAlpha: 1,
-              duration: 0.8,
-              stagger: 0.1,
-              ease: "power3.out",
-              clearProps: "transform,opacity,visibility",
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                start: "top 75%",
-                toggleActions: "play none none none",
-              },
-            }
-          );
-
-          gsap.fromTo(
-            ".skill-domain-card .hud-corner-ornament",
-            { scale: 0.8, autoAlpha: 0 },
-            {
-              scale: 1,
-              autoAlpha: 1,
-              duration: 0.5,
-              stagger: 0.04,
-              ease: "power2.out",
-              clearProps: "transform,opacity,visibility",
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                start: "top 75%",
-                toggleActions: "play none none none",
-              },
-            }
-          );
-        }
-      );
-    },
-    { scope: sectionRef }
-  );
 
   return (
     <section

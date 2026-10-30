@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink, GitCommit } from "lucide-react";
 import { motion } from "motion/react";
-import { gsap, useGSAP, GSAP_MEDIA_QUERIES } from "@/lib/gsap";
 import { PORTFOLIO_DATA, type GithubContributionDay } from "@/data/portfolio";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion-tokens";
@@ -123,59 +122,29 @@ export function GithubActivitySection() {
     {}
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-
-      mm.add(
-        {
-          isDesktop: GSAP_MEDIA_QUERIES.isDesktop,
-          isMobile: GSAP_MEDIA_QUERIES.isMobile,
-          reduceMotion: GSAP_MEDIA_QUERIES.reduceMotion,
-        },
-        (context) => {
-          const { reduceMotion } = context.conditions as {
-            isDesktop: boolean;
-            isMobile: boolean;
-            reduceMotion: boolean;
-          };
-
-          if (reduceMotion) {
-            gsap.set(".github-telemetry-card", {
-              autoAlpha: 1,
-              y: 0,
-              yPercent: 0,
-              clearProps: "all",
-            });
-            return;
-          }
-
-          // Contribution Card: smooth entrance
-          gsap.fromTo(
-            ".github-telemetry-card",
-            { y: 28, autoAlpha: 0 },
-            {
-              y: 0,
-              autoAlpha: 1,
-              duration: 0.85,
-              ease: "power3.out",
-              clearProps: "all",
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                start: "top 85%",
-                toggleActions: "play none none none",
-              },
-            }
-          );
-        }
-      );
-    },
-    { scope: sectionRef }
-  );
+  const [shouldFetchLive, setShouldFetchLive] = useState<boolean>(false);
 
   useEffect(() => {
-    if (liveCache[selectedYear]) return;
+    const el = sectionRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setShouldFetchLive(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShouldFetchLive(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "650px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!shouldFetchLive || liveCache[selectedYear]) return;
 
     let isCancelled = false;
     queueMicrotask(() => {
@@ -255,7 +224,7 @@ export function GithubActivitySection() {
     return () => {
       isCancelled = true;
     };
-  }, [githubTelemetry.username, liveCache, selectedYear]);
+  }, [githubTelemetry.username, liveCache, selectedYear, shouldFetchLive]);
 
   const currentLiveYear = liveCache[selectedYear];
 
@@ -375,9 +344,28 @@ export function GithubActivitySection() {
           </span>
         </div>
 
-        {/* 52-Week Contribution Heatmap Grid */}
+        {/* 52-Week Contribution Heatmap Grid (Event-Delegated for Zero Closure Bloat) */}
         <div
           className="overflow-x-auto border border-border-subtle bg-bg-primary/90 p-4 sm:p-5"
+          onPointerOver={(e) => {
+            const target = (e.target as HTMLElement).closest<HTMLElement>(
+              "[data-gh-date]"
+            );
+            if (!target || !statusTextRef.current) return;
+            const rawDate = target.dataset.ghDate ?? "";
+            const count = Number(target.dataset.ghCount ?? "0");
+            const fallback = target.dataset.ghFallback ?? "";
+            const formatted = formatContributionDate(rawDate);
+            const countWord = count === 1 ? "contribution" : "contributions";
+            statusTextRef.current.textContent = formatted
+              ? `${count} ${countWord} on ${formatted}`
+              : `${count} ${countWord} — ${fallback}`;
+          }}
+          onPointerLeave={() => {
+            if (statusTextRef.current) {
+              statusTextRef.current.textContent = defaultSummaryText;
+            }
+          }}
         >
           <div className="flex min-w-[680px] justify-between gap-1">
             {heatmapWeeks.map((week, wIdx) => (
@@ -395,38 +383,12 @@ export function GithubActivitySection() {
                     );
                   }
 
-                  const formattedDate = formatContributionDate(day.date);
-                  const countWord =
-                    day.count === 1 ? "contribution" : "contributions";
-                  const label = formattedDate
-                    ? `${day.count} ${countWord} on ${formattedDate}`
-                    : `${day.count} ${countWord} — Week ${wIdx + 1}, Day ${dIdx + 1} (${selectedYear})`;
-
                   return (
-                    <button
+                    <span
                       key={`${wIdx}-${dIdx}`}
-                      type="button"
-                      aria-label={label}
-                      onMouseEnter={() => {
-                        if (statusTextRef.current) {
-                          statusTextRef.current.textContent = label;
-                        }
-                      }}
-                      onFocus={() => {
-                        if (statusTextRef.current) {
-                          statusTextRef.current.textContent = label;
-                        }
-                      }}
-                      onMouseLeave={() => {
-                        if (statusTextRef.current) {
-                          statusTextRef.current.textContent = defaultSummaryText;
-                        }
-                      }}
-                      onBlur={() => {
-                        if (statusTextRef.current) {
-                          statusTextRef.current.textContent = defaultSummaryText;
-                        }
-                      }}
+                      data-gh-date={day.date}
+                      data-gh-count={day.count}
+                      data-gh-fallback={`Week ${wIdx + 1}, Day ${dIdx + 1} (${selectedYear})`}
                       className={cn(
                         "h-3 w-3 border border-border-subtle/40 transition-transform duration-150 ease-out hover:scale-125",
                         LEVEL_BG_CLASSES[day.level]

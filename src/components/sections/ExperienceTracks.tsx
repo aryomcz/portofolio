@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { gsap, useGSAP, GSAP_MEDIA_QUERIES, refreshScrollTrigger } from "@/lib/gsap";
+import { gsap, useGSAP, refreshScrollTrigger } from "@/lib/gsap";
 import { motion } from "motion/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { EASE_REDUCED, SPRING_SNAPPY } from "@/lib/motion";
@@ -48,98 +48,32 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
 
   useGSAP(
     () => {
-      const mm = gsap.matchMedia();
+      if (isReducedMotion) {
+        gsap.set(".experience-timeline-progress-line", {
+          scaleY: 1,
+        });
+        return;
+      }
 
-      mm.add(
-        {
-          isDesktop: GSAP_MEDIA_QUERIES.isDesktop,
-          isMobile: GSAP_MEDIA_QUERIES.isMobile,
-          reduceMotion: GSAP_MEDIA_QUERIES.reduceMotion,
-        },
-        (context) => {
-          const { reduceMotion } = context.conditions as {
-            isDesktop: boolean;
-            isMobile: boolean;
-            reduceMotion: boolean;
-          };
-
-          if (reduceMotion) {
-            gsap.set(".experience-kinetic-title", {
-              autoAlpha: 1,
-              yPercent: 0,
-              clearProps: "transform,opacity,visibility",
-            });
-            gsap.set(".experience-timeline-progress-line", {
-              scaleY: 1,
-            });
-            return;
-          }
-
-          gsap.fromTo(
-            ".experience-kinetic-title",
-            { yPercent: 105, autoAlpha: 0 },
-            {
-              yPercent: 0,
-              autoAlpha: 1,
-              duration: 0.9,
-              ease: "power3.out",
-              clearProps: "transform",
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                start: "top 78%",
-                toggleActions: "play none none none",
-              },
-            }
-          );
-
-          // Scroll-drawn vertical timeline line for each track panel
-          const progressLines = gsap.utils.toArray<HTMLElement>(
-            ".experience-timeline-progress-line"
-          );
-          progressLines.forEach((line) => {
-            const listEl = line.closest(".experience-timeline-list") ?? sectionRef.current;
-            gsap.fromTo(
-              line,
-              { scaleY: 0 },
-              {
-                scaleY: 1,
-                ease: "none",
-                scrollTrigger: {
-                  trigger: listEl,
-                  start: "top 72%",
-                  end: "bottom 45%",
-                  scrub: 0.35,
-                },
-              }
-            );
-          });
-
-          // Activate & pulse timeline nodes as the scroll line reaches each item
-          const items = gsap.utils.toArray<HTMLElement>(".experience-timeline-item");
-          items.forEach((item) => {
-            const node = item.querySelector(".experience-timeline-node");
-            if (node) {
-              gsap.fromTo(
-                node,
-                { scale: 0.65, autoAlpha: 0.4 },
-                {
-                  scale: 1,
-                  autoAlpha: 1,
-                  duration: 0.4,
-                  ease: "back.out(2)",
-                  scrollTrigger: {
-                    trigger: item,
-                    start: "top 75%",
-                    toggleActions: "play none none reverse",
-                  },
-                }
-              );
-            }
-          });
-        }
+      const progressLines = gsap.utils.toArray<HTMLElement>(
+        ".experience-timeline-progress-line"
       );
+      progressLines.forEach((line) => {
+        const listEl =
+          line.closest(".experience-timeline-list") ?? sectionRef.current;
+        gsap.to(line, {
+          scaleY: 1,
+          ease: "none",
+          scrollTrigger: {
+            trigger: listEl,
+            start: "top 72%",
+            end: "bottom 45%",
+            scrub: 0.35,
+          },
+        });
+      });
     },
-    { scope: sectionRef, dependencies: [activeId] }
+    { scope: sectionRef, dependencies: [activeId, isReducedMotion] }
   );
 
   // WAI-ARIA tabs pattern: arrows / Home / End move focus and activate.
@@ -207,7 +141,7 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
                 role="tab"
                 aria-selected={isActive}
                 aria-controls={`experience-panel-${track.id}`}
-                aria-label={`${track.shortLabel} — ${track.label} (${track.count} ${track.count === 1 ? "entry" : "entries"})`}
+                aria-label={`${track.label} (${track.count} ${track.count === 1 ? "entry" : "entries"})`}
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => handleSelectTrack(track.id)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}

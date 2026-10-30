@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { motion } from "motion/react";
+import React, { useEffect, useRef } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import type { ProjectThemeId } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
@@ -23,19 +22,8 @@ export interface KineticBlockRevealProps {
   readonly children: React.ReactNode;
   readonly className?: string;
   readonly textClassName?: string;
-  /**
-   * Tailwind class for block curtain (e.g. "bg-accent-primary", "bg-[#0e7c86]").
-   * Backwards-compatible with existing usages.
-   */
   readonly blockColor?: string;
-  /**
-   * ProjectThemeId or theme name (e.g. "orange", "blue", "sky", "red", "fuchsia", "teal").
-   * Automatically resolves to the project's signature color.
-   */
   readonly themeColor?: ProjectThemeId | string;
-  /**
-   * Direct color code (hex "#f97316", "rgb(...)", CSS var "var(--accent-primary)", or theme ID).
-   */
   readonly color?: string;
   readonly delay?: number;
   readonly duration?: number;
@@ -47,20 +35,11 @@ interface BlockVisuals {
   style?: React.CSSProperties;
 }
 
-/**
- * Resolves color styling with priority:
- * 1. themeColor prop (e.g. "orange", "blue", etc. or custom hex)
- * 2. color prop (hex, rgb, theme name, or CSS var)
- * 3. blockColor prop (Tailwind class or hex)
- * 4. Default fallback: "bg-accent-primary", which natively inherits
- *    var(--accent-primary) from any ancestor with data-project-theme!
- */
 function resolveBlockVisuals(
   themeColor?: ProjectThemeId | string,
   color?: string,
   blockColor?: string
 ): BlockVisuals {
-  // 1. Check themeColor
   if (themeColor) {
     const hex =
       THEME_COLOR_MAP[themeColor] ||
@@ -78,7 +57,6 @@ function resolveBlockVisuals(
     }
   }
 
-  // 2. Check direct color
   if (color) {
     const hex =
       THEME_COLOR_MAP[color] || (color.startsWith("#") ? color : undefined);
@@ -109,7 +87,6 @@ function resolveBlockVisuals(
     }
   }
 
-  // 3. Check blockColor (legacy class or value)
   if (blockColor) {
     if (blockColor in THEME_COLOR_MAP) {
       const hex = THEME_COLOR_MAP[blockColor];
@@ -134,22 +111,36 @@ function resolveBlockVisuals(
     };
   }
 
-  // 4. Default: Use dynamic CSS accent-primary
-  // When inside a container with [data-project-theme], this automatically
-  // reflects the project's exact theme color (orange, blue, sky, red, fuchsia).
   return {
     className: "bg-accent-primary shadow-[0_0_16px_var(--accent-primary)]",
   };
 }
 
-/**
- * KineticBlockReveal
- * Recreates the signature Lando Norris text highlighter block reveal animation.
- * A high-energy neon/theme block sweeps across the text line from left to right,
- * then smoothly collapses to the right, revealing typography underneath.
- *
- * Supports dynamic themeColor / color styling matching each individual project.
- */
+// Shared singleton IntersectionObserver across all KineticBlockReveal instances
+// Eliminates ~60 separate IntersectionObservers and ~180 Framer Motion fibers
+let sharedObserver: IntersectionObserver | null = null;
+
+function getSharedRevealObserver(): IntersectionObserver | null {
+  if (typeof window === "undefined" || typeof IntersectionObserver === "undefined") {
+    return null;
+  }
+  if (!sharedObserver) {
+    sharedObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const target = entry.target as HTMLElement;
+            target.dataset.revealed = "true";
+            sharedObserver?.unobserve(target);
+          }
+        }
+      },
+      { threshold: 0.1 }
+    );
+  }
+  return sharedObserver;
+}
+
 export function KineticBlockReveal({
   children,
   className,
@@ -162,9 +153,28 @@ export function KineticBlockReveal({
   as = "span",
 }: KineticBlockRevealProps) {
   const isReducedMotion = useReducedMotion();
+  const rootRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (isReducedMotion) return;
+    const el = rootRef.current;
+    if (!el) return;
+
+    const observer = getSharedRevealObserver();
+    if (!observer) {
+      el.dataset.revealed = "true";
+      return;
+    }
+
+    observer.observe(el);
+    return () => {
+      observer.unobserve(el);
+    };
+  }, [isReducedMotion]);
+
+  const Tag = as as React.ElementType;
 
   if (isReducedMotion) {
-    const Tag = as;
     return (
       <Tag className={cn("inline-block", className, textClassName)}>
         {children}
@@ -172,60 +182,35 @@ export function KineticBlockReveal({
     );
   }
 
-  const Component = motion[as] as typeof motion.span;
   const blockVisuals = resolveBlockVisuals(themeColor, color, blockColor);
+  const textDelay = +(delay + duration * 0.36).toFixed(3);
 
   return (
-    <Component
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-10% 0px" }}
-      className={cn("relative inline-block overflow-hidden align-top", className)}
+    <Tag
+      ref={rootRef}
+      style={
+        {
+          "--kb-delay": `${delay}s`,
+          "--kb-duration": `${duration}s`,
+          "--kb-text-delay": `${textDelay}s`,
+        } as React.CSSProperties
+      }
+      className={cn(
+        "kinetic-reveal-root relative inline-block overflow-hidden align-top",
+        className
+      )}
     >
-      {/* 1. Underlying typography revealed as the block clears */}
-      <motion.span
-        variants={{
-          hidden: { opacity: 0, y: "15%" },
-          visible: {
-            opacity: 1,
-            y: 0,
-            transition: {
-              duration: 0.35,
-              delay: delay + duration * 0.42,
-              ease: [0.23, 1, 0.32, 1],
-            },
-          },
-        }}
-        className={cn("inline-block", textClassName)}
-      >
+      <span className={cn("kinetic-reveal-text inline-block", textClassName)}>
         {children}
-      </motion.span>
-
-      {/* 2. Precision Highlighter Block Curtain */}
-      <motion.span
+      </span>
+      <span
         aria-hidden="true"
-        variants={{
-          hidden: {
-            scaleX: 0,
-            originX: 0,
-          },
-          visible: {
-            scaleX: [0, 1, 1, 0],
-            originX: [0, 0, 1, 1],
-            transition: {
-              duration,
-              delay,
-              times: [0, 0.48, 0.52, 1],
-              ease: [0.16, 1, 0.3, 1],
-            },
-          },
-        }}
         style={blockVisuals.style}
         className={cn(
-          "pointer-events-none absolute inset-0 z-20 will-change-transform",
+          "kinetic-reveal-curtain pointer-events-none absolute inset-0 z-20 will-change-transform",
           blockVisuals.className
         )}
       />
-    </Component>
+    </Tag>
   );
 }

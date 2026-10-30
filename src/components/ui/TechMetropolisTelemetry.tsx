@@ -8,12 +8,10 @@ import React, {
   useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
-import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import {
   RotateCcw,
   Layers,
@@ -515,45 +513,28 @@ export function evaluateSkybridgePoint(
 // SOFTWARE WEBGL DETECTION & STUDIO ENVIRONMENT
 // ============================================================================
 
+let _cachedMetropolisSoftwareGl: boolean | null = null;
 function detectSoftwareWebGL(): boolean {
+  if (_cachedMetropolisSoftwareGl !== null) return _cachedMetropolisSoftwareGl;
   if (typeof document === "undefined") return false;
   try {
     const canvas = document.createElement("canvas");
     const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
-    if (!gl) return true;
+    if (!gl) {
+      _cachedMetropolisSoftwareGl = true;
+      return true;
+    }
     const ext = gl.getExtension("WEBGL_debug_renderer_info");
     const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
     const rendererName = String(gl.getParameter(param) || "");
     gl.getExtension("WEBGL_lose_context")?.loseContext();
-    return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(
-      rendererName
-    );
+    _cachedMetropolisSoftwareGl =
+      /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(rendererName);
+    return _cachedMetropolisSoftwareGl;
   } catch {
+    _cachedMetropolisSoftwareGl = false;
     return false;
   }
-}
-
-function MetropolisStudioEnvironment() {
-  const { gl } = useThree();
-
-  const envTexture = useMemo(() => {
-    const pmremGenerator = new THREE.PMREMGenerator(gl);
-    pmremGenerator.compileEquirectangularShader();
-    const roomEnv = new RoomEnvironment();
-    const envTarget = pmremGenerator.fromScene(roomEnv, 0.04);
-    const texture = envTarget.texture;
-    roomEnv.dispose();
-    pmremGenerator.dispose();
-    return texture;
-  }, [gl]);
-
-  useEffect(() => {
-    return () => {
-      envTexture.dispose();
-    };
-  }, [envTexture]);
-
-  return <primitive object={envTexture} attach="environment" />;
 }
 
 // ============================================================================
@@ -767,7 +748,7 @@ function SkybridgeGatewaySystem({
   const packetCount = 88;
   const dummyObj = useMemo(() => new THREE.Object3D(), []);
 
-  // Build smooth curves for North and South suspension bridges + cables
+  // Build smooth curves for North and South suspension bridges + pre-sampled Float32Array LUTs
   const {
     northDeckGeo,
     southDeckGeo,
@@ -776,8 +757,8 @@ function SkybridgeGatewaySystem({
     southCableLeftGeo,
     southCableRightGeo,
     suspenderLinesGeo,
-    northCurve,
-    southCurve,
+    northSamples,
+    southSamples,
   } = useMemo(() => {
     const createDeckCurve = (branch: "north" | "south") => {
       const pts: THREE.Vector3[] = [];
@@ -858,16 +839,33 @@ function SkybridgeGatewaySystem({
       new THREE.Float32BufferAttribute(suspenderVerts, 3)
     );
 
+    // Pre-sample 256 points along both curves once so useFrame has zero Vector3 allocations
+    const SAMPLE_STEPS = 256;
+    const nSamples = new Float32Array(SAMPLE_STEPS * 3);
+    const sSamples = new Float32Array(SAMPLE_STEPS * 3);
+    for (let s = 0; s < SAMPLE_STEPS; s++) {
+      const u = s / (SAMPLE_STEPS - 1);
+      const np = nCurve.getPointAt(u);
+      const sp = sCurve.getPointAt(u);
+      const base = s * 3;
+      nSamples[base] = np.x;
+      nSamples[base + 1] = np.y;
+      nSamples[base + 2] = np.z;
+      sSamples[base] = sp.x;
+      sSamples[base + 1] = sp.y;
+      sSamples[base + 2] = sp.z;
+    }
+
     return {
-      northDeckGeo: new THREE.TubeGeometry(nCurve, 44, 0.18, 8, false),
-      southDeckGeo: new THREE.TubeGeometry(sCurve, 44, 0.18, 8, false),
-      northCableLeftGeo: new THREE.TubeGeometry(nCableL, 40, 0.028, 6, false),
-      northCableRightGeo: new THREE.TubeGeometry(nCableR, 40, 0.028, 6, false),
-      southCableLeftGeo: new THREE.TubeGeometry(sCableL, 40, 0.028, 6, false),
-      southCableRightGeo: new THREE.TubeGeometry(sCableR, 40, 0.028, 6, false),
+      northDeckGeo: new THREE.TubeGeometry(nCurve, 36, 0.18, 6, false),
+      southDeckGeo: new THREE.TubeGeometry(sCurve, 36, 0.18, 6, false),
+      northCableLeftGeo: new THREE.TubeGeometry(nCableL, 32, 0.028, 5, false),
+      northCableRightGeo: new THREE.TubeGeometry(nCableR, 32, 0.028, 5, false),
+      southCableLeftGeo: new THREE.TubeGeometry(sCableL, 32, 0.028, 5, false),
+      southCableRightGeo: new THREE.TubeGeometry(sCableR, 32, 0.028, 5, false),
       suspenderLinesGeo: suspGeo,
-      northCurve: nCurve,
-      southCurve: sCurve,
+      northSamples: nSamples,
+      southSamples: sSamples,
     };
   }, []);
 
@@ -889,7 +887,7 @@ function SkybridgeGatewaySystem({
     }
   }, [packetCount]);
 
-  // Animate continuous bi-directional packet streams along both skybridges
+  // Animate continuous bi-directional packet streams along both skybridges using O(1) LUT
   useFrame((state) => {
     const mesh = packetsMeshRef.current;
     if (!mesh) return;
@@ -897,17 +895,21 @@ function SkybridgeGatewaySystem({
 
     for (let i = 0; i < packetCount; i++) {
       const isNorth = i % 2 === 0;
-      const curve = isNorth ? northCurve : southCurve;
+      const samples = isNorth ? northSamples : southSamples;
       const speed = 0.14 + (i % 5) * 0.025;
       const offset = (i / packetCount) * 2.0;
       const rawT = (elapsed * speed + offset) % 1;
       const u = isNorth ? rawT : 1 - rawT;
 
-      const pt = curve.getPointAt(u);
+      const lutIdx = Math.min(255, Math.max(0, (u * 255) | 0)) * 3;
+      const px = samples[lutIdx];
+      const py = samples[lutIdx + 1];
+      const pz = samples[lutIdx + 2];
+
       const laneOffset = ((i % 3) - 1) * 0.12;
       const bobOffset = Math.sin(elapsed * 4 + i) * 0.035;
 
-      dummyObj.position.set(pt.x, pt.y + 0.14 + bobOffset, pt.z + laneOffset);
+      dummyObj.position.set(px, py + 0.14 + bobOffset, pz + laneOffset);
       const pulseScale = 0.78 + Math.sin(elapsed * 5 + i * 0.7) * 0.24;
       dummyObj.scale.setScalar(pulseScale);
       dummyObj.updateMatrix();
@@ -1029,8 +1031,6 @@ function MetropolisBuildingNode({
   onHover: (node: TechNodeSpec | null) => void;
   onSelect: (node: TechNodeSpec) => void;
 }) {
-  const groupRef = useRef<THREE.Group | null>(null);
-  const beaconRef = useRef<THREE.Mesh | null>(null);
   const [w, h, d] = node.dimensions;
 
   const isHovered = hoveredNodeId === node.id;
@@ -1039,40 +1039,24 @@ function MetropolisBuildingNode({
   const isDimmed =
     activeDistrict !== "overview" && activeDistrict !== node.district;
 
-  const mainEdgesGeo = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d)),
-    [w, h, d]
-  );
-  const crownEdgesGeo = useMemo(
-    () =>
-      new THREE.EdgesGeometry(
-        new THREE.BoxGeometry(w * 0.72, h * 0.24, d * 0.72)
-      ),
-    [w, h, d]
-  );
-
-  useFrame((state, delta) => {
-    if (groupRef.current) {
-      const targetScaleY = isHighlighted ? 1.05 : 1.0;
-      groupRef.current.scale.y = THREE.MathUtils.lerp(
-        groupRef.current.scale.y,
-        targetScaleY,
-        1 - Math.exp(-10 * delta)
-      );
-    }
-    if (beaconRef.current) {
-      const pulse =
-        0.75 +
-        Math.sin(state.clock.getElapsedTime() * 3.5 + node.position[0]) * 0.25;
-      beaconRef.current.scale.setScalar(isHighlighted ? 1.35 : pulse);
-    }
-  });
+  const { mainEdgesGeo, crownEdgesGeo } = useMemo(() => {
+    const boxA = new THREE.BoxGeometry(w, h, d);
+    const boxB = new THREE.BoxGeometry(w * 0.72, h * 0.24, d * 0.72);
+    const edgesA = new THREE.EdgesGeometry(boxA);
+    const edgesB = new THREE.EdgesGeometry(boxB);
+    boxA.dispose();
+    boxB.dispose();
+    return { mainEdgesGeo: edgesA, crownEdgesGeo: edgesB };
+  }, [w, h, d]);
 
   const edgeOpacity = isHighlighted ? 1.0 : isDimmed ? 0.16 : 0.78;
   const bodyOpacity = isDimmed ? 0.3 : 0.96;
 
   return (
-    <group position={node.position} ref={groupRef}>
+    <group
+      position={node.position}
+      scale={[1, isHighlighted ? 1.05 : 1, 1]}
+    >
       {/* Invisible Ergonomic Raycast Hit Box */}
       <mesh
         position={[0, h * 0.55, 0]}
@@ -1170,7 +1154,7 @@ function MetropolisBuildingNode({
           </mesh>
 
           {/* Golden Civic Spire & Beacon */}
-          <mesh ref={beaconRef} position={[0, 2.42, 0]}>
+          <mesh position={[0, 2.42, 0]}>
             <octahedronGeometry args={[0.2, 0]} />
             <meshBasicMaterial color="#fbbf24" />
           </mesh>
@@ -1208,7 +1192,7 @@ function MetropolisBuildingNode({
               />
             </mesh>
           ))}
-          <mesh ref={beaconRef} position={[0, h + 0.16, 0]}>
+          <mesh position={[0, h + 0.16, 0]}>
             <sphereGeometry args={[0.11, 12, 12]} />
             <meshBasicMaterial color={node.accentColor} />
           </mesh>
@@ -1302,7 +1286,7 @@ function MetropolisBuildingNode({
             <cylinderGeometry args={[0.02, 0.035, h * 0.28, 8]} />
             <meshBasicMaterial color={node.accentColor} />
           </mesh>
-          <mesh ref={beaconRef} position={[w * 0.12, h + h * 0.5, 0]}>
+          <mesh position={[w * 0.12, h + h * 0.5, 0]}>
             <octahedronGeometry args={[0.09, 0]} />
             <meshBasicMaterial color={node.accentColor} />
           </mesh>
@@ -1376,7 +1360,7 @@ function MetropolisBuildingNode({
           })}
 
           {/* Rooftop Server Status Beacon */}
-          <mesh ref={beaconRef} position={[0, h + 0.34, 0]}>
+          <mesh position={[0, h + 0.34, 0]}>
             <boxGeometry args={[0.16, 0.1, 0.16]} />
             <meshBasicMaterial color={node.accentColor} />
           </mesh>
@@ -1474,32 +1458,36 @@ function TechMetropolisScene({
 
   return (
     <>
-      <MetropolisStudioEnvironment />
-
-      {/* Atmospheric Depth & Balanced Multi-Zone Lighting */}
+      {/* Atmospheric Depth & Balanced Multi-Zone Lighting (Zero PMREM Cubemap Bake Overhead) */}
       <fog attach="fog" args={["#070c18", 22, 46]} />
-      <hemisphereLight args={["#e2e8f0", "#0f172a", 1.15]} />
+      <ambientLight intensity={0.65} color="#cbd5e1" />
+      <hemisphereLight args={["#f1f5f9", "#0f172a", 1.45]} />
       <directionalLight
         position={[10, 18, 12]}
-        intensity={2.1}
+        intensity={2.45}
         color="#fff7ed"
+      />
+      <directionalLight
+        position={[-10, 12, -8]}
+        intensity={1.15}
+        color="#38bdf8"
       />
       {/* District Accent Point Lights */}
       <pointLight
         position={[-7.2, 5.5, 1.5]}
-        intensity={4.5}
+        intensity={4.8}
         distance={14}
         color="#00f0ff"
       />
       <pointLight
         position={[0, 5.0, 0]}
-        intensity={4.0}
+        intensity={4.2}
         distance={14}
         color="#fbbf24"
       />
       <pointLight
         position={[7.2, 5.5, 1.5]}
-        intensity={4.5}
+        intensity={4.8}
         distance={14}
         color="#10b981"
       />
@@ -1562,6 +1550,7 @@ export function TechMetropolisTelemetry() {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const labelRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const lastPinCoordsRef = useRef<Record<string, string>>({});
   const hoverCardRef = useRef<HTMLDivElement | null>(null);
 
   const [activeDistrict, setActiveDistrict] = useState<DistrictId>("overview");
@@ -1573,21 +1562,30 @@ export function TechMetropolisTelemetry() {
   const [wireframe, setWireframe] = useState<boolean>(false);
   const [isDockCollapsed, setIsDockCollapsed] = useState<boolean>(false);
   const [isInViewport, setIsInViewport] = useState<boolean>(false);
-  const [isSoftwareGl] = useState<boolean>(() => detectSoftwareWebGL());
+  const [hasEnteredViewport, setHasEnteredViewport] = useState<boolean>(false);
+  const [isSoftwareGl, setIsSoftwareGl] = useState<boolean>(false);
 
-  // Pause rendering when scrolled completely out of viewport
+  // Lazily mount Canvas when approaching viewport (420px rootMargin) and pause when scrolled away
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") {
-      setIsInViewport(true);
-      return;
-    }
+    if (!el || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (entry) setIsInViewport(entry.isIntersecting);
+        if (entry) {
+          const nextVisible = entry.isIntersecting;
+          setIsInViewport((prev) => (prev === nextVisible ? prev : nextVisible));
+          if (nextVisible) {
+            setHasEnteredViewport((prev) => {
+              if (!prev) {
+                setIsSoftwareGl(detectSoftwareWebGL());
+              }
+              return true;
+            });
+          }
+        }
       },
-      { rootMargin: "300px 0px 300px 0px", threshold: 0.01 }
+      { threshold: 0, rootMargin: "420px 0px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -1639,12 +1637,20 @@ export function TechMetropolisTelemetry() {
         const clampedX = Math.max(48, Math.min(width - 48, px));
         const clampedY = Math.max(24, Math.min(height - 96, py));
 
-        el.style.transform = `translate3d(${clampedX.toFixed(1)}px, ${clampedY.toFixed(1)}px, 0) translate(-50%, -100%)`;
+        const nextTransform = `translate3d(${clampedX.toFixed(1)}px, ${clampedY.toFixed(1)}px, 0) translate(-50%, -100%)`;
+        if (lastPinCoordsRef.current[node.id] !== nextTransform) {
+          lastPinCoordsRef.current[node.id] = nextTransform;
+          el.style.transform = nextTransform;
+        }
 
         if (hoveredNode?.id === node.id && hoverCardRef.current) {
           const cardX = Math.max(145, Math.min(width - 145, clampedX));
           const cardY = Math.max(115, Math.min(height - 125, clampedY - 22));
-          hoverCardRef.current.style.transform = `translate3d(${cardX.toFixed(1)}px, ${cardY.toFixed(1)}px, 0) translate(-50%, -100%)`;
+          const nextCardTransform = `translate3d(${cardX.toFixed(1)}px, ${cardY.toFixed(1)}px, 0) translate(-50%, -100%)`;
+          if (lastPinCoordsRef.current.__hoverCard !== nextCardTransform) {
+            lastPinCoordsRef.current.__hoverCard = nextCardTransform;
+            hoverCardRef.current.style.transform = nextCardTransform;
+          }
         }
       }
     },
@@ -1784,36 +1790,41 @@ export function TechMetropolisTelemetry() {
       {/* =====================================================================
           INTERACTIVE 3D ISOMETRIC WEBGL VIEWPORT + PROJECTED 2D HUD PINS
       ====================================================================== */}
-      <div className="relative h-[440px] w-full sm:h-[520px] lg:h-[580px] cursor-grab active:cursor-grabbing select-none overflow-hidden">
-        <Canvas
-          camera={{ position: [0, 14.8, 23.2], fov: 36 }}
-          dpr={isSoftwareGl ? 1 : [1, 1.75]}
-          frameloop={isInViewport ? "always" : "never"}
-          gl={{
-            powerPreference: "high-performance",
-            antialias: !isSoftwareGl,
-            alpha: false,
-            preserveDrawingBuffer: true,
-          }}
-          onCreated={({ gl, scene }) => {
-            gl.outputColorSpace = THREE.SRGBColorSpace;
-            gl.toneMapping = THREE.ACESFilmicToneMapping;
-            gl.toneMappingExposure = 1.12;
-            scene.background = new THREE.Color("#070c18");
-          }}
-        >
-          <TechMetropolisScene
-            activeDistrict={activeDistrict}
-            hoveredNodeId={hoveredNode?.id ?? null}
-            selectedNodeId={selectedNode.id}
-            wireframe={wireframe}
-            autoRotate={autoRotate}
-            isSoftwareGl={isSoftwareGl}
-            onSyncOverlay={handleSyncOverlay}
-            onHoverNode={setHoveredNode}
-            onSelectNode={handleNodeSelect}
-          />
-        </Canvas>
+      <div className="relative h-[440px] w-full sm:h-[520px] lg:h-[580px] cursor-grab active:cursor-grabbing select-none overflow-hidden touch-pan-y">
+        {hasEnteredViewport ? (
+          <Canvas
+            camera={{ position: [0, 14.8, 23.2], fov: 36 }}
+            dpr={isSoftwareGl ? 1 : [1, 1.5]}
+            frameloop={isInViewport ? "always" : "never"}
+            gl={{
+              powerPreference: "high-performance",
+              antialias: !isSoftwareGl,
+              alpha: false,
+            }}
+            onCreated={({ gl, scene }) => {
+              gl.outputColorSpace = THREE.SRGBColorSpace;
+              gl.toneMapping = THREE.ACESFilmicToneMapping;
+              gl.toneMappingExposure = 1.12;
+              scene.background = new THREE.Color("#070c18");
+            }}
+          >
+            <TechMetropolisScene
+              activeDistrict={activeDistrict}
+              hoveredNodeId={hoveredNode?.id ?? null}
+              selectedNodeId={selectedNode.id}
+              wireframe={wireframe}
+              autoRotate={autoRotate}
+              isSoftwareGl={isSoftwareGl}
+              onSyncOverlay={handleSyncOverlay}
+              onHoverNode={setHoveredNode}
+              onSelectNode={handleNodeSelect}
+            />
+          </Canvas>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-[#070c18] font-mono text-xs tracking-widest text-slate-500">
+            INITIALIZING 3D METROPOLIS VIEWPORT...
+          </div>
+        )}
 
         {/* Zero-Overhead Projected 2D Callout Badges (Synced in useFrame) */}
         <div
@@ -1985,7 +1996,7 @@ export function TechMetropolisTelemetry() {
           {TECH_METROPOLIS_NODES.map((node) => (
             <li key={`sr-${node.id}`}>
               <strong>{node.roleTitle}</strong> — {node.productionDetail} (
-              <Link href={`/projects/${node.projectSlug}`}>{node.projectLabel}</Link>)
+              <a href={`/projects/${node.projectSlug}`}>{node.projectLabel}</a>)
             </li>
           ))}
         </ul>

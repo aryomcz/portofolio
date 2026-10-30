@@ -38,6 +38,18 @@ export function SectionNextTeaser({
     const el = trackRef.current;
     const badgeEl = badgeRef.current;
 
+    let isVisible = false;
+    const observer =
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            ([entry]) => {
+              isVisible = entry?.isIntersecting ?? false;
+            },
+            { rootMargin: "120px 0px" }
+          )
+        : null;
+    observer?.observe(el);
+
     const xTo = gsap.quickTo(el, "x", {
       duration: 0.45,
       ease: "power3.out",
@@ -56,6 +68,8 @@ export function SectionNextTeaser({
     let resetTimer: ReturnType<typeof setTimeout> | null = null;
 
     const unsubscribe = subscribeScrollCamera((state) => {
+      if (!isVisible) return;
+
       const { teaserShiftPx, skewDeg } = computeMarqueeKinematics(
         state.velocity
       );
@@ -75,6 +89,7 @@ export function SectionNextTeaser({
 
     return () => {
       if (resetTimer) clearTimeout(resetTimer);
+      observer?.disconnect();
       unsubscribe();
     };
   }, [isReducedMotion]);

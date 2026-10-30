@@ -45,20 +45,7 @@ export function ProjectDetailEntrance({
             return;
           }
 
-          // 1. Requirement 5: Judul per baris kinetic masked reveal
-          gsap.fromTo(
-            ".project-detail-title",
-            { yPercent: 110, autoAlpha: 0 },
-            {
-              yPercent: 0,
-              autoAlpha: 1,
-              duration: 0.85,
-              ease: "power3.out",
-              clearProps: "all",
-            }
-          );
-
-          // 2. Requirement 5: Meta HUD dossier & metric cards staggered entrance
+          // 1. Requirement 5: Meta HUD dossier & metric cards staggered entrance
           gsap.fromTo(
             ".project-detail-meta",
             { y: 22, autoAlpha: 0 },

@@ -2,22 +2,11 @@
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SplitText } from "gsap/SplitText";
-import { Flip } from "gsap/Flip";
-import { Observer } from "gsap/Observer";
-import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
 import { useGSAP } from "@gsap/react";
 
-// Register all plugins once centrally
+// Register only used plugins (eliminates 48.4 KiB of unused SplitText/Flip/Observer/ScrambleTextPlugin code)
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(
-    ScrollTrigger,
-    SplitText,
-    Flip,
-    Observer,
-    ScrambleTextPlugin,
-    useGSAP
-  );
+  gsap.registerPlugin(ScrollTrigger, useGSAP);
 }
 
 /**
@@ -31,7 +20,7 @@ export const GSAP_MEDIA_QUERIES = {
 
 /**
  * Helper to safely refresh ScrollTrigger calculations across the document
- * with optional debounce for layout shifts (e.g. font loaded, tab switch, bento grid toggle).
+ * with debounce so multiple layout events coalesce into a single layout read.
  */
 let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
 export function refreshScrollTrigger(immediate = false): void {
@@ -48,17 +37,9 @@ export function refreshScrollTrigger(immediate = false): void {
   refreshTimeout = setTimeout(() => {
     ScrollTrigger.refresh();
     refreshTimeout = null;
-  }, 100);
+  }, 150);
 }
 
-export {
-  gsap,
-  ScrollTrigger,
-  SplitText,
-  Flip,
-  Observer,
-  ScrambleTextPlugin,
-  useGSAP,
-};
+export { gsap, ScrollTrigger, useGSAP };
 
 export default gsap;

@@ -4,6 +4,8 @@
 
 :root,
 [data-theme="light"] {
+  --font-display: var(--font-anton), "Anton", Impact, sans-serif;
+
   --bg-primary: #edf1f5;
   --bg-elevated: #ffffff;
   --bg-subtle: #e2e8f0;
@@ -12,10 +14,10 @@
 
   --text-primary: #0a1120;
   --text-secondary: #475569;
-  --text-muted: #475569;
+  --text-muted: #64748b;
 
   --border-subtle: #cbd5e1;
-  --border-strong: #475569;
+  --border-strong: #64748b;
 
   --accent-primary: #0e7c86;
   --accent-emerald: #0d9488;
@@ -44,7 +46,7 @@
 
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
-  --text-muted: #94a3b8;
+  --text-muted: #64748b;
 
   --border-subtle: #1e293b;
   --border-strong: #475569;
@@ -294,6 +296,89 @@ html.lenis body {
     clip-path: polygon(0 75%, 100% 75%, 100% 95%, 0 95%);
     transform: translate(2px, -1px);
   }
+}
+
+/* =====================================================================
+   GPU-COMPOSITED KINETIC BLOCK REVEAL & HERO ENTRANCE ANIMATIONS
+   Replaces ~180 Framer Motion whileInView instances & synchronous GSAP sets
+====================================================================== */
+@keyframes kinetic-block-sweep {
+  0% {
+    transform: translate3d(-103%, 0, 0);
+  }
+  44% {
+    transform: translate3d(0%, 0, 0);
+  }
+  54% {
+    transform: translate3d(0%, 0, 0);
+  }
+  100% {
+    transform: translate3d(103%, 0, 0);
+  }
+}
+
+@keyframes kinetic-text-reveal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 12%, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.kinetic-reveal-text {
+  opacity: 0;
+  transform: translate3d(0, 12%, 0);
+}
+
+.kinetic-reveal-curtain {
+  transform: translate3d(-103%, 0, 0);
+}
+
+.kinetic-reveal-root[data-revealed="true"] > .kinetic-reveal-text {
+  animation: kinetic-text-reveal 0.32s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation-delay: var(--kb-text-delay, 0.18s);
+}
+
+.kinetic-reveal-root[data-revealed="true"] > .kinetic-reveal-curtain {
+  animation: kinetic-block-sweep var(--kb-duration, 0.65s) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--kb-delay, 0s);
+}
+
+@keyframes hero-char-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 105%, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes hero-fade-up {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.hero-char-anim {
+  opacity: 0;
+  animation: hero-char-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--char-delay, 0s);
+}
+
+.hero-fade-anim {
+  opacity: 0;
+  animation: hero-fade-up 0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--fade-delay, 0.15s);
 }
 
 /* Rule 3 (SYSTEM_RULES.md): Global CSS Reduced-Motion Safety Net */

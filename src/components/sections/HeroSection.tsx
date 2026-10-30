@@ -1,13 +1,8 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { gsap, useGSAP, GSAP_MEDIA_QUERIES, SplitText } from "@/lib/gsap";
-import {
-  MOTION_TIMINGS,
-  MOTION_EASINGS,
-  STAGGER_TOKENS,
-  SPATIAL_TOKENS,
-} from "@/lib/motion";
+import { gsap, useGSAP, GSAP_MEDIA_QUERIES } from "@/lib/gsap";
+import { MOTION_EASINGS } from "@/lib/motion";
 import {
   ArrowLeftRight,
   ArrowUpRight,
@@ -66,226 +61,56 @@ export function HeroSection() {
   const { scrollTo } = useLenis();
   const [isAuraForced, setIsAuraForced] = useState<boolean>(false);
 
-  // Batch [3A] Choreographed Hero Sequence: Masked SplitText, Staggered Metadata,
-  // Direct DOM Counter Ticker, Scroll Parallax, and Section Exit Scrub
+  // Desktop-only scroll parallax (initial entrance uses zero-reflow GPU CSS keyframes)
   useGSAP(
     () => {
-      const mm = gsap.matchMedia();
+      if (typeof window === "undefined") return;
+      const isDesktop = window.matchMedia(GSAP_MEDIA_QUERIES.isDesktop).matches;
+      const reduceMotion = window.matchMedia(
+        GSAP_MEDIA_QUERIES.reduceMotion
+      ).matches;
 
-      mm.add(
-        {
-          isDesktop: GSAP_MEDIA_QUERIES.isDesktop,
-          isMobile: GSAP_MEDIA_QUERIES.isMobile,
-          reduceMotion: GSAP_MEDIA_QUERIES.reduceMotion,
-        },
-        (context) => {
-          const { reduceMotion, isDesktop } = context.conditions as {
-            isDesktop: boolean;
-            isMobile: boolean;
-            reduceMotion: boolean;
-          };
+      if (!isDesktop || reduceMotion || !sectionRef.current) return;
 
-          if (reduceMotion) {
-            gsap.set(
-              [
-                heroStageRef.current,
-                leftColRef.current,
-                portraitWrapRef.current,
-                ".hero-name-line",
-                ".hero-meta-row",
-                ".hero-hud-block",
-                ".hero-action-bar",
-              ],
-              {
-                autoAlpha: 1,
-                y: 0,
-                yPercent: 0,
-                scale: 1,
-                clearProps: "all",
-              }
-            );
-            if (statProjectsRef.current) statProjectsRef.current.textContent = "4+";
-            if (statGpaRef.current) statGpaRef.current.textContent = "3.83";
-            if (statAwardRef.current) statAwardRef.current.textContent = "1";
-            return;
-          }
+      if (portraitWrapRef.current) {
+        gsap.to(portraitWrapRef.current, {
+          y: -45,
+          ease: MOTION_EASINGS.gsapScrub,
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 0.5,
+          },
+        });
+      }
 
-          // 1. Initial State Set (Synchronous pre-paint to prevent FOUC)
-          gsap.set([".hero-meta-row", ".hero-hud-block", ".hero-action-bar"], {
-            autoAlpha: 0,
-            y: SPATIAL_TOKENS.standard,
-          });
+      if (leftColRef.current) {
+        gsap.to(leftColRef.current, {
+          y: 25,
+          ease: MOTION_EASINGS.gsapScrub,
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 0.5,
+          },
+        });
+      }
 
-          // Split display name into kinetic characters inside masked line containers
-          const split = SplitText.create(".hero-name-line", {
-            type: "chars",
-            charsClass: "hero-name-char inline-block will-change-transform",
-          });
-
-          gsap.set(split.chars, {
-            yPercent: 110,
-            autoAlpha: 0,
-          });
-
-          // Initial counter placeholder
-          if (statProjectsRef.current) statProjectsRef.current.textContent = "0+";
-          if (statGpaRef.current) statGpaRef.current.textContent = "0.00";
-          if (statAwardRef.current) statAwardRef.current.textContent = "0";
-
-          // 2. Master Entrance Timeline
-          const tl = gsap.timeline({
-            defaults: { ease: MOTION_EASINGS.gsapEaseOut },
-          });
-
-          // Step A: Giant display name enters per character with masked kinetic reveal
-          tl.to(
-            split.chars,
-            {
-              yPercent: 0,
-              autoAlpha: 1,
-              duration: MOTION_TIMINGS.deliberate + 0.15, // 0.75s
-              stagger: 0.025,
-              ease: MOTION_EASINGS.gsapEaseOut,
-              clearProps: "transform,opacity,visibility",
-            },
-            0.05
-          );
-
-          // Step B: Three metadata rows appear sequentially
-          tl.to(
-            ".hero-meta-row",
-            {
-              autoAlpha: 1,
-              y: 0,
-              duration: MOTION_TIMINGS.standard + 0.05, // 0.4s
-              stagger: STAGGER_TOKENS.standard, // 0.06s
-              ease: MOTION_EASINGS.gsapEaseOut,
-              clearProps: "transform,opacity,visibility",
-            },
-            0.32
-          );
-
-          // Step C: Right column HUD telemetry blocks & bottom action bar
-          tl.to(
-            [".hero-hud-block", ".hero-action-bar"],
-            {
-              autoAlpha: 1,
-              y: 0,
-              duration: MOTION_TIMINGS.deliberate,
-              stagger: STAGGER_TOKENS.standard,
-              ease: MOTION_EASINGS.gsapEaseOut,
-              clearProps: "transform,opacity,visibility",
-            },
-            0.38
-          );
-
-          // Step D: HUD label scramble text decoding effect
-          tl.to(
-            ".hero-hud-label-currently",
-            {
-              duration: MOTION_TIMINGS.standard,
-              scrambleText: {
-                text: "CURRENTLY",
-                chars: "#$%&_/01XZ><",
-                speed: 0.4,
-              },
-            },
-            0.4
-          );
-
-          tl.to(
-            ".hero-hud-label-glance",
-            {
-              duration: MOTION_TIMINGS.standard,
-              scrambleText: {
-                text: "AT A GLANCE",
-                chars: "#$%&_/01XZ><",
-                speed: 0.4,
-              },
-            },
-            0.44
-          );
-
-          // Step E: Direct DOM Spring Number Tickers (zero React state overhead)
-          const statCounters = { projects: 0, gpa: 0, award: 0 };
-          tl.to(
-            statCounters,
-            {
-              projects: 4,
-              gpa: 3.83,
-              award: 1,
-              duration: 0.65,
-              ease: MOTION_EASINGS.gsapEaseExpo,
-              onUpdate: () => {
-                if (statProjectsRef.current) {
-                  statProjectsRef.current.textContent = `${Math.round(statCounters.projects)}+`;
-                }
-                if (statGpaRef.current) {
-                  statGpaRef.current.textContent = statCounters.gpa.toFixed(2);
-                }
-                if (statAwardRef.current) {
-                  statAwardRef.current.textContent = `${Math.round(statCounters.award)}`;
-                }
-              },
-              onComplete: () => {
-                if (statProjectsRef.current) statProjectsRef.current.textContent = "4+";
-                if (statGpaRef.current) statGpaRef.current.textContent = "3.83";
-                if (statAwardRef.current) statAwardRef.current.textContent = "1";
-              },
-            },
-            0.45
-          );
-
-          // 3. Scroll Interactions: Desktop Camera Parallax & Section Exit Scrub
-          if (isDesktop && sectionRef.current) {
-            // Camera Parallax: Portrait rises slightly (-45px), text drifts (+25px)
-            if (portraitWrapRef.current) {
-              gsap.to(portraitWrapRef.current, {
-                y: -45,
-                ease: MOTION_EASINGS.gsapScrub,
-                scrollTrigger: {
-                  trigger: sectionRef.current,
-                  start: "top top",
-                  end: "bottom top",
-                  scrub: 0.5,
-                },
-              });
-            }
-
-            if (leftColRef.current) {
-              gsap.to(leftColRef.current, {
-                y: 25,
-                ease: MOTION_EASINGS.gsapScrub,
-                scrollTrigger: {
-                  trigger: sectionRef.current,
-                  start: "top top",
-                  end: "bottom top",
-                  scrub: 0.5,
-                },
-              });
-            }
-
-            // Hero Stage Continuity: subtly scale down and fade out on scrub
-            if (heroStageRef.current) {
-              gsap.to(heroStageRef.current, {
-                scale: 0.96,
-                opacity: 0.35,
-                ease: MOTION_EASINGS.gsapScrub,
-                scrollTrigger: {
-                  trigger: sectionRef.current,
-                  start: "top top",
-                  end: "bottom top",
-                  scrub: true,
-                },
-              });
-            }
-          }
-
-          return () => {
-            split.revert();
-          };
-        }
-      );
+      if (heroStageRef.current) {
+        gsap.to(heroStageRef.current, {
+          scale: 0.96,
+          opacity: 0.35,
+          ease: MOTION_EASINGS.gsapScrub,
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      }
     },
     { scope: sectionRef }
   );
@@ -305,7 +130,7 @@ export function HeroSection() {
       {/* Scalable Hero Stage (Controlled by ScrollTrigger Scrub) */}
       <div
         ref={heroStageRef}
-        className="relative mx-auto flex w-full flex-1 flex-col justify-between px-5 sm:px-9 lg:px-11 will-change-transform"
+        className="relative mx-auto flex w-full flex-1 flex-col justify-between px-5 sm:px-9 lg:px-11 lg:pb-20 will-change-transform"
       >
         {/* Main 3-Column Hero Stage */}
         <div className="relative grid flex-1 grid-cols-1 items-center gap-8 lg:grid-cols-12">
@@ -316,16 +141,31 @@ export function HeroSection() {
           >
             <h1
               id="hero-display-name"
+              aria-label="ARYO MACHFUDZ"
               className="lg:text-shadow-md text-shadow-accent-primary font-display text-[clamp(4.25rem,7.2vw,6.75rem)] leading-[0.94] tracking-[0.01em] text-text-primary select-none"
             >
-              <span className="block overflow-hidden">
-                <span className="hero-name-line inline-block will-change-transform">
-                  ARYO
+              <span className="block overflow-hidden" aria-hidden="true">
+                <span className="hero-name-line inline-block">
+                  {"ARYO".split("").map((ch, idx) => (
+                    <span
+                      key={`a-${idx}`}
+                      className="hero-name-char inline-block will-change-transform"
+                    >
+                      {ch}
+                    </span>
+                  ))}
                 </span>
               </span>
-              <span className="block overflow-hidden">
-                <span className="hero-name-line inline-block will-change-transform">
-                  MACHFUDZ
+              <span className="block overflow-hidden" aria-hidden="true">
+                <span className="hero-name-line inline-block">
+                  {"MACHFUDZ".split("").map((ch, idx) => (
+                    <span
+                      key={`m-${idx}`}
+                      className="hero-name-char inline-block will-change-transform"
+                    >
+                      {ch}
+                    </span>
+                  ))}
                 </span>
               </span>
             </h1>
@@ -407,19 +247,14 @@ export function HeroSection() {
               {/* Block 2: AT A GLANCE */}
               <div className="hero-hud-block">
                 <OpenHudCorners>
-                  <KineticBlockReveal delay={0.1} blockColor="bg-[#0e7c86]">
                   <p className="hero-hud-label-glance font-mono text-[11px] font-bold tracking-[0.08em] text-accent-primary uppercase">
                     AT A GLANCE
                   </p>
-                  </KineticBlockReveal>
-
                   <div className="mt-2.5 grid grid-cols-3 gap-4">
                     <div>
-                  <KineticBlockReveal delay={0.2} blockColor="bg-[#0e7c86]">
                       <p className="text-[10px] font-semibold tracking-[0.06em] text-text-muted uppercase">
                         PROJECTS
                       </p>
-                  </KineticBlockReveal>
                       <p
                         ref={statProjectsRef}
                         className="tabular-nums mt-1 font-display text-4xl leading-none text-text-primary"
@@ -428,11 +263,9 @@ export function HeroSection() {
                       </p>
                     </div>
                     <div>
-                      <KineticBlockReveal delay={0.2} blockColor="bg-[#0e7c86]">
                       <p className="text-[10px] font-semibold tracking-[0.06em] text-text-muted uppercase">
                         GPA
                       </p>
-                      </KineticBlockReveal>
                       <p
                         ref={statGpaRef}
                         className="tabular-nums mt-1 font-display text-4xl leading-none text-text-primary"
@@ -441,12 +274,9 @@ export function HeroSection() {
                       </p>
                     </div>
                     <div>
-                      <KineticBlockReveal delay={0.2} blockColor="bg-[#0e7c86]">
-
                       <p className="text-[10px] font-semibold tracking-[0.06em] text-text-muted uppercase">
                         AWARD
                       </p>
-                      </KineticBlockReveal>
                       <p
                         ref={statAwardRef}
                         className="tabular-nums mt-1 font-display text-4xl leading-none text-text-primary"
@@ -502,7 +332,7 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Architectural HUD Section Boundary Divider (Transition from Hero into Skills) */}
+      {/* Architectural HUD Section Boundary Divider & Velocity Teaser (Hero -> Skills) */}
       <div className="relative z-20 mx-auto w-full max-w-7xl px-5 pb-4 sm:px-9 lg:px-11">
         <SectionNextTeaser
           currentCode="01"

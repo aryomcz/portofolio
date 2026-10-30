@@ -18,12 +18,13 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { PORTFOLIO_DATA, type ProjectCaseStudy } from "@/data/portfolio";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import dynamic from "next/dynamic";
 import { TechBracketCard } from "@/components/ui/TechBracketCard";
 import { ProjectVisualPreview } from "@/components/ui/ProjectVisualPreview";
 import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
+import { CaseStudyQuickModal } from "@/components/ui/CaseStudyQuickModal";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
 import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 import { SectionNextTeaser } from "@/components/ui/SectionNextTeaser";
 
@@ -31,24 +32,6 @@ const TechMetropolisTelemetry = dynamic(
   () =>
     import("@/components/ui/TechMetropolisTelemetry").then(
       (mod) => mod.TechMetropolisTelemetry
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="relative mx-auto my-8 flex min-h-[480px] w-full flex-col items-center justify-center rounded-2xl border border-border-subtle bg-bg-elevated/40 p-8 backdrop-blur-md">
-        <div className="mb-4 h-10 w-10 animate-spin rounded-full border-2 border-accent-primary border-t-transparent" />
-        <span className="font-mono text-xs uppercase tracking-widest text-text-muted">
-          SYS.TELEMETRY // MOUNTING 3D METROPOLIS RUNTIME...
-        </span>
-      </div>
-    ),
-  }
-);
-
-const CaseStudyQuickModal = dynamic(
-  () =>
-    import("@/components/ui/CaseStudyQuickModal").then(
-      (mod) => mod.CaseStudyQuickModal
     ),
   { ssr: false }
 );
@@ -100,110 +83,47 @@ export function SelectedWorksSection() {
     refreshScrollTrigger();
   };
 
+  // Scroll-driven Stacking Cards scale & depth scrub (desktop only to avoid mobile layout thrashing)
   useGSAP(
     () => {
-      const mm = gsap.matchMedia();
+      if (
+        isReducedMotion ||
+        viewMode !== "stack" ||
+        typeof window === "undefined" ||
+        !window.matchMedia(GSAP_MEDIA_QUERIES.isDesktop).matches
+      ) {
+        return;
+      }
 
-      mm.add(
-        {
-          isDesktop: GSAP_MEDIA_QUERIES.isDesktop,
-          isMobile: GSAP_MEDIA_QUERIES.isMobile,
-          reduceMotion: GSAP_MEDIA_QUERIES.reduceMotion,
-        },
-        (context) => {
-          const { reduceMotion } = context.conditions as {
-            isDesktop: boolean;
-            isMobile: boolean;
-            reduceMotion: boolean;
-          };
-
-          if (reduceMotion) {
-            gsap.set(
-              [
-                ".hud-achievement-card",
-                ".hud-achievement-card .hud-corner-ornament",
-              ],
-              {
-                autoAlpha: 1,
-                scale: 1,
-                y: 0,
-                yPercent: 0,
-                clearProps: "transform,opacity,visibility",
-              }
-            );
-            return;
-          }
-
-          // 1. Featured Achievement Card: graceful spring scale & glide
-          gsap.fromTo(
-            ".hud-achievement-card",
-            { scale: 0.96, y: 28, autoAlpha: 0 },
-            {
-              scale: 1,
-              y: 0,
-              autoAlpha: 1,
-              duration: 0.85,
-              ease: "power3.out",
-              clearProps: "transform,opacity,visibility",
-              scrollTrigger: {
-                trigger: "#achievements",
-                start: "top 75%",
-                toggleActions: "play none none none",
-              },
-            }
-          );
-
-          // 2. Featured Achievement HUD Corner Ornaments
-          gsap.fromTo(
-            ".hud-achievement-card .hud-corner-ornament",
-            { scale: 0.8, autoAlpha: 0 },
-            {
-              scale: 1,
-              autoAlpha: 1,
-              duration: 0.5,
-              stagger: 0.04,
-              ease: "power2.out",
-              clearProps: "transform,opacity,visibility",
-              scrollTrigger: {
-                trigger: "#achievements",
-                start: "top 75%",
-                toggleActions: "play none none none",
-              },
-            }
-          );
-        }
-      );
-    },
-    { scope: containerRef }
-  );
-
-  // Scroll-driven Stacking Cards scale & depth scrub
-  useGSAP(
-    () => {
-      if (isReducedMotion || viewMode !== "stack") return;
-
-      const cards = gsap.utils.toArray<HTMLElement>(".project-stack-card");
-      cards.forEach((card, idx) => {
-        if (idx === cards.length - 1) return;
-        const targetScale = Math.max(0.9, 1 - (cards.length - 1 - idx) * 0.028);
-
-        gsap.fromTo(
-          card,
-          { scale: 1 },
-          {
-            scale: targetScale,
-            ease: "none",
-            scrollTrigger: {
-              trigger: card,
-              start: "top 16%",
-              end: "bottom 12%",
-              scrub: 0.35,
-            },
-          }
+      const slots = gsap.utils.toArray<HTMLElement>(".project-stack-card");
+      slots.forEach((slot, idx) => {
+        const nextSlot = slots[idx + 1];
+        const innerCard = slot.querySelector<HTMLElement>(
+          ".project-stack-card-inner"
         );
+        if (!nextSlot || !innerCard) return;
+
+        const targetScale = Math.max(
+          0.92,
+          1 - (slots.length - 1 - idx) * 0.022
+        );
+
+        gsap.to(innerCard, {
+          scale: targetScale,
+          ease: "none",
+          scrollTrigger: {
+            trigger: nextSlot,
+            start: "top 88%",
+            end: "top 18%",
+            scrub: true,
+          },
+        });
       });
     },
-    { scope: containerRef, dependencies: [viewMode, selectedCategory, isReducedMotion] }
+    {
+      scope: containerRef,
+      dependencies: [viewMode, selectedCategory, isReducedMotion],
+    }
   );
 
   // Navigate carousel
@@ -407,7 +327,7 @@ export function SelectedWorksSection() {
         </TechBracketCard>
       </section>
 
-     {/* =====================================================================
+      {/* =====================================================================
           SECTION: 3D TECH METROPOLIS TELEMETRY
       ====================================================================== */}
       <section
@@ -469,7 +389,7 @@ export function SelectedWorksSection() {
                     ? "font-semibold text-text-primary"
                     : "text-text-muted hover:text-text-primary"
                 )}
-                aria-label="STACK view — Stacking cards"
+                aria-label="Stacking cards view"
               >
                 {viewMode === "stack" ? (
                   <motion.span
@@ -492,7 +412,7 @@ export function SelectedWorksSection() {
                     ? "font-semibold text-text-primary"
                     : "text-text-muted hover:text-text-primary"
                 )}
-                aria-label="CAROUSEL view — Interactive carousel"
+                aria-label="Carousel view"
               >
                 {viewMode === "carousel" ? (
                   <motion.span
@@ -515,7 +435,7 @@ export function SelectedWorksSection() {
                     ? "font-semibold text-text-primary"
                     : "text-text-muted hover:text-text-primary"
                 )}
-                aria-label="GRID view — Bento grid"
+                aria-label="Grid view"
               >
                 {viewMode === "grid" ? (
                   <motion.span
@@ -617,15 +537,16 @@ export function SelectedWorksSection() {
                   top: `calc(5.25rem + ${idx * 1.4}rem)`,
                   zIndex: 10 + idx,
                 }}
-                className="project-stack-card sticky origin-top will-change-transform"
+                className="project-stack-card sticky"
               >
-                <TechBracketCard
-                  as="article"
-                  bracketSize="lg"
-                  activeAccent
-                  themeColor={project.themeColor}
-                  className="hud-project-card bg-bg-elevated p-5 shadow-[0_-10px_36px_rgba(10,17,32,0.16)] sm:p-8"
-                >
+                <div className="project-stack-card-inner origin-top will-change-transform">
+                  <TechBracketCard
+                    as="article"
+                    bracketSize="lg"
+                    activeAccent
+                    themeColor={project.themeColor}
+                    className="hud-project-card bg-bg-elevated p-5 shadow-[0_-10px_36px_rgba(10,17,32,0.16)] sm:p-8"
+                  >
                   {/* Top Bar: Stack Order, Index & Category */}
                   <div className="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-accent-primary/35 pb-3 font-mono text-xs">
                     <div className="flex items-center gap-2.5">
@@ -743,7 +664,8 @@ export function SelectedWorksSection() {
                       </div>
                     </div>
                   </div>
-                </TechBracketCard>
+                  </TechBracketCard>
+                </div>
               </div>
             ))}
           </div>

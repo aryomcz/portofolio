@@ -14,6 +14,7 @@ import { PORTFOLIO_DATA } from "@/data/portfolio";
  */
 export function VelocityTechMarquee() {
   const isReducedMotion = useReducedMotion();
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const speedDisplayRef = useRef<HTMLSpanElement | null>(null);
@@ -25,8 +26,23 @@ export function VelocityTechMarquee() {
   useEffect(() => {
     if (isReducedMotion || !trackRef.current || !wrapperRef.current) return;
 
+    const container = containerRef.current;
     const track = trackRef.current;
     const wrapper = wrapperRef.current;
+
+    let isVisible = false;
+    const observer =
+      container && typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            ([entry]) => {
+              isVisible = entry?.isIntersecting ?? false;
+            },
+            { rootMargin: "150px 0px" }
+          )
+        : null;
+    if (observer && container) {
+      observer.observe(container);
+    }
 
     let xPercent = 0;
     let direction = -1;
@@ -44,6 +60,8 @@ export function VelocityTechMarquee() {
     let resetTimer: ReturnType<typeof setTimeout> | null = null;
 
     const unsubscribe = subscribeScrollCamera((state) => {
+      if (!isVisible) return;
+
       const { speedMultiplier, skewDeg } = computeMarqueeKinematics(
         state.velocity
       );
@@ -69,6 +87,7 @@ export function VelocityTechMarquee() {
     });
 
     const tick = (_time: number, deltaTime: number) => {
+      if (!isVisible) return;
       const dt = Math.min(deltaTime, 50) * 0.001;
       const baseSpeed = 4.2; // percent per second
       xPercent += direction * baseSpeed * velocityMultiplier * dt;
@@ -83,6 +102,7 @@ export function VelocityTechMarquee() {
 
     return () => {
       if (resetTimer) clearTimeout(resetTimer);
+      observer?.disconnect();
       gsap.ticker.remove(tick);
       unsubscribe();
     };
@@ -90,6 +110,7 @@ export function VelocityTechMarquee() {
 
   return (
     <div
+      ref={containerRef}
       data-testid="velocity-tech-marquee"
       className="relative my-8 overflow-hidden border-y border-border-subtle bg-bg-elevated/75 py-3.5"
     >

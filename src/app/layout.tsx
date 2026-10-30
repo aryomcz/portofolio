@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Anton } from "next/font/google";
+import { Anton, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SmoothScrollProvider } from "@/hooks/useSmoothScroll";
 import { PageTransitionProvider } from "@/components/ui/PageTransition";
@@ -8,6 +8,25 @@ import { AdaptiveNavbar } from "@/components/ui/AdaptiveNavbar";
 import { TopographicBg } from "@/components/ui/TopographicBg";
 import { Preloader } from "@/components/ui/Preloader";
 import { PORTFOLIO_DATA } from "@/data/portfolio";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const antonDisplay = Anton({
+  weight: "400",
+  variable: "--font-anton",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: `${PORTFOLIO_DATA.owner.fullName} — Full-Stack Developer & System Analyst`,
@@ -32,25 +51,6 @@ const themeInitScript = `
   })();
 `;
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const anton = Anton({
-  weight: "400",
-  variable: "--font-display",
-  subsets: ["latin"],
-  display: "swap",
-});
-
 export default function RootLayout({
   children,
 }: {
@@ -61,22 +61,15 @@ export default function RootLayout({
       lang="en"
       data-theme="light"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${anton.variable} antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${antonDisplay.variable} antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <link
-          rel="preload"
-          as="image"
-          href="/images/profile/aryo-base-aligned.webp"
-          type="image/webp"
-          fetchPriority="high"
-        />
       </head>
-      <body className="relative min-h-screen flex flex-col bg-bg-primary text-text-primary">
+      <body className="relative min-h-screen flex flex-col bg-bg-primary text-text-primary transition-colors duration-500">
         <SmoothScrollProvider>
-        <ScrollProgressBar />
-        <TopographicBg />
+          <ScrollProgressBar />
+          <TopographicBg />
           <Preloader />
           <PageTransitionProvider>
             <AdaptiveNavbar />

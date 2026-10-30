@@ -2,7 +2,6 @@ import { Clock3, MapPin } from "lucide-react";
 import type { ExperienceEntry } from "@/data/portfolio";
 import { TechBracketCard } from "@/components/ui/TechBracketCard";
 import { formatTenure, formatTenureLength } from "@/lib/experience";
-import { KineticBlockReveal } from "./KineticBlockReveal";
 
 /** Captures figures like `15+`, `150+`, `25%` so they can be emphasised. */
 const METRIC_PATTERN = /(\d+(?:\.\d+)?\+?%?)/;
@@ -46,21 +45,14 @@ export function ExperienceCard({ entry }: ExperienceCardProps) {
     <TechBracketCard as="article" bracketSize="md" className="p-5 sm:p-7">
       {/* Header: role, organisation, tenure */}
       <header className="flex flex-col gap-4 border-b border-border-subtle pb-5 sm:flex-row sm:items-start sm:justify-between">
-
-        <div className="min-w-0 flex flex-col">
-        <KineticBlockReveal delay={0.1} blockColor="bg-[#0e7c86]">
+        <div className="min-w-0">
           <p className="font-mono text-[11px] text-text-muted">{typeLabel}</p>
-        </KineticBlockReveal>
-        <KineticBlockReveal delay={0.2} blockColor="bg-[#0e7c86]">
           <h3 className="mt-1.5 font-display text-2xl leading-[1.05] tracking-wide text-balance text-text-primary sm:text-3xl">
             {entry.role}
           </h3>
-        </KineticBlockReveal>
-        <KineticBlockReveal delay={0.3} blockColor="bg-[#0e7c86]">
           <p className="mt-1.5 text-sm font-medium text-accent-primary">
             {entry.organization}
           </p>
-        </KineticBlockReveal>
         </div>
 
         <p

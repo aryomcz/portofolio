@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type * as THREE from "three";
-import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useLenis } from "@/hooks/useLenis";
 import {
   MAIN_PAGE_SECTIONS,
   interpolateCameraRig,
   clamp01,
+  detectActiveSectionFromOffsets,
+  quantizeScrollPercent,
   type CameraRigPose,
 } from "@/lib/scrollNavigation";
 
@@ -65,10 +67,13 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
   const cameraRef = options?.cameraRef;
   const trackSectionState = options?.trackSectionState ?? false;
 
-  const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
-  const [overallProgress, setOverallProgress] = useState<number>(0);
+  const [activeSectionIndex, setActiveSectionIndex] = useState<number>(
+    globalScrollCameraState.activeSectionIndex
+  );
+  const [overallProgress, setOverallProgress] = useState<number>(
+    globalScrollCameraState.progress
+  );
 
-  // Smoothly animated proxy target driven by GSAP quickTo for silky camera damping
   const animatedRigRef = useRef({
     px: globalScrollCameraState.pose.position[0],
     py: globalScrollCameraState.pose.position[1],
@@ -78,10 +83,11 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
     rz: globalScrollCameraState.pose.rotation[2],
   });
 
-  useGSAP(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
 
     const rig = animatedRigRef.current;
+    const hasCamera = Boolean(cameraRef);
 
     const applyCameraTransform = () => {
       const cam = cameraRef?.current;
@@ -91,60 +97,108 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
       }
     };
 
-    const qPx = gsap.quickTo(rig, "px", {
-      duration: isReducedMotion ? 0.05 : 0.55,
-      ease: "power3.out",
-      onUpdate: applyCameraTransform,
-    });
-    const qPy = gsap.quickTo(rig, "py", {
-      duration: isReducedMotion ? 0.05 : 0.55,
-      ease: "power3.out",
-    });
-    const qPz = gsap.quickTo(rig, "pz", {
-      duration: isReducedMotion ? 0.05 : 0.55,
-      ease: "power3.out",
-    });
-    const qRx = gsap.quickTo(rig, "rx", {
-      duration: isReducedMotion ? 0.05 : 0.65,
-      ease: "power3.out",
-    });
-    const qRy = gsap.quickTo(rig, "ry", {
-      duration: isReducedMotion ? 0.05 : 0.65,
-      ease: "power3.out",
-    });
-    const qRz = gsap.quickTo(rig, "rz", {
-      duration: isReducedMotion ? 0.05 : 0.65,
-      ease: "power3.out",
-    });
+    const qPx = hasCamera
+      ? gsap.quickTo(rig, "px", {
+          duration: isReducedMotion ? 0.05 : 0.55,
+          ease: "power3.out",
+          onUpdate: applyCameraTransform,
+        })
+      : null;
+    const qPy = hasCamera
+      ? gsap.quickTo(rig, "py", {
+          duration: isReducedMotion ? 0.05 : 0.55,
+          ease: "power3.out",
+        })
+      : null;
+    const qPz = hasCamera
+      ? gsap.quickTo(rig, "pz", {
+          duration: isReducedMotion ? 0.05 : 0.55,
+          ease: "power3.out",
+        })
+      : null;
+    const qRx = hasCamera
+      ? gsap.quickTo(rig, "rx", {
+          duration: isReducedMotion ? 0.05 : 0.65,
+          ease: "power3.out",
+        })
+      : null;
+    const qRy = hasCamera
+      ? gsap.quickTo(rig, "ry", {
+          duration: isReducedMotion ? 0.05 : 0.65,
+          ease: "power3.out",
+        })
+      : null;
+    const qRz = hasCamera
+      ? gsap.quickTo(rig, "rz", {
+          duration: isReducedMotion ? 0.05 : 0.65,
+          ease: "power3.out",
+        })
+      : null;
 
-    let lastActiveIdx = -1;
+    let cachedSectionTops: number[] = [];
+    let cachedMaxScroll = 5000;
+    let cachedViewportHeight = window.innerHeight || 900;
+    let lastAppliedThemeKey = "";
 
-    const updateFromProgress = (rawProgress: number, velocity = 0, direction: 1 | -1 = 1) => {
+    const measureSectionOffsets = () => {
+      const scrollY = window.scrollY;
+      cachedViewportHeight = window.innerHeight;
+      cachedMaxScroll = Math.max(
+        1,
+        document.documentElement.scrollHeight - cachedViewportHeight
+      );
+      const tops: number[] = [];
+      for (let i = 0; i < MAIN_PAGE_SECTIONS.length; i++) {
+        const el = document.getElementById(MAIN_PAGE_SECTIONS[i].id);
+        if (el) {
+          tops.push(el.getBoundingClientRect().top + scrollY);
+        }
+      }
+      cachedSectionTops = tops;
+    };
+
+    const updateFromProgress = (
+      rawProgress: number,
+      velocity = 0,
+      direction: 1 | -1 = 1,
+      currentScrollY = window.scrollY
+    ) => {
       const progress = clamp01(rawProgress);
       const pose = interpolateCameraRig(progress);
-      const detectedIdx = pose.activeSectionIndex;
+
+      const detectedIdx = detectActiveSectionFromOffsets(
+        currentScrollY,
+        cachedViewportHeight,
+        cachedSectionTops,
+        pose.activeSectionIndex
+      );
 
       globalScrollCameraState.progress = progress;
       globalScrollCameraState.velocity = velocity;
       globalScrollCameraState.direction = direction;
       globalScrollCameraState.activeSectionIndex = detectedIdx;
-      globalScrollCameraState.pose = pose;
+      globalScrollCameraState.pose = {
+        ...pose,
+        activeSectionIndex: detectedIdx,
+      };
 
-      // Update GSAP quickTo camera targets
-      qPx(pose.position[0]);
-      qPy(pose.position[1]);
-      qPz(pose.position[2]);
-      qRx(pose.rotation[0]);
-      qRy(pose.rotation[1]);
-      qRz(pose.rotation[2]);
+      if (cameraRef?.current && qPx && qPy && qPz && qRx && qRy && qRz) {
+        qPx(pose.position[0]);
+        qPy(pose.position[1]);
+        qPz(pose.position[2]);
+        qRx(pose.rotation[0]);
+        qRy(pose.rotation[1]);
+        qRz(pose.rotation[2]);
+      }
 
-      // Only update documentElement styles when active section actually changes (prevents layout thrashing)
-      if (detectedIdx !== lastActiveIdx) {
-        lastActiveIdx = detectedIdx;
-        const activeSec = MAIN_PAGE_SECTIONS[detectedIdx] ?? MAIN_PAGE_SECTIONS[0];
-        const isDark =
-          document.documentElement.getAttribute("data-theme") === "dark" ||
-          document.documentElement.classList.contains("dark");
+      const activeSec = MAIN_PAGE_SECTIONS[detectedIdx] ?? MAIN_PAGE_SECTIONS[0];
+      const isDark =
+        document.documentElement.getAttribute("data-theme") === "dark" ||
+        document.documentElement.classList.contains("dark");
+      const themeKey = `${activeSec.id}:${isDark ? "dark" : "light"}`;
+
+      if (themeKey !== lastAppliedThemeKey) {
+        lastAppliedThemeKey = themeKey;
         document.documentElement.style.setProperty(
           "--section-ambient-tint",
           isDark ? activeSec.tintDark : activeSec.tintLight
@@ -162,66 +216,92 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
       notifySubscribers();
     };
 
-    // 1. Bind to GSAP ScrollTrigger across the document
-    const trigger = ScrollTrigger.create({
-      trigger: document.documentElement,
-      start: "top top",
-      end: "bottom bottom",
-      scrub: true,
-      onUpdate: (self) => {
-        const vel = lenis ? lenis.velocity : self.getVelocity() / 300;
-        const dir: 1 | -1 = self.direction >= 0 ? 1 : -1;
-        updateFromProgress(self.progress, vel, dir);
-      },
+    let measureRafId = window.requestAnimationFrame(() => {
+      measureSectionOffsets();
+      updateFromProgress(
+        window.scrollY / cachedMaxScroll,
+        0,
+        1,
+        window.scrollY
+      );
     });
 
-    // 2. Also bind directly to Lenis scroll events for sub-frame velocity accuracy
+    const handleResizeOrRefresh = () => {
+      window.cancelAnimationFrame(measureRafId);
+      measureRafId = window.requestAnimationFrame(() => {
+        measureSectionOffsets();
+      });
+    };
+
+    window.addEventListener("resize", handleResizeOrRefresh, { passive: true });
+    ScrollTrigger.addEventListener("refresh", handleResizeOrRefresh);
+
     const handleLenisScroll = (e: {
+      scroll: number;
       progress: number;
       velocity: number;
       direction: number;
     }) => {
       const dir: 1 | -1 = e.direction >= 0 ? 1 : -1;
-      updateFromProgress(e.progress, e.velocity, dir);
+      updateFromProgress(e.progress, e.velocity, dir, e.scroll);
+    };
+
+    let lastNativeScrollY = window.scrollY;
+    let lastNativeTime = performance.now();
+    const handleNativeScroll = () => {
+      const now = performance.now();
+      const sy = window.scrollY;
+      const dt = Math.max(16, now - lastNativeTime);
+      const rawVel = ((sy - lastNativeScrollY) / dt) * 16;
+      const dir: 1 | -1 = sy >= lastNativeScrollY ? 1 : -1;
+      lastNativeScrollY = sy;
+      lastNativeTime = now;
+      updateFromProgress(sy / cachedMaxScroll, rawVel, dir, sy);
     };
 
     if (lenis) {
       lenis.on("scroll", handleLenisScroll);
+    } else {
+      window.addEventListener("scroll", handleNativeScroll, { passive: true });
     }
 
-    // Initial evaluation
-    const maxScroll = Math.max(
-      1,
-      document.documentElement.scrollHeight - window.innerHeight
-    );
-    updateFromProgress(window.scrollY / maxScroll, 0, 1);
-
     return () => {
-      trigger.kill();
+      window.cancelAnimationFrame(measureRafId);
+      window.removeEventListener("resize", handleResizeOrRefresh);
+      ScrollTrigger.removeEventListener("refresh", handleResizeOrRefresh);
       if (lenis) {
         lenis.off("scroll", handleLenisScroll);
+      } else {
+        window.removeEventListener("scroll", handleNativeScroll);
       }
     };
-  }, [lenis, isReducedMotion, cameraRef]);
+  }, [cameraRef, isReducedMotion, lenis]);
 
   useEffect(() => {
     if (!trackSectionState) return;
-
-    // Synchronize to current scroll state immediately after hydration
-    setActiveSectionIndex(globalScrollCameraState.activeSectionIndex);
-    setOverallProgress(globalScrollCameraState.progress);
+    let lastIdx = globalScrollCameraState.activeSectionIndex;
+    let lastPct = quantizeScrollPercent(globalScrollCameraState.progress);
 
     return subscribeScrollCamera((state) => {
-      setActiveSectionIndex(state.activeSectionIndex);
-      setOverallProgress(state.progress);
+      const nextPct = quantizeScrollPercent(state.progress);
+      if (state.activeSectionIndex !== lastIdx) {
+        lastIdx = state.activeSectionIndex;
+        setActiveSectionIndex(state.activeSectionIndex);
+      }
+      if (nextPct !== lastPct) {
+        lastPct = nextPct;
+        setOverallProgress(nextPct / 100);
+      }
     });
   }, [trackSectionState]);
 
+  const activeSection =
+    MAIN_PAGE_SECTIONS[activeSectionIndex] ?? MAIN_PAGE_SECTIONS[0];
+
   return {
     activeSectionIndex,
+    activeSection,
     overallProgress,
-    sections: MAIN_PAGE_SECTIONS,
-    getState: getGlobalScrollCameraState,
-    subscribe: subscribeScrollCamera,
+    getTelemetry: getGlobalScrollCameraState,
   };
 }

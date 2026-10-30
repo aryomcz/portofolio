@@ -6,7 +6,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { gsap } from "@/lib/gsap";
 
 const PRELOADER_SESSION_KEY = "aryo_hud_preloader_seen";
-const FALLBACK_TIMEOUT_MS = 1300;
+const FALLBACK_TIMEOUT_MS = 750;
 
 export function Preloader() {
   const { stop, start, scrollTo } = useLenis();
@@ -49,15 +49,12 @@ export function Preloader() {
       window.dispatchEvent(new CustomEvent("hud:preloader-complete"));
     };
 
-    // 1. Point 3: Instantly bypass if prefers-reduced-motion is true, or running in Lighthouse/bot audit
-    const isAutostart =
+    // 1. Only show blocking full-screen preloader when explicitly requested (?preloader=1)
+    // so initial page visits and PageSpeed Insights / Lighthouse audits have zero LCP element render delay.
+    const forcePreloader =
       typeof window !== "undefined" &&
-      new URLSearchParams(window.location.search).get("autostart") === "1";
-    const isLighthouse =
-      typeof navigator !== "undefined" &&
-      /Chrome-Lighthouse|Googlebot|Lighthouse/i.test(navigator.userAgent);
-
-    if (isReducedMotion || isAutostart || isLighthouse) {
+      new URLSearchParams(window.location.search).get("preloader") === "1";
+    if (isReducedMotion || !forcePreloader) {
       finishPreloader();
       return;
     }
@@ -137,8 +134,7 @@ export function Preloader() {
       duration: 0.55,
       ease: "power2.inOut",
       onUpdate: () => {
-        const nextVal = Math.round(progressObj.value);
-        setProgress((prev) => (prev === nextVal ? prev : nextVal));
+        setProgress(Math.round(progressObj.value));
       },
     });
 
@@ -161,7 +157,7 @@ export function Preloader() {
       aria-valuemax={100}
       className="pointer-events-auto fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
     >
-      {/* Top Shutter Curtain Panel */}
+      {/* Dual Shutter Curtain Panels with Accent Highlight Trims */}
       <div
         ref={topPanelRef}
         className="absolute top-0 right-0 left-0 h-1/2 bg-[#060A12] border-b border-accent-primary/20 will-change-transform"
@@ -198,7 +194,7 @@ export function Preloader() {
           />
         </div>
 
-        {/* Revealed Name Tag once 50% reached */}
+        {/* Revealed Identity Tag once 40% reached */}
         <div
           className={`mt-6 space-y-1 transition-opacity duration-300 ${
             progress > 45 ? "opacity-100" : "opacity-0"

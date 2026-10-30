@@ -251,3 +251,33 @@ export function getSectionThemeByIndex(index: number): MainSectionConfig {
   );
   return MAIN_PAGE_SECTIONS[safeIdx];
 }
+
+/**
+ * Determines the active section index using pre-cached document Y offsets
+ * (measured on load/resize/refresh instead of calling getBoundingClientRect on every scroll tick).
+ */
+export function detectActiveSectionFromOffsets(
+  scrollY: number,
+  viewportHeight: number,
+  sectionTops: readonly number[],
+  fallbackIndex = 0
+): number {
+  if (sectionTops.length === 0) return fallbackIndex;
+  const triggerLine = scrollY + viewportHeight * 0.42;
+  for (let i = sectionTops.length - 1; i >= 0; i--) {
+    const top = sectionTops[i];
+    if (typeof top === "number" && Number.isFinite(top) && top <= triggerLine) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Quantizes normalized scroll progress [0..1] to an integer percentage [0..100]
+ * so HUD state consumers never re-render on sub-percent floating point changes.
+ */
+export function quantizeScrollPercent(progress: number): number {
+  return Math.round(clamp01(progress) * 100);
+}
+

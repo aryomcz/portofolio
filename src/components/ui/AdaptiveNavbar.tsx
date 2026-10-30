@@ -5,8 +5,10 @@ import { TransitionLink } from "@/components/ui/TransitionLink";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, FileText, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
 import { useLenis } from "@/hooks/useLenis";
+import { subscribeScrollCamera } from "@/hooks/useScrollCamera";
+import { MAIN_PAGE_SECTIONS } from "@/lib/scrollNavigation";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { PORTFOLIO_DATA } from "@/data/portfolio";
@@ -23,16 +25,10 @@ const NAV_ITEMS: readonly NavItem[] = [
   { id: "hero", label: "About", href: "#hero" },
   { id: "skills", label: "Skills", href: "#skills" },
   { id: "achievements", label: "Achievements", href: "#achievements" },
+  { id: "artifacts", label: "3D Telemetry", href: "#artifacts" },
   { id: "projects", label: "Projects", href: "#projects" },
   { id: "timeline", label: "Experience", href: "#timeline" },
 ];
-
-const SPLIT_SPRING = {
-  type: "spring" as const,
-  stiffness: 260,
-  damping: 28,
-  mass: 0.6,
-};
 
 export function AdaptiveNavbar() {
   const headerRef = useRef<HTMLElement | null>(null);
@@ -56,81 +52,65 @@ export function AdaptiveNavbar() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isMobileMenuOpen]);
 
-  // Batch [3A] Navbar Orchestration: Smart hide/show & ScrollTrigger section spy
-  useGSAP(
-    () => {
-      let lastScrollY = window.scrollY;
+  // Zero-reflow Navbar Orchestration via shared subscribeScrollCamera
+  useEffect(() => {
+    let lastScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+    let lastScrolledState = lastScrollY > 50;
+    let lastActiveId = "hero";
+    let isHidden = false;
 
-      // 1. Smart hide on scroll down, show on scroll up
-      const navTrigger = ScrollTrigger.create({
-        start: "top top",
-        end: "max",
-        onUpdate: (self) => {
-          const currentScrollY = self.scroll();
-          const delta = currentScrollY - lastScrollY;
+    return subscribeScrollCamera((state) => {
+      const currentScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+      const delta = currentScrollY - lastScrollY;
 
-          // Update island split state
-          setIsScrolled(currentScrollY > 50);
-
-          if (isReducedMotion || !headerRef.current) return;
-
-          if (currentScrollY <= 40) {
-            // Always fully visible near top
-            gsap.to(headerRef.current, {
-              y: 0,
-              duration: 0.28,
-              ease: "power3.out",
-              overwrite: "auto",
-            });
-          } else if (delta > 6 && currentScrollY > 100) {
-            // Scrolling down -> hide navbar smoothly
-            gsap.to(headerRef.current, {
-              y: -100,
-              duration: 0.32,
-              ease: "power3.out",
-              overwrite: "auto",
-            });
-          } else if (delta < -6) {
-            // Scrolling up -> reveal navbar instantly
-            gsap.to(headerRef.current, {
-              y: 0,
-              duration: 0.28,
-              ease: "power3.out",
-              overwrite: "auto",
-            });
-          }
-
-          lastScrollY = currentScrollY;
-        },
-      });
-
-      // 2. Link aktif mengikuti section (ScrollTrigger section spy)
-      const spyTriggers: ScrollTrigger[] = [];
-      if (isHome) {
-        const sectionIds = [...NAV_ITEMS.map((item) => item.id), "contact"];
-        sectionIds.forEach((id) => {
-          const el = document.getElementById(id);
-          if (!el) return;
-
-          const st = ScrollTrigger.create({
-            trigger: el,
-            start: "top 35%",
-            end: "bottom 35%",
-            onEnter: () => setActiveSection(id === "contact" ? "timeline" : id),
-            onEnterBack: () =>
-              setActiveSection(id === "contact" ? "timeline" : id),
-          });
-          spyTriggers.push(st);
-        });
+      const nextScrolled = currentScrollY > 50;
+      if (nextScrolled !== lastScrolledState) {
+        lastScrolledState = nextScrolled;
+        setIsScrolled(nextScrolled);
       }
 
-      return () => {
-        navTrigger.kill();
-        spyTriggers.forEach((st) => st.kill());
-      };
-    },
-    { dependencies: [isHome, isReducedMotion], scope: headerRef }
-  );
+      if (isHome) {
+        const sec = MAIN_PAGE_SECTIONS[state.activeSectionIndex];
+        const rawId = sec?.id ?? "hero";
+        const mappedId =
+          rawId === "contact" || rawId === "github" ? "timeline" : rawId;
+        if (mappedId !== lastActiveId) {
+          lastActiveId = mappedId;
+          setActiveSection(mappedId);
+        }
+      }
+
+      if (!isReducedMotion && headerRef.current) {
+        if (currentScrollY <= 40 && isHidden) {
+          isHidden = false;
+          gsap.to(headerRef.current, {
+            y: 0,
+            duration: 0.28,
+            ease: "power3.out",
+            overwrite: "auto",
+          });
+        } else if (delta > 6 && currentScrollY > 100 && !isHidden) {
+          isHidden = true;
+          gsap.to(headerRef.current, {
+            y: -100,
+            duration: 0.32,
+            ease: "power3.out",
+            overwrite: "auto",
+          });
+        } else if (delta < -6 && isHidden) {
+          isHidden = false;
+          gsap.to(headerRef.current, {
+            y: 0,
+            duration: 0.28,
+            ease: "power3.out",
+            overwrite: "auto",
+          });
+        }
+      }
+
+      lastScrollY = currentScrollY;
+    });
+  }, [isHome, isReducedMotion]);
 
   const handleNavClick = (
     event: React.MouseEvent<HTMLAnchorElement>,
@@ -145,11 +125,9 @@ export function AdaptiveNavbar() {
     scrollTo(href, { offset: targetOffset, duration: 1.15 });
   };
 
-  const springTransition = isReducedMotion ? EASE_REDUCED : SPLIT_SPRING;
-
   // Shared surface class for each independent island (never applied to the outer wrapper)
   const islandSurfaceClass =
-    "pointer-events-auto flex h-13 shrink-0 items-center border border-border-subtle bg-bg-glass shadow-[0_8px_28px_rgba(10,17,32,0.06)] backdrop-blur-md";
+    "pointer-events-auto flex h-13 shrink-0 items-center border border-border-subtle bg-bg-glass shadow-[0_8px_28px_rgba(10,17,32,0.06)] backdrop-blur-md transition-[padding,border-radius,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]";
 
   return (
     <header
@@ -159,16 +137,14 @@ export function AdaptiveNavbar() {
       {/* Transparent layout track — zero background, zero border, zero shadow */}
       <div
         className={cn(
-          "pointer-events-none flex items-center",
+          "pointer-events-none flex items-center transition-[width,gap] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
           isScrolled
             ? "w-full max-w-6xl justify-between gap-3 sm:gap-4"
             : "w-auto justify-center gap-0"
         )}
       >
         {/* IslandLeft: Brand Logo (ARYO) */}
-        <motion.div
-          layout
-          transition={springTransition}
+        <div
           className={cn(
             islandSurfaceClass,
             isScrolled
@@ -197,13 +173,11 @@ export function AdaptiveNavbar() {
               <span>ARYO</span>
             </TransitionLink>
           )}
-        </motion.div>
+        </div>
 
         {/* IslandCenter: Desktop Navigation Links */}
         {isHome ? (
-          <motion.nav
-            layout
-            transition={springTransition}
+          <nav
             aria-label="Primary navigation"
             onMouseLeave={() => setHoveredSection(null)}
             className={cn(
@@ -269,13 +243,11 @@ export function AdaptiveNavbar() {
                 </a>
               );
             })}
-          </motion.nav>
+          </nav>
         ) : null}
 
         {/* IslandRight: Action Cluster (CV, Theme Toggle, Contact ↗, Mobile Menu) */}
-        <motion.div
-          layout
-          transition={springTransition}
+        <div
           className={cn(
             islandSurfaceClass,
             "gap-2",
@@ -333,26 +305,31 @@ export function AdaptiveNavbar() {
               )}
             </button>
           ) : null}
-        </motion.div>
+        </div>
       </div>
 
-      {/* Mobile Slide-Down Drawer Navigation */}
+      {/* Mobile Editorial Drawer Navigation (Inspired by Lando Norris Menu) */}
       <AnimatePresence>
         {isHome && isMobileMenuOpen ? (
           <motion.div
             data-lenis-prevent
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            initial={{ opacity: 0, y: -12, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            exit={{ opacity: 0, y: -12, scale: 0.96 }}
             transition={
               isReducedMotion
                 ? EASE_REDUCED
-                : { duration: 0.18, ease: [0.23, 1, 0.32, 1] }
+                : { duration: 0.22, ease: [0.23, 1, 0.32, 1] }
             }
-            className="pointer-events-auto mt-2 w-full max-w-sm origin-top rounded-2xl border border-border-subtle bg-bg-glass p-3 shadow-2xl backdrop-blur-xl lg:hidden"
+            className="pointer-events-auto mt-2 w-full max-w-sm origin-top border border-border-subtle bg-bg-elevated/95 p-4 shadow-2xl backdrop-blur-xl lg:hidden"
           >
+            <div className="flex items-center justify-between border-b border-border-subtle pb-2 mb-2 font-mono text-[10px] text-text-muted">
+              <span>{"// NAVIGATION HUD"}</span>
+              <span className="text-[#0e7c86]">ARM PROTOCOL</span>
+            </div>
+
             <nav className="flex flex-col space-y-1">
-              {NAV_ITEMS.map((item) => {
+              {NAV_ITEMS.map((item, idx) => {
                 const isActive = activeSection === item.id;
                 return (
                   <a
@@ -360,27 +337,37 @@ export function AdaptiveNavbar() {
                     href={item.href}
                     onClick={(e) => handleNavClick(e, item.href, item.id)}
                     className={cn(
-                      "flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-medium transition-colors",
+                      "group flex items-center justify-between px-3 py-2 text-left transition-colors",
                       isActive
-                        ? "bg-accent-primary/10 font-semibold text-accent-primary"
-                        : "text-text-secondary hover:bg-bg-subtle/60 hover:text-text-primary"
+                        ? "bg-[#0e7c86]/10 text-text-primary"
+                        : "text-text-secondary hover:bg-bg-subtle/80 hover:text-text-primary"
                     )}
                   >
-                    <span>{item.label}</span>
+                    <div className="flex items-baseline gap-2.5">
+                      <span className="font-mono text-[10px] text-text-muted group-hover:text-[#0e7c86]">
+                        0{idx + 1}
+                      </span>
+                      <span className="font-display text-xl tracking-wide uppercase">
+                        {item.label}
+                      </span>
+                    </div>
+
                     {isActive ? (
-                      <span className="h-1.5 w-1.5 rounded-full bg-accent-primary" />
-                    ) : null}
+                      <span className="h-2 w-2 rounded-full bg-[#0e7c86] shadow-[0_0_8px_rgba(14,124,134,0.8)]" />
+                    ) : (
+                      <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100 text-[#0e7c86]" />
+                    )}
                   </a>
                 );
               })}
 
-              <div className="border-t border-border-subtle/60 pt-2">
+              <div className="border-t border-border-subtle pt-3 mt-2">
                 <a
                   href="#contact"
                   onClick={(e) => handleNavClick(e, "#contact", "contact")}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-accent-primary px-4 py-2.5 text-sm font-semibold text-white shadow-xs"
+                  className="press-scale flex items-center justify-between bg-accent-primary px-4 py-2.5 font-mono text-xs font-bold text-white shadow-xs hover:bg-[#0e7c86] hover:text-white transition-colors"
                 >
-                  <span>Contact Aryo</span>
+                  <span>CONTACT ARYO</span>
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                 </a>
               </div>

@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLenis } from "@/hooks/useLenis";
+import {
+  useScrollCamera,
+  subscribeScrollCamera,
+  getGlobalScrollCameraState,
+} from "@/hooks/useScrollCamera";
 import {
   MAIN_PAGE_SECTIONS,
   formatSectionHudLabel,
 } from "@/lib/scrollNavigation";
 import { cn } from "@/lib/utils";
-import { useScrollCamera } from "@/hooks/useScrollCamera";
 
 /**
  * Fixed Right-Side Progress HUD:
@@ -16,15 +20,44 @@ import { useScrollCamera } from "@/hooks/useScrollCamera";
  */
 export function SectionProgressHud() {
   const { scrollTo } = useLenis();
-  const { activeSectionIndex, overallProgress } = useScrollCamera({
-    trackSectionState: true,
-  });
+  // Initialize global scroll camera synchronization
+  useScrollCamera();
+
+  const [activeSectionIndex, setActiveSectionIndex] = useState<number>(
+    () => getGlobalScrollCameraState().activeSectionIndex
+  );
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
-  const hudReadout = formatSectionHudLabel(
+  const readoutRef = useRef<HTMLSpanElement | null>(null);
+  const progressFillRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let lastSecIdx = getGlobalScrollCameraState().activeSectionIndex;
+
+    return subscribeScrollCamera((state) => {
+      if (readoutRef.current) {
+        readoutRef.current.textContent = formatSectionHudLabel(
+          state.activeSectionIndex + 1,
+          MAIN_PAGE_SECTIONS.length,
+          state.progress
+        );
+      }
+      if (progressFillRef.current) {
+        progressFillRef.current.style.height = `${Math.round(
+          state.progress * 100
+        )}%`;
+      }
+      if (state.activeSectionIndex !== lastSecIdx) {
+        lastSecIdx = state.activeSectionIndex;
+        setActiveSectionIndex(state.activeSectionIndex);
+      }
+    });
+  }, []);
+
+  const initialHudReadout = formatSectionHudLabel(
     activeSectionIndex + 1,
     MAIN_PAGE_SECTIONS.length,
-    overallProgress
+    getGlobalScrollCameraState().progress
   );
 
   const activeSection =
@@ -52,11 +85,11 @@ export function SectionProgressHud() {
             className="pointer-events-none absolute -right-px -bottom-px h-1.5 w-1.5 border-r border-b border-accent-primary"
           />
           <span
+            ref={readoutRef}
             data-testid="section-progress-readout"
             className="tabular-nums text-accent-primary"
-            suppressHydrationWarning
           >
-            {hudReadout}
+            {initialHudReadout}
           </span>
         </div>
 
@@ -72,11 +105,13 @@ export function SectionProgressHud() {
             className="pointer-events-none absolute top-2 right-0.5 bottom-2 w-[1.5px] bg-border-subtle/60"
           >
             <div
-              className="w-full bg-accent-primary transition-all duration-150"
+              ref={progressFillRef}
+              className="w-full bg-accent-primary"
               style={{
-                height: `${Math.round(overallProgress * 100)}%`,
+                height: `${Math.round(
+                  getGlobalScrollCameraState().progress * 100
+                )}%`,
               }}
-              suppressHydrationWarning
             />
           </div>
 
@@ -129,3 +164,4 @@ export function SectionProgressHud() {
     </aside>
   );
 }
+
