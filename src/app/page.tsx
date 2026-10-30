@@ -5,10 +5,12 @@ import { ExperienceSection } from "@/components/sections/ExperienceSection";
 import { GithubActivitySection } from "@/components/sections/GithubActivitySection";
 import { ContactFooter } from "@/components/sections/ContactFooter";
 import { SectionProgressHud } from "@/components/ui/SectionProgressHud";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export default function HomePage() {
   return (
     <main className="relative min-h-screen text-text-primary">
+      <SpeedInsights />
       <SectionProgressHud/>
       <HeroSection />
       <CapabilitiesSection />
