@@ -37,6 +37,12 @@
       "skillPath": "skills/improve-animations/SKILL.md",
       "computedHash": "b913ec7ef2b1aa900060eb6e5dbdccc94b6ea631059ec3474c4b61e2ffefeeb4"
     },
+    "nextjs-best-practices": {
+      "source": "sickn33/agentic-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nextjs-best-practices/SKILL.md",
+      "computedHash": "c8b3231482531f451aedefccb8cca86486ef7b5d7ec96240b3f7d223c05c951a"
+    },
     "review-animations": {
       "source": "emilkowalski/skills",
       "sourceType": "github",

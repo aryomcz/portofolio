@@ -36,7 +36,7 @@ export function VelocityTechMarquee() {
       duration: 0.35,
       ease: "power3.out",
     });
-    const rotTo = gsap.quickTo(wrapper, "rotate", {
+    const rotTo = gsap.quickTo(wrapper, "rotation", {
       duration: 0.45,
       ease: "power3.out",
     });

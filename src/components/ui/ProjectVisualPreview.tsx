@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { ProjectCaseStudy } from "@/data/portfolio";
 import { Award, CheckCircle2 } from "lucide-react";
 
@@ -43,12 +44,12 @@ export function ProjectVisualPreview({ study }: ProjectVisualPreviewProps) {
 
       {/* Primary 16:9 Showcase Image (100% Clear & Unobscured) */}
       <div className="relative aspect-[16/9] w-full overflow-hidden border-b border-accent-primary/35 bg-bg-elevated">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={study.previewImage.src}
           alt={study.previewImage.alt}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover/preview:scale-[1.02]"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 720px"
+          className="object-cover transition-transform duration-500 ease-out group-hover/preview:scale-[1.02]"
         />
       </div>
 
@@ -61,14 +62,14 @@ export function ProjectVisualPreview({ study }: ProjectVisualPreviewProps) {
               key={item.id}
               className="relative aspect-[16/10] overflow-hidden border border-accent-primary/35 bg-bg-primary transition-colors duration-150 group-hover/preview:border-accent-primary"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={item.imageUrl}
                 alt={item.title}
-                loading="lazy"
-                className="h-full w-full object-cover opacity-90 transition-opacity duration-150 group-hover/preview:opacity-100"
+                fill
+                sizes="(max-width: 768px) 33vw, 240px"
+                className="object-cover opacity-90 transition-opacity duration-150 group-hover/preview:opacity-100"
               />
-              <span className="absolute right-0 bottom-0 left-0 truncate border-t border-accent-primary/30 bg-bg-primary/90 px-1.5 py-0.5 font-mono text-[8px] text-accent-primary">
+              <span className="absolute right-0 bottom-0 left-0 z-10 truncate border-t border-accent-primary/30 bg-bg-primary/90 px-1.5 py-0.5 font-mono text-[8px] text-accent-primary">
                 {item.tag.split("//")[0]?.trim() ?? item.tag}
               </span>
             </div>

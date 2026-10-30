@@ -65,12 +65,8 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
   const cameraRef = options?.cameraRef;
   const trackSectionState = options?.trackSectionState ?? false;
 
-  const [activeSectionIndex, setActiveSectionIndex] = useState<number>(
-    globalScrollCameraState.activeSectionIndex
-  );
-  const [overallProgress, setOverallProgress] = useState<number>(
-    globalScrollCameraState.progress
-  );
+  const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
+  const [overallProgress, setOverallProgress] = useState<number>(0);
 
   // Smoothly animated proxy target driven by GSAP quickTo for silky camera damping
   const animatedRigRef = useRef({
@@ -121,32 +117,18 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
       ease: "power3.out",
     });
 
+    let lastActiveIdx = -1;
+
     const updateFromProgress = (rawProgress: number, velocity = 0, direction: 1 | -1 = 1) => {
       const progress = clamp01(rawProgress);
       const pose = interpolateCameraRig(progress);
-
-      // Measure actual DOM section positions when present on page for exact section detection
-      let detectedIdx = pose.activeSectionIndex;
-      const viewportCenter = window.innerHeight * 0.42;
-      for (let i = MAIN_PAGE_SECTIONS.length - 1; i >= 0; i--) {
-        const el = document.getElementById(MAIN_PAGE_SECTIONS[i].id);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top <= viewportCenter) {
-            detectedIdx = i;
-            break;
-          }
-        }
-      }
+      const detectedIdx = pose.activeSectionIndex;
 
       globalScrollCameraState.progress = progress;
       globalScrollCameraState.velocity = velocity;
       globalScrollCameraState.direction = direction;
       globalScrollCameraState.activeSectionIndex = detectedIdx;
-      globalScrollCameraState.pose = {
-        ...pose,
-        activeSectionIndex: detectedIdx,
-      };
+      globalScrollCameraState.pose = pose;
 
       // Update GSAP quickTo camera targets
       qPx(pose.position[0]);
@@ -156,23 +138,26 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
       qRy(pose.rotation[1]);
       qRz(pose.rotation[2]);
 
-      // Apply ambient section theme variables onto documentElement for smooth cross-section atmosphere
-      const activeSec = MAIN_PAGE_SECTIONS[detectedIdx] ?? MAIN_PAGE_SECTIONS[0];
-      const isDark =
-        document.documentElement.getAttribute("data-theme") === "dark" ||
-        document.documentElement.classList.contains("dark");
-      document.documentElement.style.setProperty(
-        "--section-ambient-tint",
-        isDark ? activeSec.tintDark : activeSec.tintLight
-      );
-      document.documentElement.style.setProperty(
-        "--section-accent-active",
-        isDark ? activeSec.accentDark : activeSec.accentLight
-      );
-      document.documentElement.setAttribute(
-        "data-active-section",
-        activeSec.id
-      );
+      // Only update documentElement styles when active section actually changes (prevents layout thrashing)
+      if (detectedIdx !== lastActiveIdx) {
+        lastActiveIdx = detectedIdx;
+        const activeSec = MAIN_PAGE_SECTIONS[detectedIdx] ?? MAIN_PAGE_SECTIONS[0];
+        const isDark =
+          document.documentElement.getAttribute("data-theme") === "dark" ||
+          document.documentElement.classList.contains("dark");
+        document.documentElement.style.setProperty(
+          "--section-ambient-tint",
+          isDark ? activeSec.tintDark : activeSec.tintLight
+        );
+        document.documentElement.style.setProperty(
+          "--section-accent-active",
+          isDark ? activeSec.accentDark : activeSec.accentLight
+        );
+        document.documentElement.setAttribute(
+          "data-active-section",
+          activeSec.id
+        );
+      }
 
       notifySubscribers();
     };
@@ -221,6 +206,11 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
 
   useEffect(() => {
     if (!trackSectionState) return;
+
+    // Synchronize to current scroll state immediately after hydration
+    setActiveSectionIndex(globalScrollCameraState.activeSectionIndex);
+    setOverallProgress(globalScrollCameraState.progress);
+
     return subscribeScrollCamera((state) => {
       setActiveSectionIndex(state.activeSectionIndex);
       setOverallProgress(state.progress);

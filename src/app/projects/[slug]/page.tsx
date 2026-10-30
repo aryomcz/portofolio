@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { TransitionLink } from "@/components/ui/TransitionLink";
 import { ProjectDetailEntrance } from "@/components/sections/ProjectDetailEntrance";
@@ -247,11 +248,13 @@ export default async function ProjectCaseStudyPage({
               className="overflow-hidden p-3 sm:p-4"
             >
               <div className="relative aspect-[16/9] w-full overflow-hidden border border-border-subtle bg-bg-primary">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={study.previewImage.src}
                   alt={study.previewImage.alt}
-                  className="h-full w-full object-cover"
+                  fill
+                  priority
+                  sizes="(max-width: 1280px) 100vw, 1200px"
+                  className="object-cover"
                 />
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-accent-primary/35 pt-3">
@@ -284,14 +287,14 @@ export default async function ProjectCaseStudyPage({
               >
                 <div>
                   <div className="relative aspect-[16/10] w-full overflow-hidden border border-border-subtle bg-bg-primary">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={photo.imageUrl}
                       alt={photo.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-300 ease-out hover:scale-105"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
+                      className="object-cover transition-transform duration-300 ease-out hover:scale-105"
                     />
-                    <span className="absolute top-2 left-2 border border-accent-primary/50 bg-bg-primary/95 px-2 py-0.5 font-mono text-[10px] font-medium text-accent-primary">
+                    <span className="absolute top-2 left-2 z-10 border border-accent-primary/50 bg-bg-primary/95 px-2 py-0.5 font-mono text-[10px] font-medium text-accent-primary">
                       {photo.tag}
                     </span>
                   </div>

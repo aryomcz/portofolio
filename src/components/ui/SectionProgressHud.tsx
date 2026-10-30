@@ -54,6 +54,7 @@ export function SectionProgressHud() {
           <span
             data-testid="section-progress-readout"
             className="tabular-nums text-accent-primary"
+            suppressHydrationWarning
           >
             {hudReadout}
           </span>
@@ -75,6 +76,7 @@ export function SectionProgressHud() {
               style={{
                 height: `${Math.round(overallProgress * 100)}%`,
               }}
+              suppressHydrationWarning
             />
           </div>
 

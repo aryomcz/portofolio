@@ -22,7 +22,7 @@ const TOPOGRAPHY_VERTEX_SHADER = /* glsl */ `
 `;
 
 const TOPOGRAPHY_FRAGMENT_SHADER = /* glsl */ `
-  precision highp float;
+  precision mediump float;
   varying vec2 vUv;
 
   uniform float uTime;
@@ -170,13 +170,13 @@ export function InteractiveTopographyCanvas({ className }: InteractiveTopography
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
-      antialias: !isSoftwareGl,
+      antialias: false,
       powerPreference: "high-performance",
-      precision: isSoftwareGl ? "mediump" : "highp",
+      precision: "mediump",
     });
 
     renderer.setSize(width, height);
-    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(1);
     renderer.domElement.style.position = "absolute";
     renderer.domElement.style.inset = "0";
     renderer.domElement.style.width = "100%";

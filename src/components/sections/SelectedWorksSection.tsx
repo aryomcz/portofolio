@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useMemo, useCallback } from "react";
-import { gsap, useGSAP, GSAP_MEDIA_QUERIES, SplitText, refreshScrollTrigger } from "@/lib/gsap";
+import { gsap, useGSAP, GSAP_MEDIA_QUERIES, refreshScrollTrigger } from "@/lib/gsap";
 import { TransitionLink } from "@/components/ui/TransitionLink";
 import {
   ArrowUpRight,
@@ -24,7 +24,7 @@ import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
 import { CaseStudyQuickModal } from "@/components/ui/CaseStudyQuickModal";
 import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { InteractiveArtifactShowcase } from "@/components/ui/InteractiveArtifactShowcase";
+import { TechMetropolisTelemetry } from "@/components/ui/TechMetropolisTelemetry";
 import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 import { SectionNextTeaser } from "@/components/ui/SectionNextTeaser";
 
@@ -95,11 +95,8 @@ export function SelectedWorksSection() {
           if (reduceMotion) {
             gsap.set(
               [
-                ".achieve-kinetic-title",
                 ".hud-achievement-card",
                 ".hud-achievement-card .hud-corner-ornament",
-                ".projects-title-selected",
-                ".projects-title-projects",
               ],
               {
                 autoAlpha: 1,
@@ -112,25 +109,7 @@ export function SelectedWorksSection() {
             return;
           }
 
-          // 1. Achievements Section Kinetic Title Reveal
-          gsap.fromTo(
-            ".achieve-kinetic-title",
-            { yPercent: 105, autoAlpha: 0 },
-            {
-              yPercent: 0,
-              autoAlpha: 1,
-              duration: 0.9,
-              ease: "power3.out",
-              clearProps: "transform",
-              scrollTrigger: {
-                trigger: "#achievements",
-                start: "top 78%",
-                toggleActions: "play none none none",
-              },
-            }
-          );
-
-          // 2. Featured Achievement Card: graceful spring scale & glide
+          // 1. Featured Achievement Card: graceful spring scale & glide
           gsap.fromTo(
             ".hud-achievement-card",
             { scale: 0.96, y: 28, autoAlpha: 0 },
@@ -149,7 +128,7 @@ export function SelectedWorksSection() {
             }
           );
 
-          // 3. Featured Achievement HUD Corner Ornaments
+          // 2. Featured Achievement HUD Corner Ornaments
           gsap.fromTo(
             ".hud-achievement-card .hud-corner-ornament",
             { scale: 0.8, autoAlpha: 0 },
@@ -167,49 +146,6 @@ export function SelectedWorksSection() {
               },
             }
           );
-
-          // 4. Projects Section Kinetic Title: Staggered Letters Reveal
-          const split1 = SplitText.create(".projects-title-selected", {
-            type: "chars",
-          });
-          const split2 = SplitText.create(".projects-title-projects", {
-            type: "chars",
-          });
-
-          // Animation: "SELECTED" & "PROJECTS" synchronized with power3.out
-          gsap.from(split1.chars, {
-            y: 35,
-            autoAlpha: 0,
-            stagger: 0.03,
-            duration: 0.8,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: "#projects",
-              start: "top 78%",
-              toggleActions: "play none none none",
-            },
-          });
-
-          gsap.from(split2.chars, {
-            autoAlpha: 0.1,
-            scale: 0.9,
-            stagger: {
-              each: 0.04,
-              from: "start",
-            },
-            duration: 0.8,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: "#projects",
-              start: "top 78%",
-              toggleActions: "play none none none",
-            },
-          });
-
-          return () => {
-            split1.revert();
-            split2.revert();
-          };
         }
       );
     },
@@ -446,15 +382,15 @@ export function SelectedWorksSection() {
         </TechBracketCard>
       </section>
 
-      {/* =====================================================================
-          SECTION: 3D ARTIFACT SHOWCASE (Inspired by Lando Norris 3D Showcase)
+     {/* =====================================================================
+          SECTION: 3D TECH METROPOLIS TELEMETRY
       ====================================================================== */}
       <section
         id="artifacts"
-        aria-label="Interactive 3D Hardware Telemetry Showcase"
+        aria-label="Interactive 3D Tech Metropolis Telemetry"
         className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
       >
-        <InteractiveArtifactShowcase />
+        <TechMetropolisTelemetry />
 
         <SectionNextTeaser
           currentCode="03"

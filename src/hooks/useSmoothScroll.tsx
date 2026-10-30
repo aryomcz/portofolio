@@ -88,7 +88,8 @@ export function SmoothScrollProvider({
     };
 
     gsap.ticker.add(updateLenis);
-    gsap.ticker.lagSmoothing(0);
+    // Allow standard lag smoothing to prevent stuttering during GC pauses
+    gsap.ticker.lagSmoothing(500, 33);
 
     // 5. Initial refresh
     ScrollTrigger.refresh();

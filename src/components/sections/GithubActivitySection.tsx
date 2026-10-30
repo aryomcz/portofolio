@@ -142,7 +142,7 @@ export function GithubActivitySection() {
           };
 
           if (reduceMotion) {
-            gsap.set([".github-kinetic-title", ".github-telemetry-card"], {
+            gsap.set(".github-telemetry-card", {
               autoAlpha: 1,
               y: 0,
               yPercent: 0,
@@ -151,25 +151,7 @@ export function GithubActivitySection() {
             return;
           }
 
-          // 1. Heading Kinetic Reveal: masked upward slide with power3.out
-          gsap.fromTo(
-            ".github-kinetic-title",
-            { yPercent: 105, autoAlpha: 0 },
-            {
-              yPercent: 0,
-              autoAlpha: 1,
-              duration: 0.9,
-              ease: "power3.out",
-              clearProps: "all",
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                start: "top 85%",
-                toggleActions: "play none none none",
-              },
-            }
-          );
-
-          // 2. Contribution Card: smooth entrance
+          // Contribution Card: smooth entrance
           gsap.fromTo(
             ".github-telemetry-card",
             { y: 28, autoAlpha: 0 },
