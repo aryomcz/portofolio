@@ -337,12 +337,25 @@ html.lenis body {
   transform: translate3d(-103%, 0, 0);
 }
 
-.kinetic-reveal-root[data-revealed="true"] > .kinetic-reveal-text {
+.kinetic-reveal-line-block {
+  display: block;
+}
+
+.kinetic-reveal-line-wrap {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+}
+
+.kinetic-reveal-root[data-revealed="true"] > .kinetic-reveal-text,
+.kinetic-reveal-root[data-revealed="true"] .kinetic-reveal-line-wrap > .kinetic-reveal-text {
   animation: kinetic-text-reveal 0.32s cubic-bezier(0.23, 1, 0.32, 1) forwards;
   animation-delay: var(--kb-text-delay, 0.18s);
 }
 
-.kinetic-reveal-root[data-revealed="true"] > .kinetic-reveal-curtain {
+.kinetic-reveal-root[data-revealed="true"] > .kinetic-reveal-curtain,
+.kinetic-reveal-root[data-revealed="true"] .kinetic-reveal-line-wrap > .kinetic-reveal-curtain {
   animation: kinetic-block-sweep var(--kb-duration, 0.65s) cubic-bezier(0.16, 1, 0.3, 1) forwards;
   animation-delay: var(--kb-delay, 0s);
 }
