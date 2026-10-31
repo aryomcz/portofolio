@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { ArrowDownRight } from "lucide-react";
 import { gsap } from "@/lib/gsap";
 import { useLenis } from "@/hooks/useLenis";
@@ -21,7 +21,7 @@ interface SectionNextTeaserProps {
  * Smoothly shifts and tilts in response to Lenis scroll velocity;
  * clicking smoothly scrolls to the target section.
  */
-export function SectionNextTeaser({
+export const SectionNextTeaser = memo(function SectionNextTeaser({
   currentCode,
   nextCode,
   nextLabel,
@@ -150,4 +150,4 @@ export function SectionNextTeaser({
       </div>
     </div>
   );
-}
+});

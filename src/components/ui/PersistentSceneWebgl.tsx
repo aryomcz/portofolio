@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { isUserScrolling } from "@/hooks/useScrollCamera";
 import {
   TOTAL_PERSISTENT_NODES,
   dampValue,
@@ -32,6 +33,7 @@ export interface SharedSceneRuntimeState {
   cursorY: number;
   activeSkillName: string | null;
   isDarkTheme: boolean;
+  isPaused?: boolean;
 }
 
 // =====================================================================
@@ -52,24 +54,29 @@ const _brightColorMint = new THREE.Color("#2dd4bf");
 const _goldColor = new THREE.Color("#f59e0b");
 const _dimColor = new THREE.Color("#475569");
 
-function SoftwareRenderPacer({
-  enabled,
-  isPaused,
+function BackgroundFramePacer({
+  runtimeRef,
+  isSoftwareGl,
 }: {
-  readonly enabled: boolean;
-  readonly isPaused: boolean;
+  readonly runtimeRef: React.RefObject<SharedSceneRuntimeState>;
+  readonly isSoftwareGl: boolean;
 }) {
   const { invalidate } = useThree();
 
   useEffect(() => {
-    if (!enabled || isPaused) return;
+    invalidate();
     let timerId: ReturnType<typeof setTimeout> | null = null;
     let cancelled = false;
+    // 30 FPS (33ms) on hardware Desktop GPU, ~15 FPS (65ms) on software fallback
+    const intervalMs = isSoftwareGl ? 65 : 33;
 
     const tick = () => {
       if (cancelled) return;
-      invalidate();
-      timerId = setTimeout(tick, 65);
+      const shouldYieldToScroll = isSoftwareGl && isUserScrolling(160);
+      if (!runtimeRef.current?.isPaused && !shouldYieldToScroll) {
+        invalidate();
+      }
+      timerId = setTimeout(tick, intervalMs);
     };
 
     tick();
@@ -77,7 +84,7 @@ function SoftwareRenderPacer({
       cancelled = true;
       if (timerId) clearTimeout(timerId);
     };
-  }, [enabled, isPaused, invalidate]);
+  }, [runtimeRef, isSoftwareGl, invalidate]);
 
   return null;
 }
@@ -370,10 +377,10 @@ function PersistentSceneContent({
       const heroLineOpacity =
         (weights.hero * 0.28 + weights.achievements * 0.1) *
         (runtime.isDarkTheme ? 1.15 : 0.85);
-      constellationMatRef.current.opacity = heroLineOpacity;
-      constellationLinesRef.current.visible = heroLineOpacity > 0.01;
+      constellationMatRef.current.opacity =
+        heroLineOpacity > 0.01 ? heroLineOpacity : 0;
 
-      if (constellationLinesRef.current.visible) {
+      if (heroLineOpacity > 0.01) {
         const posAttr = sceneData.constellationGeo.getAttribute(
           "position"
         ) as THREE.BufferAttribute;
@@ -399,10 +406,9 @@ function PersistentSceneContent({
     if (armLinesRef.current && armLinesMatRef.current) {
       const pulse = 0.72 + Math.sin(elapsed * 3.4) * 0.28;
       const armOpacity = weights.contact * 0.92 * pulse;
-      armLinesMatRef.current.opacity = armOpacity;
-      armLinesRef.current.visible = armOpacity > 0.015;
+      armLinesMatRef.current.opacity = armOpacity > 0.015 ? armOpacity : 0;
 
-      if (armLinesRef.current.visible) {
+      if (armOpacity > 0.015) {
         const posAttr = sceneData.armLineGeo.getAttribute(
           "position"
         ) as THREE.BufferAttribute;
@@ -428,9 +434,11 @@ function PersistentSceneContent({
     const beamsMesh = beamsMeshRef.current;
     if (beamsMesh) {
       const skillsVisibility = weights.skills;
-      beamsMesh.visible = skillsVisibility > 0.04;
+      const isBeamsActive = skillsVisibility > 0.04;
+      const mat = beamsMesh.material as THREE.MeshBasicMaterial;
+      mat.opacity = isBeamsActive ? 0.52 * Math.min(1, skillsVisibility * 1.5) : 0;
 
-      if (beamsMesh.visible) {
+      if (isBeamsActive) {
         const beams = sceneData.beams;
         for (let b = 0; b < beams.length; b++) {
           const edge = beams[b];
@@ -501,10 +509,9 @@ function PersistentSceneContent({
       spotTargetRingRef.current &&
       spotTargetMatRef.current
     ) {
+      // Keep spotLight and meshes visible=true at all times so Three.js NEVER recompiles
+      // MeshStandardMaterial shaders when crossing section boundaries!
       const isSpotActive = achieveWeight > 0.04;
-      spotLightRef.current.visible = isSpotActive;
-      spotBeamConeRef.current.visible = isSpotActive;
-      spotTargetRingRef.current.visible = isSpotActive;
 
       if (isSpotActive) {
         _vecA.set(spotPose.source[0], spotPose.source[1], spotPose.source[2]);
@@ -540,6 +547,10 @@ function PersistentSceneContent({
         spotTargetRingRef.current.scale.setScalar(ringPulse);
         spotTargetMatRef.current.opacity =
           achieveWeight * spotPose.intensity * 0.42;
+      } else {
+        spotLightRef.current.intensity = 0;
+        spotBeamMatRef.current.opacity = 0;
+        spotTargetMatRef.current.opacity = 0;
       }
     }
   });
@@ -597,7 +608,7 @@ function PersistentSceneContent({
         <meshBasicMaterial
           color="#14b8a6"
           transparent
-          opacity={0.52}
+          opacity={0}
           depthWrite={false}
         />
       </instancedMesh>
@@ -610,7 +621,7 @@ function PersistentSceneContent({
         penumbra={0.85}
         distance={10}
       />
-      <mesh ref={spotBeamConeRef} visible={false} frustumCulled={false}>
+      <mesh ref={spotBeamConeRef} frustumCulled={false}>
         <coneGeometry args={[1.45, 3.8, 24, 1, true]} />
         <meshBasicMaterial
           ref={spotBeamMatRef}
@@ -622,7 +633,7 @@ function PersistentSceneContent({
           blending={THREE.AdditiveBlending}
         />
       </mesh>
-      <mesh ref={spotTargetRingRef} visible={false} frustumCulled={false}>
+      <mesh ref={spotTargetRingRef} frustumCulled={false}>
         <ringGeometry args={[0.68, 0.74, 32]} />
         <meshBasicMaterial
           ref={spotTargetMatRef}
@@ -637,7 +648,6 @@ function PersistentSceneContent({
       <lineSegments
         ref={armLinesRef}
         geometry={sceneData.armLineGeo}
-        visible={false}
         frustumCulled={false}
       >
         <lineBasicMaterial
@@ -655,18 +665,16 @@ function PersistentSceneContent({
 export function PersistentSceneWebgl({
   runtimeRef,
   maxDpr,
-  isPaused,
   isSoftwareGl,
 }: {
   readonly runtimeRef: React.RefObject<SharedSceneRuntimeState>;
   readonly maxDpr: number;
-  readonly isPaused: boolean;
   readonly isSoftwareGl: boolean;
 }) {
   return (
     <Canvas
       dpr={[1, maxDpr]}
-      frameloop={isPaused ? "never" : isSoftwareGl ? "demand" : "always"}
+      frameloop="demand"
       camera={{ position: [0, 0.18, 6.2], fov: 42, near: 0.1, far: 30 }}
       gl={{
         alpha: true,
@@ -675,7 +683,10 @@ export function PersistentSceneWebgl({
       }}
       style={{ pointerEvents: "none" }}
     >
-      <SoftwareRenderPacer enabled={isSoftwareGl} isPaused={isPaused} />
+      <BackgroundFramePacer
+        runtimeRef={runtimeRef}
+        isSoftwareGl={isSoftwareGl}
+      />
       <PersistentSceneContent runtimeRef={runtimeRef} />
     </Canvas>
   );

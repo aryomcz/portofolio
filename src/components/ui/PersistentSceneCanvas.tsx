@@ -58,10 +58,9 @@ export function PersistentSceneCanvas() {
   const isReducedMotion = useReducedMotion();
   // Default to true on SSR / initial paint so Mobile never loads Three.js or R3F chunks
   const [isMobileFallback, setIsMobileFallback] = useState<boolean>(true);
-  const [isTabHidden, setIsTabHidden] = useState<boolean>(false);
-  const [isAnySectionVisible, setIsAnySectionVisible] = useState<boolean>(true);
   const [isSoftwareGl, setIsSoftwareGl] = useState<boolean>(false);
   const [isCanvasReady, setIsCanvasReady] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const runtimeRef = useRef<SharedSceneRuntimeState>({
     globalScrollProgress: 0,
@@ -74,6 +73,7 @@ export function PersistentSceneCanvas() {
     cursorY: 0,
     activeSkillName: null,
     isDarkTheme: false,
+    isPaused: false,
   });
 
   useEffect(() => {
@@ -124,10 +124,27 @@ export function PersistentSceneCanvas() {
         setIsSoftwareGl(false);
       }
       setIsCanvasReady(true);
-    }, 280);
+    }, 220);
+
+    let isTabHiddenNow = document.hidden;
+    let isAnySectionVisibleNow = true;
+
+    const syncPausedState = () => {
+      const nextPaused = shouldPausePersistentScene({
+        isTabHidden: isTabHiddenNow,
+        isAnySectionVisible: isAnySectionVisibleNow,
+        isReducedMotion,
+        isMobileFallback: false,
+      });
+      runtimeRef.current.isPaused = nextPaused;
+      if (containerRef.current) {
+        containerRef.current.dataset.paused = nextPaused ? "true" : "false";
+      }
+    };
 
     const handleVisibilityChange = () => {
-      setIsTabHidden(document.hidden);
+      isTabHiddenNow = document.hidden;
+      syncPausedState();
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
@@ -137,10 +154,11 @@ export function PersistentSceneCanvas() {
         attr === "dark" || document.documentElement.classList.contains("dark");
     };
     checkIsDark();
+    // Only observe data-theme so Lenis toggling lenis-scrolling class on <html> never triggers observer callbacks
     const themeObserver = new MutationObserver(checkIsDark);
     themeObserver.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["data-theme", "class"],
+      attributeFilter: ["data-theme"],
     });
 
     const handlePointerMove = (e: PointerEvent) => {
@@ -189,12 +207,10 @@ export function PersistentSceneCanvas() {
         runtimeRef.current.achievementsRatio = achieveR;
         runtimeRef.current.contactRatio = contactR;
 
-        const anyVisible =
+        isAnySectionVisibleNow =
           (heroR > 0 || skillsR > 0 || achieveR > 0 || contactR > 0) &&
           artifactsR < 0.25;
-        setIsAnySectionVisible((prev) =>
-          prev === anyVisible ? prev : anyVisible
-        );
+        syncPausedState();
       },
       {
         threshold: [0, 0.25, 0.65],
@@ -212,7 +228,8 @@ export function PersistentSceneCanvas() {
         }
       }
       if (!foundAny) {
-        setIsAnySectionVisible(false);
+        isAnySectionVisibleNow = false;
+        syncPausedState();
       }
     };
     attachSectionObservers();
@@ -260,28 +277,21 @@ export function PersistentSceneCanvas() {
     return <StaticMobileGradientFallback />;
   }
 
-  const isPaused = shouldPausePersistentScene({
-    isTabHidden,
-    isAnySectionVisible,
-    isReducedMotion,
-    isMobileFallback,
-  });
-
-  const maxDpr = clampPersistentDpr(1.25, isSoftwareGl);
+  const maxDpr = clampPersistentDpr(1.0, isSoftwareGl);
 
   return (
     <SceneErrorBoundary fallback={<StaticMobileGradientFallback />}>
       <div
+        ref={containerRef}
         aria-hidden="true"
         data-testid="persistent-3d-scene-container"
-        data-paused={isPaused ? "true" : "false"}
+        data-paused="false"
         className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
       >
         {isCanvasReady ? (
           <PersistentSceneWebgl
             runtimeRef={runtimeRef}
             maxDpr={maxDpr}
-            isPaused={isPaused}
             isSoftwareGl={isSoftwareGl}
           />
         ) : (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { subscribeScrollCamera } from "@/hooks/useScrollCamera";
@@ -8,20 +8,19 @@ import { computeMarqueeKinematics } from "@/lib/scrollNavigation";
 import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
 import { PORTFOLIO_DATA } from "@/data/portfolio";
 
+const ALL_SKILLS = PORTFOLIO_DATA.capabilityDomains.flatMap((d) => d.skills);
+const MARQUEE_ITEMS = [...ALL_SKILLS, ...ALL_SKILLS];
+
 /**
  * Velocity-Reactive Tech Stack Marquee:
  * Speed and tilt/skew angle dynamically respond to Lenis scroll velocity.
  */
-export function VelocityTechMarquee() {
+export const VelocityTechMarquee = memo(function VelocityTechMarquee() {
   const isReducedMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const speedDisplayRef = useRef<HTMLSpanElement | null>(null);
-
-  // Extract all unique tech stack items from capabilityDomains
-  const allSkills = PORTFOLIO_DATA.capabilityDomains.flatMap((d) => d.skills);
-  const marqueeItems = [...allSkills, ...allSkills];
 
   useEffect(() => {
     if (isReducedMotion || !trackRef.current || !wrapperRef.current) return;
@@ -128,7 +127,7 @@ export function VelocityTechMarquee() {
           ref={trackRef}
           className="flex w-max items-center gap-3 px-4 will-change-transform"
         >
-          {marqueeItems.map((skill, idx) => (
+          {MARQUEE_ITEMS.map((skill, idx) => (
             <div
               key={`${skill.name}-${idx}`}
               className="inline-flex shrink-0 items-center gap-2.5 border border-border-subtle bg-bg-primary/90 px-4 py-2 font-mono text-xs text-text-primary"
@@ -147,4 +146,4 @@ export function VelocityTechMarquee() {
       </div>
     </div>
   );
-}
+});

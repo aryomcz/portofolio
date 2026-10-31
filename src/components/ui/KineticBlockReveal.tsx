@@ -142,6 +142,8 @@ function getSharedRevealObserver(): IntersectionObserver | null {
   return sharedObserver;
 }
 
+let sharedRange: Range | null = null;
+
 /**
  * Detects visual rendered lines of text inside an element by measuring word bounding rects.
  * Returns an array of line strings if > 1 line, or empty array if <= 1 line.
@@ -150,38 +152,70 @@ function detectTextLines(root: HTMLElement): string[] {
   if (typeof document === "undefined" || !root) return [];
 
   const rawText = root.textContent?.trim();
-  if (!rawText) return [];
+  if (!rawText || !rawText.includes(" ")) return [];
 
-  // Search inside .kinetic-reveal-text if present, or root
-  const textContainer = root.querySelector(".kinetic-reveal-text") || root;
+  if (!sharedRange) {
+    sharedRange = document.createRange();
+  }
 
-  const walker = document.createTreeWalker(
-    textContainer,
-    NodeFilter.SHOW_TEXT,
-    null
-  );
-  const words: { word: string; top: number }[] = [];
-  let currentNode = walker.nextNode();
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  const wordTokens: { node: Text; start: number; end: number; word: string }[] =
+    [];
+  let currentNode = walker.nextNode() as Text | null;
 
   while (currentNode) {
     const text = currentNode.textContent || "";
     const regex = /\S+/g;
     let match: RegExpExecArray | null;
     while ((match = regex.exec(text)) !== null) {
-      const word = match[0];
-      const range = document.createRange();
-      try {
-        range.setStart(currentNode, match.index);
-        range.setEnd(currentNode, match.index + word.length);
-        const rect = range.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-          words.push({ word, top: rect.top });
-        }
-      } catch {
-        // Fallback for detached range
-      }
+      wordTokens.push({
+        node: currentNode,
+        start: match.index,
+        end: match.index + match[0].length,
+        word: match[0],
+      });
     }
-    currentNode = walker.nextNode();
+    currentNode = walker.nextNode() as Text | null;
+  }
+
+  if (wordTokens.length <= 1) return [];
+
+  // Fast-path O(1) check: if first word and last word share the same vertical line, skip measuring intermediate words
+  try {
+    const first = wordTokens[0];
+    sharedRange.setStart(first.node, first.start);
+    sharedRange.setEnd(first.node, first.end);
+    const firstRect = sharedRange.getBoundingClientRect();
+
+    const last = wordTokens[wordTokens.length - 1];
+    sharedRange.setStart(last.node, last.start);
+    sharedRange.setEnd(last.node, last.end);
+    const lastRect = sharedRange.getBoundingClientRect();
+
+    if (
+      firstRect.height > 0 &&
+      lastRect.height > 0 &&
+      Math.abs(lastRect.top - firstRect.top) <= 6
+    ) {
+      return [];
+    }
+  } catch {
+    return [];
+  }
+
+  const words: { word: string; top: number }[] = [];
+  for (let i = 0; i < wordTokens.length; i++) {
+    const token = wordTokens[i];
+    try {
+      sharedRange.setStart(token.node, token.start);
+      sharedRange.setEnd(token.node, token.end);
+      const rect = sharedRange.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        words.push({ word: token.word, top: rect.top });
+      }
+    } catch {
+      // Fallback for detached range
+    }
   }
 
   if (words.length <= 1) return [];
@@ -208,10 +242,10 @@ function detectTextLines(root: HTMLElement): string[] {
     lines.push(currentLineWords.join(" "));
   }
 
-  return lines;
+  return lines.length > 1 ? lines : [];
 }
 
-export function KineticBlockReveal({
+export const KineticBlockReveal = React.memo(function KineticBlockReveal({
   children,
   className,
   textClassName,
@@ -257,7 +291,7 @@ export function KineticBlockReveal({
           return detected;
         });
       } else {
-        setLines(null);
+        setLines((prev) => (prev === null ? prev : null));
       }
     };
 
@@ -273,7 +307,7 @@ export function KineticBlockReveal({
     let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     const handleResize = () => {
       if (resizeTimer) clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(measureLines, 120);
+      resizeTimer = setTimeout(measureLines, 150);
     };
 
     window.addEventListener("resize", handleResize, { passive: true });
@@ -412,4 +446,4 @@ export function KineticBlockReveal({
       />
     </Tag>
   );
-}
+});

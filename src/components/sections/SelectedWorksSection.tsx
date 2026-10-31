@@ -391,14 +391,13 @@ export function SelectedWorksSection() {
                 )}
                 aria-label="Stacking cards view"
               >
-                {viewMode === "stack" ? (
-                  <motion.span
-                    layoutId="project-view-mode-pill"
-                    transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
-                    className="absolute inset-0 bg-bg-subtle shadow-xs"
-                    aria-hidden="true"
-                  />
-                ) : null}
+                <span
+                  className={cn(
+                    "pointer-events-none absolute inset-0 bg-bg-subtle shadow-xs transition-opacity duration-150",
+                    viewMode === "stack" ? "opacity-100" : "opacity-0"
+                  )}
+                  aria-hidden="true"
+                />
                 <Layers className="relative z-10 h-3.5 w-3.5" />
                 <span className="relative z-10">STACK</span>
               </button>
@@ -414,14 +413,13 @@ export function SelectedWorksSection() {
                 )}
                 aria-label="Carousel view"
               >
-                {viewMode === "carousel" ? (
-                  <motion.span
-                    layoutId="project-view-mode-pill"
-                    transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
-                    className="absolute inset-0 bg-bg-subtle shadow-xs"
-                    aria-hidden="true"
-                  />
-                ) : null}
+                <span
+                  className={cn(
+                    "pointer-events-none absolute inset-0 bg-bg-subtle shadow-xs transition-opacity duration-150",
+                    viewMode === "carousel" ? "opacity-100" : "opacity-0"
+                  )}
+                  aria-hidden="true"
+                />
                 <GalleryHorizontal className="relative z-10 h-3.5 w-3.5" />
                 <span className="relative z-10">CAROUSEL</span>
               </button>
@@ -437,14 +435,13 @@ export function SelectedWorksSection() {
                 )}
                 aria-label="Grid view"
               >
-                {viewMode === "grid" ? (
-                  <motion.span
-                    layoutId="project-view-mode-pill"
-                    transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
-                    className="absolute inset-0 bg-bg-subtle shadow-xs"
-                    aria-hidden="true"
-                  />
-                ) : null}
+                <span
+                  className={cn(
+                    "pointer-events-none absolute inset-0 bg-bg-subtle shadow-xs transition-opacity duration-150",
+                    viewMode === "grid" ? "opacity-100" : "opacity-0"
+                  )}
+                  aria-hidden="true"
+                />
                 <LayoutGrid className="relative z-10 h-3.5 w-3.5" />
                 <span className="relative z-10">GRID</span>
               </button>
@@ -471,14 +468,13 @@ export function SelectedWorksSection() {
                       : "border-border-subtle bg-bg-elevated/80 text-text-secondary hover:border-accent-primary/50 hover:text-text-primary"
                   )}
                 >
-                  {isSelected ? (
-                    <motion.span
-                      layoutId="project-cat-pill"
-                      transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
-                      className="absolute inset-0 bg-accent-primary/15"
-                      aria-hidden="true"
-                    />
-                  ) : null}
+                  <span
+                    className={cn(
+                      "pointer-events-none absolute inset-0 bg-accent-primary/15 transition-opacity duration-150",
+                      isSelected ? "opacity-100" : "opacity-0"
+                    )}
+                    aria-hidden="true"
+                  />
                   <span className="relative z-10 flex items-center gap-1.5">
                     <span>{cat}</span>
                     <span className="opacity-60 text-[10px]">({count})</span>

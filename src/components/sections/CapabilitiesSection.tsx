@@ -1,13 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TransitionLink } from "@/components/ui/TransitionLink";
 import { ArrowUpRight, Layers, Cpu, Sparkles } from "lucide-react";
 import {
   PORTFOLIO_DATA,
   getCaseStudyBySlug,
+  type ProjectCaseStudy,
   type ProjectSlug,
 } from "@/data/portfolio";
+import { isUserScrolling } from "@/hooks/useScrollCamera";
 import { TechBracketCard } from "@/components/ui/TechBracketCard";
 import { BrandTechIcon } from "@/components/ui/BrandTechIcon";
 import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
@@ -21,15 +23,83 @@ const BENTO_SPAN_CLASSES: readonly string[] = [
   "md:col-span-3 lg:col-span-5",
 ];
 
+const { capabilityDomains, projects, featuredAchievement } = PORTFOLIO_DATA;
+const ALL_DEPLOYMENTS: readonly ProjectCaseStudy[] = [
+  featuredAchievement,
+  ...projects,
+];
+
+const DOMAIN_LINKED_STUDIES: Readonly<
+  Record<string, readonly ProjectCaseStudy[]>
+> = Object.fromEntries(
+  capabilityDomains.map((domain) => {
+    const uniqueSlugs = Array.from(
+      new Set(domain.skills.flatMap((s) => s.relatedProjectSlugs))
+    );
+    const studies = uniqueSlugs
+      .map((slug) => getCaseStudyBySlug(slug))
+      .filter((s): s is ProjectCaseStudy => Boolean(s));
+    return [domain.id, studies];
+  })
+);
+
 export function CapabilitiesSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
+  const hoverRafRef = useRef<number | null>(null);
+  const activeSkillRef = useRef<string | null>(null);
+
   const [highlightedSlugs, setHighlightedSlugs] = useState<
     readonly ProjectSlug[]
   >([]);
   const [activeSkillName, setActiveSkillName] = useState<string | null>(null);
 
-  const { capabilityDomains, projects, featuredAchievement } = PORTFOLIO_DATA;
-  const allDeployments = [featuredAchievement, ...projects];
+  const commitSkillFilter = useCallback(
+    (skillName: string | null, slugs: readonly ProjectSlug[]) => {
+      if (hoverRafRef.current !== null) {
+        window.cancelAnimationFrame(hoverRafRef.current);
+        hoverRafRef.current = null;
+      }
+      if (activeSkillRef.current === skillName) return;
+      activeSkillRef.current = skillName;
+      setActiveSkillName(skillName);
+      setHighlightedSlugs(slugs);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("hud:skill-hover", { detail: { skillName } })
+        );
+      }
+    },
+    []
+  );
+
+  const scheduleHoverSkill = useCallback(
+    (skillName: string | null, slugs: readonly ProjectSlug[]) => {
+      if (isUserScrolling(180)) return;
+      if (hoverRafRef.current !== null) {
+        window.cancelAnimationFrame(hoverRafRef.current);
+      }
+      hoverRafRef.current = window.requestAnimationFrame(() => {
+        hoverRafRef.current = null;
+        if (isUserScrolling(180)) return;
+        if (activeSkillRef.current === skillName) return;
+        activeSkillRef.current = skillName;
+        setActiveSkillName(skillName);
+        setHighlightedSlugs(slugs);
+        window.dispatchEvent(
+          new CustomEvent("hud:skill-hover", { detail: { skillName } })
+        );
+      });
+    },
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      if (hoverRafRef.current !== null) {
+        window.cancelAnimationFrame(hoverRafRef.current);
+      }
+    };
+  }, []);
 
   return (
     <section
@@ -88,6 +158,7 @@ export function CapabilitiesSection() {
           const spanClass =
             BENTO_SPAN_CLASSES[idx] ?? "md:col-span-6 lg:col-span-6";
           const isWideTile = idx === 0;
+          const domainStudies = DOMAIN_LINKED_STUDIES[domain.id] ?? [];
 
           return (
             <TechBracketCard
@@ -150,28 +221,31 @@ export function CapabilitiesSection() {
                         key={skill.name}
                         type="button"
                         onMouseEnter={() => {
-                          setActiveSkillName(skill.name);
-                          setHighlightedSlugs(skill.relatedProjectSlugs);
+                          scheduleHoverSkill(
+                            skill.name,
+                            skill.relatedProjectSlugs
+                          );
                         }}
                         onFocus={() => {
-                          setActiveSkillName(skill.name);
-                          setHighlightedSlugs(skill.relatedProjectSlugs);
+                          commitSkillFilter(
+                            skill.name,
+                            skill.relatedProjectSlugs
+                          );
                         }}
                         onMouseLeave={() => {
-                          setActiveSkillName(null);
-                          setHighlightedSlugs([]);
+                          scheduleHoverSkill(null, []);
                         }}
                         onBlur={() => {
-                          setActiveSkillName(null);
-                          setHighlightedSlugs([]);
+                          commitSkillFilter(null, []);
                         }}
                         onClick={() => {
-                          if (activeSkillName === skill.name) {
-                            setActiveSkillName(null);
-                            setHighlightedSlugs([]);
+                          if (activeSkillRef.current === skill.name) {
+                            commitSkillFilter(null, []);
                           } else {
-                            setActiveSkillName(skill.name);
-                            setHighlightedSlugs(skill.relatedProjectSlugs);
+                            commitSkillFilter(
+                              skill.name,
+                              skill.relatedProjectSlugs
+                            );
                           }
                         }}
                         className={cn(
@@ -203,16 +277,12 @@ export function CapabilitiesSection() {
                   DEPLOYED IN PRODUCTION:
                 </p>
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
-                  {Array.from(
-                    new Set(domain.skills.flatMap((s) => s.relatedProjectSlugs))
-                  ).map((slug) => {
-                    const study = getCaseStudyBySlug(slug);
-                    if (!study) return null;
-                    const isHighlighted = highlightedSlugs.includes(slug);
+                  {domainStudies.map((study) => {
+                    const isHighlighted = highlightedSlugs.includes(study.slug);
                     return (
                       <TransitionLink
-                        key={slug}
-                        href={`/projects/${slug}`}
+                        key={study.slug}
+                        href={`/projects/${study.slug}`}
                         label={`DOSSIER // ${study.shortTitle.toUpperCase()}`}
                         className={cn(
                           "press-scale group inline-flex items-center gap-1 border px-2.5 py-1 font-mono text-[11px] transition-colors duration-150",
@@ -261,14 +331,14 @@ export function CapabilitiesSection() {
               <h3 className="font-display text-3xl tracking-wide text-text-primary sm:text-4xl">
                 APPLIED ARCHITECTURE TELEMETRY
               </h3>
-              {/* <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent-primary">
+              <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent-primary">
                 <Sparkles className="h-3 w-3" aria-hidden="true" />
                 <span>
                   {activeSkillName
                     ? `FILTERED BY: ${activeSkillName}`
                     : "5 VERIFIED PRODUCTION SYSTEMS"}
                 </span>
-              </span> */}
+              </span>
             </div>
 
             <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">
@@ -279,7 +349,7 @@ export function CapabilitiesSection() {
 
             {/* 5 Production System Mini-Cards inside Bento Tile */}
             <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              {allDeployments.map((study) => {
+              {ALL_DEPLOYMENTS.map((study) => {
                 const isMatched =
                   highlightedSlugs.length === 0 ||
                   highlightedSlugs.includes(study.slug);
@@ -290,7 +360,7 @@ export function CapabilitiesSection() {
                     href={`/projects/${study.slug}`}
                     label={`SYSTEM // ${study.shortTitle.toUpperCase()}`}
                     className={cn(
-                      "press-scale group flex items-center justify-between border p-3 transition-all duration-200",
+                      "press-scale group flex items-center justify-between border p-3 transition-[border-color,background-color,opacity] duration-200",
                       highlightedSlugs.includes(study.slug)
                         ? "border-accent-primary bg-accent-primary/10 shadow-xs"
                         : isMatched

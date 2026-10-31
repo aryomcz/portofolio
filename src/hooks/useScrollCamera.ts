@@ -31,9 +31,18 @@ const globalScrollCameraState: ScrollCameraTelemetry = {
 };
 
 const subscribers = new Set<(state: ScrollCameraTelemetry) => void>();
+let lastScrollEventTime = -10000;
 
 export function getGlobalScrollCameraState(): ScrollCameraTelemetry {
   return globalScrollCameraState;
+}
+
+export function isUserScrolling(graceMs = 160): boolean {
+  if (typeof performance === "undefined") return false;
+  return (
+    Math.abs(globalScrollCameraState.velocity) > 0.12 ||
+    performance.now() - lastScrollEventTime < graceMs
+  );
 }
 
 export function subscribeScrollCamera(
@@ -138,7 +147,6 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
     let cachedSectionTops: number[] = [];
     let cachedMaxScroll = 5000;
     let cachedViewportHeight = window.innerHeight || 900;
-    let lastAppliedThemeKey = "";
 
     const measureSectionOffsets = () => {
       const scrollY = window.scrollY;
@@ -191,28 +199,6 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
         qRz(pose.rotation[2]);
       }
 
-      const activeSec = MAIN_PAGE_SECTIONS[detectedIdx] ?? MAIN_PAGE_SECTIONS[0];
-      const isDark =
-        document.documentElement.getAttribute("data-theme") === "dark" ||
-        document.documentElement.classList.contains("dark");
-      const themeKey = `${activeSec.id}:${isDark ? "dark" : "light"}`;
-
-      if (themeKey !== lastAppliedThemeKey) {
-        lastAppliedThemeKey = themeKey;
-        document.documentElement.style.setProperty(
-          "--section-ambient-tint",
-          isDark ? activeSec.tintDark : activeSec.tintLight
-        );
-        document.documentElement.style.setProperty(
-          "--section-accent-active",
-          isDark ? activeSec.accentDark : activeSec.accentLight
-        );
-        document.documentElement.setAttribute(
-          "data-active-section",
-          activeSec.id
-        );
-      }
-
       notifySubscribers();
     };
 
@@ -242,6 +228,7 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
       velocity: number;
       direction: number;
     }) => {
+      lastScrollEventTime = performance.now();
       const dir: 1 | -1 = e.direction >= 0 ? 1 : -1;
       updateFromProgress(e.progress, e.velocity, dir, e.scroll);
     };
@@ -250,6 +237,7 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
     let lastNativeTime = performance.now();
     const handleNativeScroll = () => {
       const now = performance.now();
+      lastScrollEventTime = now;
       const sy = window.scrollY;
       const dt = Math.max(16, now - lastNativeTime);
       const rawVel = ((sy - lastNativeScrollY) / dt) * 16;

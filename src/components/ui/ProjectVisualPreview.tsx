@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Image from "next/image";
 import type { ProjectCaseStudy } from "@/data/portfolio";
 import { Award, CheckCircle2 } from "lucide-react";
@@ -13,7 +14,9 @@ interface ProjectVisualPreviewProps {
  * Showcases the full custom 16:9 banner artwork from /public/images at 100% clarity
  * with per-project colored borders and text telemetry.
  */
-export function ProjectVisualPreview({ study }: ProjectVisualPreviewProps) {
+export const ProjectVisualPreview = memo(function ProjectVisualPreview({
+  study,
+}: ProjectVisualPreviewProps) {
   const isAchievement = study.kind === "achievement";
 
   return (
@@ -48,7 +51,10 @@ export function ProjectVisualPreview({ study }: ProjectVisualPreviewProps) {
           src={study.previewImage.src}
           alt={study.previewImage.alt}
           fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 720px"
+          loading="eager"
+          decoding="async"
+          sizes="(max-width: 768px) 92vw, (max-width: 1280px) 48vw, 580px"
+          referrerPolicy="no-referrer"
           className="object-cover transition-transform duration-500 ease-out group-hover/preview:scale-[1.02]"
         />
       </div>
@@ -66,7 +72,10 @@ export function ProjectVisualPreview({ study }: ProjectVisualPreviewProps) {
                 src={item.imageUrl}
                 alt={item.title}
                 fill
-                sizes="(max-width: 768px) 33vw, 240px"
+                loading="eager"
+                decoding="async"
+                sizes="(max-width: 768px) 28vw, 130px"
+                referrerPolicy="no-referrer"
                 className="object-cover opacity-90 transition-opacity duration-150 group-hover/preview:opacity-100"
               />
               <span className="absolute right-0 bottom-0 left-0 z-10 truncate border-t border-accent-primary/30 bg-bg-primary/90 px-1.5 py-0.5 font-mono text-[8px] text-accent-primary">
@@ -109,4 +118,4 @@ export function ProjectVisualPreview({ study }: ProjectVisualPreviewProps) {
       </div>
     </div>
   );
-}
+});

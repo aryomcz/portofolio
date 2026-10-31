@@ -4,7 +4,7 @@ import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { gsap, useGSAP, refreshScrollTrigger } from "@/lib/gsap";
 import { motion } from "motion/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { EASE_REDUCED, SPRING_SNAPPY } from "@/lib/motion";
+import { EASE_REDUCED } from "@/lib/motion";
 import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 import { SectionNextTeaser } from "@/components/ui/SectionNextTeaser";
 import { cn } from "@/lib/utils";
@@ -91,7 +91,6 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
     tabRefs.current[next]?.focus();
   };
 
-  const indicatorTransition = isReducedMotion ? EASE_REDUCED : SPRING_SNAPPY;
   const panelTransition = isReducedMotion ? EASE_REDUCED : PANEL_TRANSITION;
 
   return (
@@ -152,14 +151,13 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
                     : "text-text-muted hover:text-text-primary"
                 )}
               >
-                {isActive ? (
-                  <motion.span
-                    layoutId="activeExperienceTab"
-                    transition={indicatorTransition}
-                    className="absolute inset-0 border-b-2 border-accent-primary bg-accent-primary/10"
-                    aria-hidden="true"
-                  />
-                ) : null}
+                <span
+                  className={cn(
+                    "pointer-events-none absolute inset-0 border-b-2 border-accent-primary bg-accent-primary/10 transition-opacity duration-150",
+                    isActive ? "opacity-100" : "opacity-0"
+                  )}
+                  aria-hidden="true"
+                />
                 <span
                   className={cn(
                     "relative",

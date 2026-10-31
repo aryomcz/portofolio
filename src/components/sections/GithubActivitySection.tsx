@@ -2,10 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink, GitCommit } from "lucide-react";
-import { motion } from "motion/react";
 import { PORTFOLIO_DATA, type GithubContributionDay } from "@/data/portfolio";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion-tokens";
+import { getGlobalScrollCameraState } from "@/hooks/useScrollCamera";
 import { TechBracketCard } from "@/components/ui/TechBracketCard";
 import { KineticBlockReveal } from "@/components/ui/KineticBlockReveal";
 import { SectionNextTeaser } from "@/components/ui/SectionNextTeaser";
@@ -114,7 +112,6 @@ export function GithubActivitySection() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const statusTextRef = useRef<HTMLSpanElement | null>(null);
   const { githubTelemetry } = PORTFOLIO_DATA;
-  const isReducedMotion = useReducedMotion();
   const [selectedYear, setSelectedYear] = useState<number>(
     githubTelemetry.availableYears[0] ?? 2026
   );
@@ -124,34 +121,32 @@ export function GithubActivitySection() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [shouldFetchLive, setShouldFetchLive] = useState<boolean>(false);
 
+  // Pre-fetch GitHub contributions during initial page idle time so network + 365-cell DOM commit
+  // never interrupts mid-scroll transitions between Projects, Experience, and GitHub Telemetry.
   useEffect(() => {
-    const el = sectionRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") {
+    const timer = window.setTimeout(() => {
       setShouldFetchLive(true);
-      return;
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setShouldFetchLive(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "650px 0px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
+    }, 350);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!shouldFetchLive || liveCache[selectedYear]) return;
 
     let isCancelled = false;
-    queueMicrotask(() => {
-      if (!isCancelled) {
-        setIsLoading(true);
+    let commitTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const commitWhenScrollIdle = (data: LiveYearTelemetry | null) => {
+      if (isCancelled) return;
+      if (Math.abs(getGlobalScrollCameraState().velocity) > 0.35) {
+        commitTimer = setTimeout(() => commitWhenScrollIdle(data), 120);
+        return;
       }
-    });
+      if (data) {
+        setLiveCache((prev) => ({ ...prev, [selectedYear]: data }));
+      }
+      setIsLoading(false);
+    };
 
     async function loadYearTelemetry() {
       const username = githubTelemetry.username;
@@ -164,8 +159,7 @@ export function GithubActivitySection() {
         if (res.ok) {
           const data = (await res.json()) as LiveYearTelemetry;
           if (!isCancelled && Array.isArray(data.weeks) && data.weeks.length > 0) {
-            setLiveCache((prev) => ({ ...prev, [selectedYear]: data }));
-            setIsLoading(false);
+            commitWhenScrollIdle(data);
             return;
           }
         }
@@ -196,16 +190,12 @@ export function GithubActivitySection() {
                 : sumTotal;
 
             if (!isCancelled) {
-              setLiveCache((prev) => ({
-                ...prev,
-                [selectedYear]: {
-                  year: selectedYear,
-                  totalContributions,
-                  source: "github-public-api",
-                  weeks: groupDaysIntoWeeks(days, selectedYear),
-                },
-              }));
-              setIsLoading(false);
+              commitWhenScrollIdle({
+                year: selectedYear,
+                totalContributions,
+                source: "github-public-api",
+                weeks: groupDaysIntoWeeks(days, selectedYear),
+              });
               return;
             }
           }
@@ -214,15 +204,14 @@ export function GithubActivitySection() {
         // Keep deterministic snapshot fallback if offline
       }
 
-      if (!isCancelled) {
-        setIsLoading(false);
-      }
+      commitWhenScrollIdle(null);
     }
 
     void loadYearTelemetry();
 
     return () => {
       isCancelled = true;
+      if (commitTimer) clearTimeout(commitTimer);
     };
   }, [githubTelemetry.username, liveCache, selectedYear, shouldFetchLive]);
 
@@ -297,14 +286,13 @@ export function GithubActivitySection() {
                     : "text-text-secondary hover:text-text-primary"
                 )}
               >
-                {isActive ? (
-                  <motion.span
-                    layoutId="github-year-pill"
-                    transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
-                    className="absolute inset-0 border border-border-strong bg-bg-subtle"
-                    aria-hidden="true"
-                  />
-                ) : null}
+                <span
+                  className={cn(
+                    "pointer-events-none absolute inset-0 border border-border-strong bg-bg-subtle transition-opacity duration-150",
+                    isActive ? "opacity-100" : "opacity-0"
+                  )}
+                  aria-hidden="true"
+                />
                 <span className="relative z-10">{year}</span>
               </button>
             );

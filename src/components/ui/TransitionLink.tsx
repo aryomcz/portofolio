@@ -28,6 +28,7 @@ export function TransitionLink({
   className,
   onClick,
   target,
+  prefetch = false,
   ...rest
 }: TransitionLinkProps) {
   const { isNavigating, navigate } = usePageTransition();
@@ -65,6 +66,7 @@ export function TransitionLink({
     <Link
       href={href}
       target={target}
+      prefetch={prefetch}
       onClick={handleClick}
       className={className}
       {...rest}

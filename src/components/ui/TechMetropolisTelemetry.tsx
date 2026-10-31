@@ -26,6 +26,7 @@ import {
   Sparkles,
   Eye,
 } from "lucide-react";
+import { isUserScrolling } from "@/hooks/useScrollCamera";
 
 // ============================================================================
 // TYPES & ARCHITECTURAL DATA MODEL
@@ -1376,6 +1377,42 @@ function MetropolisBuildingNode({
 
 const _scratchWorldPos = new THREE.Vector3();
 
+function MetropolisFramePacer({
+  isInViewportRef,
+  isSoftwareGl,
+}: {
+  readonly isInViewportRef: React.RefObject<boolean>;
+  readonly isSoftwareGl: boolean;
+}) {
+  const { invalidate } = useThree();
+
+  useEffect(() => {
+    // Render one initial frame immediately on mount to pre-compile shaders & upload geometry buffers while idle
+    invalidate();
+
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+    const intervalMs = isSoftwareGl ? 65 : 33;
+
+    const tick = () => {
+      if (cancelled) return;
+      // Pause heavy 18-building WebGL rendering when out of viewport OR while the user is actively scrolling
+      if (isInViewportRef.current && !isUserScrolling(180)) {
+        invalidate();
+      }
+      timerId = setTimeout(tick, intervalMs);
+    };
+
+    tick();
+    return () => {
+      cancelled = true;
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [isInViewportRef, isSoftwareGl, invalidate]);
+
+  return null;
+}
+
 function TechMetropolisScene({
   activeDistrict,
   hoveredNodeId,
@@ -1405,7 +1442,7 @@ function TechMetropolisScene({
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const cityGroupRef = useRef<THREE.Group | null>(null);
   const isUserInteractingRef = useRef<boolean>(false);
-  const { camera, size } = useThree();
+  const { camera, size, invalidate } = useThree();
 
   const isMobile = size.width > 0 && size.width < 680;
   const mobileZoomScale = isMobile ? 1.24 : 1.0;
@@ -1421,7 +1458,8 @@ function TechMetropolisScene({
       preset.cameraPos[2] * mobileZoomScale
     );
     targetLookAt.set(...preset.cameraTarget);
-  }, [activeDistrict, mobileZoomScale, targetCameraPos, targetLookAt]);
+    invalidate();
+  }, [activeDistrict, mobileZoomScale, targetCameraPos, targetLookAt, invalidate]);
 
   useFrame((_, delta) => {
     const damp = 1 - Math.exp(-4.5 * delta);
@@ -1552,6 +1590,7 @@ export function TechMetropolisTelemetry() {
   const labelRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const lastPinCoordsRef = useRef<Record<string, string>>({});
   const hoverCardRef = useRef<HTMLDivElement | null>(null);
+  const isInViewportRef = useRef<boolean>(false);
 
   const [activeDistrict, setActiveDistrict] = useState<DistrictId>("overview");
   const [hoveredNode, setHoveredNode] = useState<TechNodeSpec | null>(null);
@@ -1561,34 +1600,56 @@ export function TechMetropolisTelemetry() {
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
   const [wireframe, setWireframe] = useState<boolean>(false);
   const [isDockCollapsed, setIsDockCollapsed] = useState<boolean>(false);
-  const [isInViewport, setIsInViewport] = useState<boolean>(false);
   const [hasEnteredViewport, setHasEnteredViewport] = useState<boolean>(false);
   const [isSoftwareGl, setIsSoftwareGl] = useState<boolean>(false);
 
-  // Lazily mount Canvas when approaching viewport (420px rootMargin) and pause when scrolled away
+  // 1. Pre-warm & mount Canvas during initial idle window so shader compilation never happens mid-scroll!
+  // 2. Track active viewport visibility via ref (zero React state re-renders on scroll crossing)
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry) {
-          const nextVisible = entry.isIntersecting;
-          setIsInViewport((prev) => (prev === nextVisible ? prev : nextVisible));
-          if (nextVisible) {
-            setHasEnteredViewport((prev) => {
-              if (!prev) {
-                setIsSoftwareGl(detectSoftwareWebGL());
-              }
-              return true;
-            });
-          }
+    if (!el) return;
+
+    const activateCanvas = () => {
+      setHasEnteredViewport((prev) => {
+        if (!prev) {
+          setIsSoftwareGl(detectSoftwareWebGL());
         }
-      },
-      { threshold: 0, rootMargin: "420px 0px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
+        return true;
+      });
+    };
+
+    const idleTimer = window.setTimeout(activateCanvas, 480);
+
+    let isIntersectingNow = false;
+    const activeViewportObserver =
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            (entries) => {
+              const entry = entries[0];
+              if (entry) {
+                isIntersectingNow = entry.isIntersecting;
+                isInViewportRef.current = isIntersectingNow && !document.hidden;
+                if (isIntersectingNow) {
+                  activateCanvas();
+                }
+              }
+            },
+            { threshold: 0, rootMargin: "100px 0px" }
+          )
+        : null;
+
+    const handleVisibilityChange = () => {
+      isInViewportRef.current = isIntersectingNow && !document.hidden;
+    };
+
+    activeViewportObserver?.observe(el);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearTimeout(idleTimer);
+      activeViewportObserver?.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   const handleDistrictChange = useCallback((districtId: DistrictId) => {
@@ -1794,8 +1855,8 @@ export function TechMetropolisTelemetry() {
         {hasEnteredViewport ? (
           <Canvas
             camera={{ position: [0, 14.8, 23.2], fov: 36 }}
-            dpr={isSoftwareGl ? 1 : [1, 1.5]}
-            frameloop={isInViewport ? "always" : "never"}
+            dpr={isSoftwareGl ? 1 : [1, 1.25]}
+            frameloop="demand"
             gl={{
               powerPreference: "high-performance",
               antialias: !isSoftwareGl,
@@ -1808,6 +1869,10 @@ export function TechMetropolisTelemetry() {
               scene.background = new THREE.Color("#070c18");
             }}
           >
+            <MetropolisFramePacer
+              isInViewportRef={isInViewportRef}
+              isSoftwareGl={isSoftwareGl}
+            />
             <TechMetropolisScene
               activeDistrict={activeDistrict}
               hoveredNodeId={hoveredNode?.id ?? null}

@@ -12,7 +12,7 @@ import { MAIN_PAGE_SECTIONS } from "@/lib/scrollNavigation";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { PORTFOLIO_DATA } from "@/data/portfolio";
-import { SPRING_LAYOUT, EASE_REDUCED } from "@/lib/motion";
+import { EASE_REDUCED } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -198,35 +198,29 @@ export function AdaptiveNavbar() {
                   onClick={(e) => handleNavClick(e, item.href, item.id)}
                   onMouseEnter={() => setHoveredSection(item.id)}
                   className={cn(
-                    "press-scale group relative rounded-full px-3.5 py-1.5 text-[13px] font-medium",
+                    "press-scale group relative rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-200",
                     isActive
                       ? "font-semibold text-text-primary"
                       : "text-text-secondary hover:text-text-primary"
                   )}
                 >
-                  {/* Active Section Solid Pill */}
-                  {isActive ? (
-                    <motion.span
-                      layoutId="active-nav-pill"
-                      transition={isReducedMotion ? EASE_REDUCED : SPRING_LAYOUT}
-                      className="absolute inset-0 rounded-full bg-bg-subtle shadow-xs"
-                      aria-hidden="true"
-                    />
-                  ) : null}
+                  {/* Active Section Solid Pill (Zero-reflow CSS transition) */}
+                  <span
+                    className={cn(
+                      "pointer-events-none absolute inset-0 rounded-full bg-bg-subtle shadow-xs transition-opacity duration-200",
+                      isActive ? "opacity-100" : "opacity-0"
+                    )}
+                    aria-hidden="true"
+                  />
 
-                  {/* Interactive Cursor-Following Hover Pill */}
-                  {isHovered && !isActive ? (
-                    <motion.span
-                      layoutId="hover-nav-pill"
-                      transition={
-                        isReducedMotion
-                          ? EASE_REDUCED
-                          : { type: "spring", stiffness: 420, damping: 30 }
-                      }
-                      className="absolute inset-0 rounded-full bg-bg-subtle/60"
-                      aria-hidden="true"
-                    />
-                  ) : null}
+                  {/* Interactive Hover Pill */}
+                  <span
+                    className={cn(
+                      "pointer-events-none absolute inset-0 rounded-full bg-bg-subtle/60 transition-opacity duration-150",
+                      isHovered && !isActive ? "opacity-100" : "opacity-0"
+                    )}
+                    aria-hidden="true"
+                  />
 
                   {/* Batch [3A]: Emil Kowalski Text-Roll Hover Effect */}
                   <span className="relative z-10 inline-flex h-[1.3em] overflow-hidden leading-tight">

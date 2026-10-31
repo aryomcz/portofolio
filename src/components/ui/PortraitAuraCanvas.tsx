@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type * as THREE from "three";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { isUserScrolling } from "@/hooks/useScrollCamera";
 
 interface PortraitAuraCanvasProps {
   readonly baseImageSrc: string;
@@ -348,7 +349,7 @@ export function PortraitAuraCanvas({
   }, [shouldInitWebgl]);
 
   useEffect(() => {
-    if (isAuraForced && !shouldInitWebgl) {
+    if (isAuraForced && !shouldInitWebgl && !isSoftwareWebGLCached()) {
       setShouldInitWebgl(true);
     }
     const nextTarget = isAuraForced ? 1.0 : 0.0;
@@ -464,6 +465,12 @@ export function PortraitAuraCanvas({
           return;
         }
 
+        // Yield heavy fragment shader evaluation while the user is actively scrolling the page
+        if (isUserScrolling(140)) {
+          isLoopActive = false;
+          return;
+        }
+
         const totalElapsed = (now - mountTime) * 0.001;
         uniforms.uTime.value = isReducedMotion ? 0.0 : totalElapsed;
 
@@ -569,7 +576,13 @@ export function PortraitAuraCanvas({
       };
 
       const wakeLoop = () => {
-        if (!isLoopActive && !disposed && isVisible && texturesLoaded) {
+        if (
+          !isLoopActive &&
+          !disposed &&
+          isVisible &&
+          texturesLoaded &&
+          !isUserScrolling(140)
+        ) {
           isLoopActive = true;
           rafId = window.requestAnimationFrame(animate);
         }
@@ -661,7 +674,8 @@ export function PortraitAuraCanvas({
   }, [shouldInitWebgl, baseImageSrc, auraImageSrc, isReducedMotion]);
 
   const handleWrapperPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!shouldInitWebgl) {
+    if (isUserScrolling(160)) return;
+    if (!shouldInitWebgl && !isSoftwareWebGLCached()) {
       setShouldInitWebgl(true);
     }
     const el = wrapperRef.current;
@@ -684,7 +698,9 @@ export function PortraitAuraCanvas({
     targetHoverRef.current = 0.0;
     targetMouseRef.current.x = 0.5;
     targetMouseRef.current.y = 0.55;
-    wakeLoopRef.current?.();
+    if (!isUserScrolling(160)) {
+      wakeLoopRef.current?.();
+    }
   };
 
   const initialSsrImageSrc = isReducedMotion ? baseImageSrc : auraImageSrc;
@@ -694,14 +710,18 @@ export function PortraitAuraCanvas({
       ref={wrapperRef}
       aria-label="Interactive 3D Shader Portrait of Aryo Ristiawan Machfudz — hover or click Show Aura to switch between Normal Portrait and Cyber-Wolf Aura"
       onPointerEnter={() => {
-        if (!shouldInitWebgl) setShouldInitWebgl(true);
+        if (!shouldInitWebgl && !isSoftwareWebGLCached() && !isUserScrolling(160)) {
+          setShouldInitWebgl(true);
+        }
       }}
       onPointerMove={handleWrapperPointerMove}
       onPointerLeave={handleWrapperPointerLeave}
       onPointerDown={() => {
-        if (!shouldInitWebgl) setShouldInitWebgl(true);
+        if (!shouldInitWebgl && !isSoftwareWebGLCached()) {
+          setShouldInitWebgl(true);
+        }
       }}
-      className="relative h-full w-full cursor-default select-none drop-shadow-[0_18px_28px_rgba(10,17,32,0.22)]"
+      className="relative h-full w-full cursor-default select-none"
     >
       {/* Instant SSR / LCP Priority Layer starts directly with Aura Image so there is zero flash of normal portrait */}
       <Image
@@ -712,7 +732,7 @@ export function PortraitAuraCanvas({
         fetchPriority="high"
         sizes="(max-width: 768px) 90vw, 480px"
         referrerPolicy="no-referrer"
-        className={`pointer-events-none object-contain object-bottom transition-opacity duration-150 ${
+        className={`pointer-events-none object-contain object-bottom drop-shadow-[0_18px_28px_rgba(10,17,32,0.22)] transition-opacity duration-150 ${
           isWebglReady ? "opacity-0" : "opacity-100"
         }`}
       />

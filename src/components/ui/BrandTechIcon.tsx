@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 
 interface BrandTechIconProps {
@@ -9,7 +10,10 @@ interface BrandTechIconProps {
  * Crisp SVG brand & technical iconography for skill pills and tech badges.
  * Strictly follows ui-ux-pro-max rules: zero emojis, 100% vector SVG paths.
  */
-export function BrandTechIcon({ name, className }: BrandTechIconProps) {
+export const BrandTechIcon = memo(function BrandTechIcon({
+  name,
+  className,
+}: BrandTechIconProps) {
   const key = name.toLowerCase();
   const baseClass = cn("h-3.5 w-3.5 shrink-0", className);
 
@@ -153,4 +157,4 @@ export function BrandTechIcon({ name, className }: BrandTechIconProps) {
       <path d="M13.5 16.75H20M16.75 13.5V20" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" />
     </svg>
   );
-}
+});

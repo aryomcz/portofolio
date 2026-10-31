@@ -142,7 +142,7 @@ export function SectionProgressHud() {
                 >
                   <span
                     className={cn(
-                      "transition-all duration-200",
+                      "transition-[transform,background-color,border-color] duration-200",
                       isActive
                         ? "h-2.5 w-2.5 rotate-45 border border-accent-primary bg-accent-primary shadow-[0_0_8px_rgba(14,124,134,0.6)]"
                         : isPassed
