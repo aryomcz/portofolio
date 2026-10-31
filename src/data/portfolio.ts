@@ -1275,7 +1275,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       organization: "Matra Hillindo",
       location: "Bogor, Indonesia",
       employmentType: "Internship",
-      tenure: { start: "2023-07", end: "2023-12" },
+      tenure: { start: "2023-06", end: "2023-12" },
       highlights: [
         "Developed 15+ responsive front-end website templates integrated with RESTful APIs, accelerating client onboarding speed by 25%.",
         "Engineered an automated invitation forwarding module leveraging the WhatsApp API to auto-fill dynamic guest names, significantly reducing manual messaging efforts and improving delivery speed.",
