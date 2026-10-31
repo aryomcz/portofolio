@@ -461,7 +461,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       cardSummary:
         "Digitized manual ice cream shop cashier operations into an installable Next.js PWA backed by Express.js and Prisma ORM, eliminating human logging errors and empowering owners with real-time SKU sales analytics.",
       previewImage: {
-        src: "/images/projects/livingroom/livingroom.png",
+        src: "/images/projects/livingroom/livingroom.webp",
         alt: "Livingroom POS PWA Dashboard showing Total Items Terjual, Total Pendapatan, and Chart.js sales trends",
         aspectRatio: "16/10",
       },
@@ -471,21 +471,21 @@ export const PORTFOLIO_DATA: PortfolioData = {
           tag: "FIG 01 // ADMIN ANALYTICS",
           title: "Real-Time Revenue & SKU Velocity Dashboard",
           caption: "Interactive Chart.js dashboard filtering Minggu, 1 Bulan, 3 Bulan, and 6 Bulan sales windows.",
-          imageUrl: "/images/projects/livingroom/chart.png",
+          imageUrl: "/images/projects/livingroom/chart.webp",
         },
         {
           id: "pos-2",
           tag: "FIG 02 // CASHIER PWA TERMINAL",
           title: "Touch-Optimized Cashier Checkout Interface",
           caption: "Installable PWA interface for rapid order entry across Kul-kul, 1 Scoop, and Muffle menu items.",
-          imageUrl: "/images/projects/livingroom/checkout.png",
+          imageUrl: "/images/projects/livingroom/checkout.webp",
         },
         {
           id: "pos-3",
           tag: "FIG 03 // PRISMA LEDGER",
           title: "Transactional Order History & Stock Audit",
           caption: "Normalized relational schema ensuring zero shift-end discrepancies.",
-          imageUrl: "/images/projects/livingroom/history.png",
+          imageUrl: "/images/projects/livingroom/history.webp",
         },
       ],
       techStack: [
@@ -627,7 +627,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       cardSummary:
         "Architected a dual-platform event ticketing ecosystem combining a React/Laravel web dashboard, MongoDB NoSQL storage, real-time Xendit payment webhooks, and a cross-platform Flutter RBAC QR scanner.",
       previewImage: {
-        src: "/images/projects/tigo/tigo.png",
+        src: "/images/projects/tigo/tigo.webp",
         alt: "TIGO Event Organizer Web Dashboard and Flutter Mobile QR Code Scanner",
         aspectRatio: "16/10",
       },
@@ -637,21 +637,21 @@ export const PORTFOLIO_DATA: PortfolioData = {
           tag: "FIG 01 // WEB TICKETING PORTAL",
           title: "Event Discovery & Xendit Instant Checkout",
           caption: "React & Laravel web interface with Google OAuth and automated Xendit invoice generation.",
-          imageUrl: "/images/projects/tigo/checkout.png",
+          imageUrl: "/images/projects/tigo/checkout.webp",
         },
         {
           id: "tigo-2",
           tag: "FIG 02 // FLUTTER QR SCANNER",
           title: "Sub-2-Second RBAC Mobile Gate Scanner",
           caption: "Cross-platform Flutter mobile app validating attendee QR payloads in under 2 seconds.",
-          imageUrl: "/images/projects/tigo/scan.png",
+          imageUrl: "/images/projects/tigo/scan.webp",
         },
         {
           id: "tigo-3",
           tag: "FIG 03 // WEBHOOK TELEMETRY",
           title: "Real-Time MongoDB & Xendit Settlement Logs",
           caption: "Automated webhook reconciliation updating withdrawal status iwth approval from xendit and ticket statuses without manual review.",
-          imageUrl: "/images/projects/tigo/xendit-webhook.png",
+          imageUrl: "/images/projects/tigo/xendit-webhook.webp",
         },
       ],
       techStack: [
@@ -793,7 +793,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       cardSummary:
         "Modernized the corporate web platform for PT Bahtera Khatulistiwa Shipping from a rigid legacy static site into a high-performance Next.js and Express.js application with a custom back-office CMS.",
       previewImage: {
-        src: "/images/projects/bks/bks.png",
+        src: "/images/projects/bks/bks.webp",
         alt: "PT Bahtera Khatulistiwa Shipping Corporate Website and Custom CMS Dashboard",
         aspectRatio: "16/10",
       },
@@ -803,21 +803,21 @@ export const PORTFOLIO_DATA: PortfolioData = {
           tag: "FIG 01 // CORPORATE PORTAL",
           title: "Modernized Maritime Fleet & Services Showcase",
           caption: "Responsive Next.js corporate landing experience deployed at www.bks-shipmanagement.com.",
-          imageUrl: "/images/projects/bks/home.png",
+          imageUrl: "/images/projects/bks/home.webp",
         },
         {
           id: "bks-2",
           tag: "FIG 02 // BACK-OFFICE CMS",
           title: "Self-Service Content & Career Management Console",
           caption: "Custom CMS empowering non-technical staff to publish updates 70% faster.",
-          imageUrl: "/images/projects/bks/career.png",
+          imageUrl: "/images/projects/bks/career.webp",
         },
         {
           id: "bks-3",
           tag: "FIG 03 // CLOUDINARY PIPELINE",
           title: "Automated High-Res Vessel Media Delivery",
           caption: "Express.js + Cloudinary integration serving optimized WebP vessel galleries.",
-          imageUrl: "/images/projects/bks/vessel.png",
+          imageUrl: "/images/projects/bks/vessel.webp",
         },
       ],
       techStack: [
@@ -950,7 +950,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       cardSummary:
         "Engineered an OCR-assisted driver trip (ritase) submission platform and admin dispatch dashboard in Next.js, cutting manual driver reporting time by 60% and automating Surat Izin Jalan (SIJ) printing.",
       previewImage: {
-        src: "/images/projects/hms/hms.png",
+        src: "/images/projects/hms/hms.webp",
         alt: "PT KJHMS Driver Management Dashboard showing Grafik Ritase and OCR receipt verification",
         aspectRatio: "16/10",
       },
@@ -960,21 +960,21 @@ export const PORTFOLIO_DATA: PortfolioData = {
           tag: "FIG 01 // OCR RECEIPT UPLOAD",
           title: "Automated Driver Receipt Metadata Extraction",
           caption: "Drivers upload receipt screenshots to auto-populate trip forms, cutting submission time by 60%.",
-          imageUrl: "/images/projects/hms/scan.jpeg",
+          imageUrl: "/images/projects/hms/scan.webp",
         },
         {
           id: "kjhms-2",
           tag: "FIG 02 // GRAFIK RITASE CONSOLE",
           title: "7-Day Rolling Fleet Ritase Telemetry",
           caption: "Real-time Next.js dashboard tracking driver trip counts and delivery logs.",
-          imageUrl: "/images/projects/hms/ritase.jpeg",
+          imageUrl: "/images/projects/hms/ritase.webp",
         },
         {
           id: "kjhms-3",
           tag: "FIG 03 // WEB-TO-PRINTER SIJ",
           title: "1-Click Surat Izin Jalan (SIJ) Auto-Printing",
           caption: "Direct hardware print bridge issuing physical dispatch slips upon verification.",
-          imageUrl: "/images/projects/hms/sij.jpeg",
+          imageUrl: "/images/projects/hms/sij.webp",
         },
       ],
       techStack: [
@@ -1119,9 +1119,9 @@ export const PORTFOLIO_DATA: PortfolioData = {
     cardSummary:
       "Awarded 1st Place Nationally (Champion) at Prisma Fest 2025 for designing and engineering Lumind—an interactive digital mental wellness platform featuring daily mood check-ins, choreographed breathing cadences, and mindful journaling.",
     previewImage: {
-      src: "/images/achievements/prisma/winner.png",
+      src: "/images/achievements/prisma/winner.webp",
       alt: "Lumind Digital Mental Wellness Platform UI and 1st Winner Prisma Fest 2025 Award Certificate",
-      secondaryCertificateSrc: "/images/achievements/prisma/certificate.png",
+      secondaryCertificateSrc: "/images/achievements/prisma/certificate.webp",
       aspectRatio: "16/9",
     },
     dummyGallery: [
@@ -1130,28 +1130,28 @@ export const PORTFOLIO_DATA: PortfolioData = {
         tag: "DOC 01 // CHAMPION AWARDING",
         title: "1st Place Winner (Juara 1) — Prisma Fest 2025",
         caption: "Representing IPB University at the National Web Design Competition, UIN Sunan Ampel Surabaya.",
-        imageUrl: "/images/achievements/prisma/photo.jpg",
+        imageUrl: "/images/achievements/prisma/photo.webp",
       },
       {
         id: "lumind-2",
         tag: "DOC 02 // OFFICIAL CERTIFICATE",
         title: "Juara 1 National Web Design Certificate",
         caption: "Official 1st Winner Certificate awarded by UIN Sunan Ampel Surabaya at Prisma Fest 2025.",
-        imageUrl: "/images/achievements/prisma/certificate.png",
+        imageUrl: "/images/achievements/prisma/certificate.webp",
       },
       {
         id: "lumind-3",
         tag: "DOC 03 // LUMIND SANCTUARY UI",
         title: "Personalized Daily Mood Check-In (Lacak Emosi)",
         caption: "Calming editorial interface at lumind.vercel.app designed for zero cognitive overload.",
-        imageUrl: "/images/achievements/prisma/daily-mood.png",
+        imageUrl: "/images/achievements/prisma/daily-mood.webp",
       },
       {
         id: "lumind-4",
         tag: "DOC 04 // MINDFUL RITUALS",
         title: "Choreographed Breathing Cadence (Atur Napas)",
         caption: "Interactive visual breathing guide and distraction-free journaling module.",
-        imageUrl: "/images/achievements/prisma/inhale.png",
+        imageUrl: "/images/achievements/prisma/inhale.webp",
       },
     ],
     techStack: [
