@@ -331,14 +331,14 @@ export function CapabilitiesSection() {
               <h3 className="font-display text-3xl tracking-wide text-text-primary sm:text-4xl">
                 APPLIED ARCHITECTURE TELEMETRY
               </h3>
-              <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent-primary">
+              {/* <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent-primary">
                 <Sparkles className="h-3 w-3" aria-hidden="true" />
                 <span>
                   {activeSkillName
                     ? `FILTERED BY: ${activeSkillName}`
                     : "5 VERIFIED PRODUCTION SYSTEMS"}
                 </span>
-              </span>
+              </span> */}
             </div>
 
             <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">
