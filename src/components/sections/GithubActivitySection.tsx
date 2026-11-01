@@ -300,7 +300,7 @@ export function GithubActivitySection() {
         </div>
       </div>
 
-      <div className="github-telemetry-card">
+      <div className="github-telemetry-card overflow-hidden max-w-full">
         <TechBracketCard bracketSize="lg" className="p-5 sm:p-7">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
           <div className="flex items-center gap-2.5">

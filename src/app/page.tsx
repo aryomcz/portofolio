@@ -9,7 +9,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export default function HomePage() {
   return (
-    <main className="relative w-full overflow-hidden min-h-screen text-text-primary">
+    <main className="relative min-h-screen text-text-primary overflow-x-clip max-w-full">
       <SpeedInsights />
       <SectionProgressHud/>
       <HeroSection />

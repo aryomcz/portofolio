@@ -117,6 +117,8 @@
 html {
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 body {
@@ -124,6 +126,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   overflow-x: clip;
+  max-width: 100%;
 }
 
 /* Lenis Virtual Scroll Recommended Rules (prevents native smooth-scroll collision) */

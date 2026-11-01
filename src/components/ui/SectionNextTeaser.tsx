@@ -101,7 +101,7 @@ export const SectionNextTeaser = memo(function SectionNextTeaser({
   return (
     <div
       className={cn(
-        "mt-12 flex w-full items-center justify-between border-t border-border-subtle pt-5",
+        "mt-12 flex w-full items-center justify-between border-t border-border-subtle pt-5 overflow-hidden",
         className
       )}
     >
