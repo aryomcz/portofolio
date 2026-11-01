@@ -39,10 +39,12 @@ export function getGlobalScrollCameraState(): ScrollCameraTelemetry {
 
 export function isUserScrolling(graceMs = 160): boolean {
   if (typeof performance === "undefined") return false;
-  return (
-    Math.abs(globalScrollCameraState.velocity) > 0.12 ||
-    performance.now() - lastScrollEventTime < graceMs
-  );
+  const elapsedSinceScroll = performance.now() - lastScrollEventTime;
+  if (elapsedSinceScroll >= graceMs) {
+    globalScrollCameraState.velocity = 0;
+    return false;
+  }
+  return true;
 }
 
 export function subscribeScrollCamera(
@@ -235,6 +237,8 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
 
     let lastNativeScrollY = window.scrollY;
     let lastNativeTime = performance.now();
+    let nativeScrollIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
     const handleNativeScroll = () => {
       const now = performance.now();
       lastScrollEventTime = now;
@@ -245,6 +249,13 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
       lastNativeScrollY = sy;
       lastNativeTime = now;
       updateFromProgress(sy / cachedMaxScroll, rawVel, dir, sy);
+
+      if (nativeScrollIdleTimer !== null) {
+        clearTimeout(nativeScrollIdleTimer);
+      }
+      nativeScrollIdleTimer = setTimeout(() => {
+        globalScrollCameraState.velocity = 0;
+      }, 140);
     };
 
     if (lenis) {
@@ -255,6 +266,9 @@ export function useScrollCamera(options?: UseScrollCameraOptions) {
 
     return () => {
       window.cancelAnimationFrame(measureRafId);
+      if (nativeScrollIdleTimer !== null) {
+        clearTimeout(nativeScrollIdleTimer);
+      }
       window.removeEventListener("resize", handleResizeOrRefresh);
       ScrollTrigger.removeEventListener("refresh", handleResizeOrRefresh);
       if (lenis) {

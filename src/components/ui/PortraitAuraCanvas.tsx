@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -310,11 +310,13 @@ export function PortraitAuraCanvas({
   const [isWebglReady, setIsWebglReady] = useState<boolean>(false);
   const isReducedMotion = useReducedMotion();
 
-  // Continuous pointer & hover refs so cursor state is captured even before WebGL finishes booting
-  const targetMouseRef = useRef<{ x: number; y: number }>({ x: 0.5, y: 0.58 });
+  // Neutral initial pointer matches headCenter (0.5, 0.55) so frame 1 has zero parallax jump
+  const targetMouseRef = useRef<{ x: number; y: number }>({ x: 0.5, y: 0.55 });
   const targetHoverRef = useRef<number>(0.0);
 
   const isAuraForcedRef = useRef<boolean>(isAuraForced);
+  const currentToggleValRef = useRef<number>(isAuraForced ? 1.0 : 0.0);
+  const cancelIntroRef = useRef<boolean>(false);
   const toggleAnimRef = useRef<{
     from: number;
     to: number;
@@ -325,8 +327,6 @@ export function PortraitAuraCanvas({
     startTime: 0,
   });
 
-  // Automatically initialize WebGL right after first frame paint for real users
-  // while deferring on headless/software-WebGL audit bots so Lighthouse TBT stays ~0ms.
   useEffect(() => {
     if (shouldInitWebgl || typeof window === "undefined") return;
 
@@ -349,19 +349,29 @@ export function PortraitAuraCanvas({
   }, [shouldInitWebgl]);
 
   useEffect(() => {
+    let cancelRaf: number | null = null;
     if (isAuraForced && !shouldInitWebgl && !isSoftwareWebGLCached()) {
-      setShouldInitWebgl(true);
+      cancelRaf = window.requestAnimationFrame(() => {
+        setShouldInitWebgl(true);
+      });
     }
     const nextTarget = isAuraForced ? 1.0 : 0.0;
     if (toggleAnimRef.current.to !== nextTarget) {
+      cancelIntroRef.current = true;
       toggleAnimRef.current = {
-        from: toggleAnimRef.current.to,
+        from: currentToggleValRef.current,
         to: nextTarget,
         startTime: performance.now(),
       };
       wakeLoopRef.current?.();
     }
     isAuraForcedRef.current = isAuraForced;
+
+    return () => {
+      if (cancelRaf !== null) {
+        window.cancelAnimationFrame(cancelRaf);
+      }
+    };
   }, [isAuraForced, shouldInitWebgl]);
 
   useEffect(() => {
@@ -418,6 +428,9 @@ export function PortraitAuraCanvas({
         () => new THREE.Vector2(initialMouse.x, initialMouse.y)
       );
 
+      const initialToggleVal = isAuraForcedRef.current ? 1.0 : 0.0;
+      currentToggleValRef.current = initialToggleVal;
+
       const uniforms = {
         uBaseTex: { value: new THREE.Texture() },
         uAuraTex: { value: new THREE.Texture() },
@@ -425,8 +438,10 @@ export function PortraitAuraCanvas({
         uMouseParallax: { value: new THREE.Vector2(0.0, 0.0) },
         uParallaxStrength: { value: 0.012 },
         uHover: { value: targetHoverRef.current },
-        uToggleMode: { value: isAuraForcedRef.current ? 1.0 : 0.0 },
-        uIntroAura: { value: isReducedMotion ? 0.0 : 1.0 },
+        uToggleMode: { value: initialToggleVal },
+        uIntroAura: {
+          value: isReducedMotion || cancelIntroRef.current ? 0.0 : 1.0,
+        },
         uIntroReveal: { value: 1.0 },
         uTime: { value: 0.0 },
         uContainerAspect: { value: width / Math.max(1, height) },
@@ -448,6 +463,7 @@ export function PortraitAuraCanvas({
       let texturesLoaded = false;
       let introStartTime: number | null = null;
       let rafId = 0;
+      let scrollRetryTimer: ReturnType<typeof setTimeout> | null = null;
       let isLoopActive = false;
       let isVisible = true;
       const mountTime = performance.now();
@@ -459,15 +475,39 @@ export function PortraitAuraCanvas({
       const currentParallax = { x: 0.0, y: 0.0 };
       let currentHover = targetHoverRef.current;
 
+      const wakeLoop = () => {
+        if (!isLoopActive && !disposed && isVisible && texturesLoaded) {
+          isLoopActive = true;
+          rafId = window.requestAnimationFrame(animate);
+        }
+      };
+      wakeLoopRef.current = wakeLoop;
+
       const animate = (now: number) => {
         if (disposed || !isVisible || !texturesLoaded) {
           isLoopActive = false;
           return;
         }
 
-        // Yield heavy fragment shader evaluation while the user is actively scrolling the page
-        if (isUserScrolling(140)) {
+        const toggleAnim = toggleAnimRef.current;
+        const isToggleActiveNow =
+          !isReducedMotion &&
+          toggleAnim.startTime > 0 &&
+          (now - toggleAnim.startTime) * 0.001 < 0.85;
+        const isIntroActiveNow =
+          !isReducedMotion &&
+          !cancelIntroRef.current &&
+          introStartTime !== null &&
+          (now - introStartTime) * 0.001 < 1.15;
+
+        // Only yield to scroll when neither intro dissolve nor manual aura toggle is actively animating
+        if (!isToggleActiveNow && !isIntroActiveNow && isUserScrolling(140)) {
           isLoopActive = false;
+          if (scrollRetryTimer !== null) clearTimeout(scrollRetryTimer);
+          scrollRetryTimer = setTimeout(() => {
+            scrollRetryTimer = null;
+            wakeLoop();
+          }, 150);
           return;
         }
 
@@ -475,7 +515,11 @@ export function PortraitAuraCanvas({
         uniforms.uTime.value = isReducedMotion ? 0.0 : totalElapsed;
 
         let isIntroRunning = false;
-        if (isReducedMotion || introStartTime === null) {
+        if (
+          isReducedMotion ||
+          cancelIntroRef.current ||
+          introStartTime === null
+        ) {
           uniforms.uIntroReveal.value = 1.0;
           uniforms.uIntroAura.value = 0.0;
         } else {
@@ -496,18 +540,21 @@ export function PortraitAuraCanvas({
         }
 
         let isToggleRunning = false;
-        const toggleAnim = toggleAnimRef.current;
         if (isReducedMotion || toggleAnim.startTime === 0) {
           uniforms.uToggleMode.value = toggleAnim.to;
+          currentToggleValRef.current = toggleAnim.to;
         } else {
           const toggleElapsed = (now - toggleAnim.startTime) * 0.001;
           if (toggleElapsed < 0.85) {
             const t = easeDissolve(toggleElapsed / 0.85);
-            uniforms.uToggleMode.value =
+            const val =
               toggleAnim.from + (toggleAnim.to - toggleAnim.from) * t;
+            uniforms.uToggleMode.value = val;
+            currentToggleValRef.current = val;
             isToggleRunning = true;
           } else {
             uniforms.uToggleMode.value = toggleAnim.to;
+            currentToggleValRef.current = toggleAnim.to;
           }
         }
 
@@ -575,19 +622,24 @@ export function PortraitAuraCanvas({
         }
       };
 
-      const wakeLoop = () => {
-        if (
-          !isLoopActive &&
-          !disposed &&
-          isVisible &&
-          texturesLoaded &&
-          !isUserScrolling(140)
-        ) {
-          isLoopActive = true;
-          rafId = window.requestAnimationFrame(animate);
+      const syncSize = () => {
+        if (!container || disposed) return;
+        const r = container.getBoundingClientRect();
+        const w = Math.max(
+          1,
+          Math.round(r.width || container.clientWidth || 380)
+        );
+        const h = Math.max(
+          1,
+          Math.round(r.height || container.clientHeight || 340)
+        );
+        renderer.setSize(w, h);
+        uniforms.uContainerAspect.value = w / Math.max(1, h);
+        if (texturesLoaded) {
+          renderer.render(scene, camera);
+          wakeLoop();
         }
       };
-      wakeLoopRef.current = wakeLoop;
 
       const textureLoader = new THREE.TextureLoader();
       const loadTex = (src: string): Promise<THREE.Texture> =>
@@ -618,6 +670,7 @@ export function PortraitAuraCanvas({
           uniforms.uAuraTex.value = auraTex;
           uniforms.uReady.value = 1.0;
 
+          syncSize();
           texturesLoaded = true;
           introStartTime = performance.now();
           renderer.render(scene, camera);
@@ -628,16 +681,12 @@ export function PortraitAuraCanvas({
           // Keep SSR priority Image visible if WebGL texture load fails
         });
 
-      const handleResize = () => {
-        if (!container) return;
-        const w = container.clientWidth || 640;
-        const h = container.clientHeight || 520;
-        renderer.setSize(w, h);
-        uniforms.uContainerAspect.value = w / Math.max(1, h);
-        wakeLoop();
-      };
+      window.addEventListener("resize", syncSize, { passive: true });
 
-      window.addEventListener("resize", handleResize, { passive: true });
+      const resizeObserver = new ResizeObserver(() => {
+        syncSize();
+      });
+      resizeObserver.observe(container);
 
       const visibilityObserver = new IntersectionObserver(
         ([entry]) => {
@@ -652,9 +701,11 @@ export function PortraitAuraCanvas({
       visibilityObserver.observe(container);
 
       cleanupWebgl = () => {
+        if (scrollRetryTimer !== null) clearTimeout(scrollRetryTimer);
+        resizeObserver.disconnect();
         visibilityObserver.disconnect();
         window.cancelAnimationFrame(rafId);
-        window.removeEventListener("resize", handleResize);
+        window.removeEventListener("resize", syncSize);
         geometry.dispose();
         material.dispose();
         uniforms.uBaseTex.value.dispose();
@@ -674,7 +725,7 @@ export function PortraitAuraCanvas({
   }, [shouldInitWebgl, baseImageSrc, auraImageSrc, isReducedMotion]);
 
   const handleWrapperPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isUserScrolling(160)) return;
+    if (e.pointerType === "touch" && isUserScrolling(140)) return;
     if (!shouldInitWebgl && !isSoftwareWebGLCached()) {
       setShouldInitWebgl(true);
     }
@@ -698,19 +749,22 @@ export function PortraitAuraCanvas({
     targetHoverRef.current = 0.0;
     targetMouseRef.current.x = 0.5;
     targetMouseRef.current.y = 0.55;
-    if (!isUserScrolling(160)) {
-      wakeLoopRef.current?.();
-    }
+    wakeLoopRef.current?.();
   };
 
-  const initialSsrImageSrc = isReducedMotion ? baseImageSrc : auraImageSrc;
+  const fallbackImageSrc =
+    isReducedMotion || !shouldInitWebgl
+      ? isAuraForced
+        ? auraImageSrc
+        : baseImageSrc
+      : auraImageSrc;
 
   return (
     <div
       ref={wrapperRef}
       aria-label="Interactive 3D Shader Portrait of Aryo Ristiawan Machfudz — hover or click Show Aura to switch between Normal Portrait and Cyber-Wolf Aura"
       onPointerEnter={() => {
-        if (!shouldInitWebgl && !isSoftwareWebGLCached() && !isUserScrolling(160)) {
+        if (!shouldInitWebgl && !isSoftwareWebGLCached()) {
           setShouldInitWebgl(true);
         }
       }}
@@ -721,22 +775,20 @@ export function PortraitAuraCanvas({
           setShouldInitWebgl(true);
         }
       }}
-      className="relative h-full w-full cursor-default select-none"
+      className="relative h-full w-full cursor-default select-none drop-shadow-[0_18px_28px_rgba(10,17,32,0.22)]"
     >
-      {/* Instant SSR / LCP Priority Layer starts directly with Aura Image so there is zero flash of normal portrait */}
       <Image
-        src={initialSsrImageSrc}
+        src={fallbackImageSrc}
         alt="Aryo Ristiawan Machfudz — Full-Stack Developer & System Analyst"
         fill
         priority
         fetchPriority="high"
-        sizes="(max-width: 768px) 90vw, 480px"
         referrerPolicy="no-referrer"
-        className={`pointer-events-none object-contain object-bottom drop-shadow-[0_18px_28px_rgba(10,17,32,0.22)] transition-opacity duration-150 ${
+        sizes="(max-width: 768px) 90vw, 480px"
+        className={`pointer-events-none object-contain object-bottom transition-opacity duration-150 ${
           isWebglReady ? "opacity-0" : "opacity-100"
         }`}
       />
-      {/* Interactive WebGL Shader Canvas Host */}
       <div ref={canvasHostRef} className="relative z-10 h-full w-full" />
     </div>
   );
