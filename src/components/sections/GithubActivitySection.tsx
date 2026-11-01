@@ -120,6 +120,57 @@ export function GithubActivitySection() {
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [shouldFetchLive, setShouldFetchLive] = useState<boolean>(false);
+  const [languages, setLanguages] = useState<
+    readonly {
+      readonly language: string;
+      readonly percentage: number;
+      readonly colorToken: string;
+    }[]
+  >(githubTelemetry.languageDistribution);
+  const [isLangLoading, setIsLangLoading] = useState<boolean>(false);
+
+  // Fetch dynamic language telemetry from GitHub API
+  useEffect(() => {
+    if (!shouldFetchLive) return;
+    let isCancelled = false;
+
+    async function loadLanguages() {
+      setIsLangLoading(true);
+      try {
+        const res = await fetch(
+          `/api/github-languages?username=${encodeURIComponent(githubTelemetry.username)}`
+        );
+        if (res.ok) {
+          const data = (await res.json()) as {
+            languages?: readonly {
+              language: string;
+              percentage: number;
+              colorToken: string;
+            }[];
+          };
+          if (
+            !isCancelled &&
+            Array.isArray(data.languages) &&
+            data.languages.length > 0
+          ) {
+            setLanguages(data.languages);
+          }
+        }
+      } catch {
+        // Fallback to static distribution on network error
+      } finally {
+        if (!isCancelled) {
+          setIsLangLoading(false);
+        }
+      }
+    }
+
+    void loadLanguages();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [githubTelemetry.username, shouldFetchLive]);
 
   // Pre-fetch GitHub contributions during initial page idle time so network + 365-cell DOM commit
   // never interrupts mid-scroll transitions between Projects, Experience, and GitHub Telemetry.
@@ -413,30 +464,37 @@ export function GithubActivitySection() {
         {/* Language Distribution & Profile Link */}
         <div className="mt-6 grid grid-cols-1 gap-6 border-t border-border-subtle pt-5 lg:grid-cols-12 lg:items-center">
           <div className="lg:col-span-8">
-            <p className="font-mono text-[11px] text-text-muted">
-              LANGUAGE TELEMETRY DISTRIBUTION
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="font-mono text-[11px] text-text-muted">
+                LANGUAGE TELEMETRY DISTRIBUTION
+              </p>
+              {isLangLoading && (
+                <span className="font-mono text-[10px] text-accent-primary animate-pulse">
+                  CALCULATING...
+                </span>
+              )}
+            </div>
             <div
               aria-hidden="true"
               className="my-2.5 flex h-2.5 w-full overflow-hidden border border-border-subtle bg-bg-primary"
             >
-              {githubTelemetry.languageDistribution.map((lang) => (
+              {languages.map((lang) => (
                 <div
                   key={lang.language}
                   style={{
                     width: `${lang.percentage}%`,
                     backgroundColor: lang.colorToken,
                   }}
-                  className="h-full border-r border-bg-primary last:border-r-0"
+                  className="h-full border-r border-bg-primary transition-[width] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] last:border-r-0"
                 />
               ))}
             </div>
             <div className="flex flex-wrap gap-4 font-mono text-xs">
-              {githubTelemetry.languageDistribution.map((lang) => (
+              {languages.map((lang) => (
                 <div key={lang.language} className="flex items-center gap-2">
                   <span
                     style={{ backgroundColor: lang.colorToken }}
-                    className="h-2 w-2"
+                    className="h-2 w-2 shrink-0"
                     aria-hidden="true"
                   />
                   <span className="text-text-primary">{lang.language}</span>

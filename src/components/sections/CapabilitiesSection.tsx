@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TransitionLink } from "@/components/ui/TransitionLink";
-import { ArrowUpRight, Layers, Cpu, Sparkles } from "lucide-react";
+import { ArrowUpRight, Layers, Cpu } from "lucide-react";
 import {
   PORTFOLIO_DATA,
   getCaseStudyBySlug,
