@@ -297,7 +297,7 @@ export function HeroSection() {
           <button
             type="button"
             onClick={() => setIsAuraForced((prev) => !prev)}
-            className="press-scale pointer-events-auto group flex items-center gap-3.5 text-left"
+            className="press-scale cursor-pointer pointer-events-auto group flex items-center gap-3.5 text-left"
           >
             <span className="flex h-11 w-11 items-center justify-center rounded-full border border-text-primary/55 bg-bg-primary/80 text-text-primary backdrop-blur-xs transition-colors duration-200 group-hover:border-accent-primary group-hover:text-accent-primary">
               <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />

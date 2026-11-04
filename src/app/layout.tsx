@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Anton, Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { SmoothScrollProvider } from "@/hooks/useSmoothScroll";
 import { PageTransitionProvider } from "@/components/ui/PageTransition";
@@ -9,27 +9,26 @@ import { TopographicBg } from "@/components/ui/TopographicBg";
 import { Preloader } from "@/components/ui/Preloader";
 import { PORTFOLIO_DATA } from "@/data/portfolio";
 
-const geistSans = Geist({
+const geistSans = localFont({
+  src: "../fonts/Geist-Variable.woff2",
   variable: "--font-geist-sans",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "../fonts/GeistMono-Variable.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const antonDisplay = Anton({
-  weight: "400",
+const antonDisplay = localFont({
+  src: "../fonts/Anton-Regular.woff2",
   variable: "--font-anton",
-  subsets: ["latin"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: `${PORTFOLIO_DATA.owner.fullName} — Full-Stack Developer & System Analyst`,
+  title: `${PORTFOLIO_DATA.owner.fullName} - Full-Stack Developer & System Analyst`,
   description: PORTFOLIO_DATA.owner.bioSummary,
 };
 

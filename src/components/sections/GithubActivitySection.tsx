@@ -331,7 +331,7 @@ export function GithubActivitySection() {
                 type="button"
                 onClick={() => setSelectedYear(year)}
                 className={cn(
-                  "press-scale tabular-nums relative px-3 py-1 font-mono text-xs transition-colors duration-150",
+                  "press-scale cursor-pointer tabular-nums relative px-3 py-1 font-mono text-xs transition-colors duration-150",
                   isActive
                     ? "text-text-primary"
                     : "text-text-secondary hover:text-text-primary"

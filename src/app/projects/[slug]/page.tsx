@@ -39,12 +39,12 @@ export async function generateMetadata({
   const study = getCaseStudyBySlug(slug);
   if (!study) {
     return {
-      title: "Case Study Not Found — Aryo Ristiawan Machfudz",
+      title: "Case Study Not Found - Aryo Ristiawan Machfudz",
     };
   }
 
   return {
-    title: `${study.title} — Case Study | Aryo Ristiawan Machfudz`,
+    title: `${study.title} - Case Study | Aryo Ristiawan Machfudz`,
     description: study.cardSummary,
   };
 }

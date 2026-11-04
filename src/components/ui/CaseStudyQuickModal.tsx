@@ -70,6 +70,7 @@ export function CaseStudyQuickModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby="quick-modal-title"
+          // data-lenis-prevent
           style={{
             position: "fixed",
             top: 0,
@@ -100,6 +101,7 @@ export function CaseStudyQuickModal({
 
           {/* Centered Modal Dialog Surface */}
           <motion.div
+            // data-lenis-prevent
             initial={
               isReducedMotion
                 ? { opacity: 0 }
@@ -138,7 +140,7 @@ export function CaseStudyQuickModal({
                 type="button"
                 onClick={onClose}
                 aria-label="Close quick preview modal"
-                className="press-scale inline-flex h-8 w-8 items-center justify-center border border-border-subtle bg-bg-primary text-text-secondary hover:border-border-strong hover:text-text-primary"
+                className="press-scale cursor-pointer inline-flex h-8 w-8 items-center justify-center border border-border-subtle bg-bg-primary text-text-secondary hover:border-border-strong hover:text-text-primary"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -146,7 +148,9 @@ export function CaseStudyQuickModal({
 
             {/* Scrollable Modal Body */}
             <div
-              className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-7 space-y-6"
+              data-lenis-prevent
+              tabIndex={0}
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 sm:p-7 space-y-6 focus:outline-hidden"
             >
               <div>
                 <p className="font-mono text-xs text-accent-emerald">

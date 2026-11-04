@@ -278,7 +278,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
     mastheadIdentity: "ARYO R. MACHFUDZ",
     roleTagline: "FULL-STACK DEVELOPER · SYSTEM ANALYST · API ARCHITECT",
     bioSummary:
-      "Third-year Software Engineering undergraduate at IPB University (GPA 3.83/4.00) shipping end-to-end web, mobile, and API architectures—from custom enterprise CMS and OCR logistics systems to PWA point-of-sale and Xendit ticketing platforms.",
+      "Third-year Software Engineering undergraduate at IPB University (GPA 3.83/4.00) shipping end-to-end web, mobile, and API architectures-from custom enterprise CMS and OCR logistics systems to PWA point-of-sale and Xendit ticketing platforms.",
     location: {
       city: "Bogor",
       country: "Indonesia",
@@ -521,7 +521,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
         ],
         painPoints: [
           "High risk of human calculation and transcription errors during peak store hours.",
-          "Delayed financial visibility—owners could not inspect real-time revenue or average order values remotely.",
+          "Delayed financial visibility-owners could not inspect real-time revenue or average order values remotely.",
           "No historical time-series comparison across weekly, monthly, or quarterly windows.",
         ],
       },
@@ -781,7 +781,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       index: "03",
       kind: "project",
       themeColor: "blue",
-      title: "CMS WEBSITE — PT BKS",
+      title: "CMS WEBSITE - PT BKS",
       shortTitle: "CMS PT BKS",
       subtitle: "Enterprise Ship Management Platform & Back-Office CMS",
       year: "2026",
@@ -939,7 +939,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       index: "04",
       kind: "project",
       themeColor: "red",
-      title: "DRIVER APP — PT KJHMS",
+      title: "DRIVER APP - PT KJHMS",
       shortTitle: "Driver App PT KJHMS",
       subtitle: "OCR Receipt Extraction, Ritase Analytics & Auto-Print SIJ",
       year: "2025",
@@ -1107,19 +1107,19 @@ export const PORTFOLIO_DATA: PortfolioData = {
     kind: "achievement",
     themeColor: "fuchsia",
     badgeText: "CHAMPION",
-    title: "1ST WINNER — PRISMA FEST WEB DESIGN COMPETITION",
+    title: "1ST WINNER - PRISMA FEST WEB DESIGN COMPETITION",
     shortTitle: "Lumind (Prisma Fest 1st Winner)",
-    subtitle: "Lumind — Digital Mental Wellness & Mindful Space Platform",
+    subtitle: "Lumind - Digital Mental Wellness & Mindful Space Platform",
     year: "2025",
     category: "National Web Design Competition · UIN Sunan Ampel Surabaya",
-    clientOrContext: "Prisma Fest 2025 — Representing IPB University",
+    clientOrContext: "Prisma Fest 2025 - Representing IPB University",
     role: "Lead Frontend Designer & Web Developer",
     liveUrl: "https://lumind.vercel.app/",
     heroMetricPill: "Juara 1 Nasional · Prisma Fest 2025 (UIN Sunan Ampel Surabaya)",
     cardSummary:
-      "Awarded 1st Place Nationally (Champion) at Prisma Fest 2025 for designing and engineering Lumind—an interactive digital mental wellness platform featuring daily mood check-ins, choreographed breathing cadences, and mindful journaling.",
+      "Awarded 1st Place Nationally (Champion) at Prisma Fest 2025 for designing and engineering Lumind-an interactive digital mental wellness platform featuring daily mood check-ins, choreographed breathing cadences, and mindful journaling.",
     previewImage: {
-      src: "/images/achievements/prisma/winner.webp",
+      src: "/images/achievements/prisma/winner.png",
       alt: "Lumind Digital Mental Wellness Platform UI and 1st Winner Prisma Fest 2025 Award Certificate",
       secondaryCertificateSrc: "/images/achievements/prisma/certificate.webp",
       aspectRatio: "16/9",
@@ -1128,7 +1128,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       {
         id: "lumind-1",
         tag: "DOC 01 // CHAMPION AWARDING",
-        title: "1st Place Winner (Juara 1) — Prisma Fest 2025",
+        title: "1st Place Winner (Juara 1) - Prisma Fest 2025",
         caption: "Representing IPB University at the National Web Design Competition, UIN Sunan Ampel Surabaya.",
         imageUrl: "/images/achievements/prisma/photo.webp",
       },
@@ -1183,7 +1183,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       headline: "Designing a Stigma-Free, Low-Friction Digital Sanctuary for Mental Wellness",
       contextParagraphs: [
         "University students and young professionals frequently experience high cognitive overload and emotional burnout, yet existing mental health platforms often feel overly clinical, cluttered, or intimidating to use for daily self-regulation.",
-        "For the Prisma Fest 2025 National Web Design Competition at UIN Sunan Ampel Surabaya, our goal was to craft a web experience ('Lumind — Your Safe Space to Feel') that lowers cognitive friction from the very first second.",
+        "For the Prisma Fest 2025 National Web Design Competition at UIN Sunan Ampel Surabaya, our goal was to craft a web experience ('Lumind - Your Safe Space to Feel') that lowers cognitive friction from the very first second.",
       ],
       painPoints: [
         "Clinical, form-heavy mental health apps discourage consistent daily emotional reflection.",
@@ -1262,7 +1262,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
         {
           dimension: "National Competition Standing",
           before: "Competing against university web design teams nationwide",
-          after: "Awarded 1st Winner (Juara 1) at Prisma Fest 2025 — UIN Sunan Ampel Surabaya",
+          after: "Awarded 1st Winner (Juara 1) at Prisma Fest 2025 - UIN Sunan Ampel Surabaya",
         },
       ],
     },

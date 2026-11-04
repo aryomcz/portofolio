@@ -145,7 +145,7 @@ export function ExperienceTracks({ tracks }: ExperienceTracksProps) {
                 onClick={() => handleSelectTrack(track.id)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
                 className={cn(
-                  "press-scale relative flex min-h-11 items-center justify-center gap-1.5 px-3 font-mono text-[11px] whitespace-nowrap sm:px-4 sm:text-xs",
+                  "press-scale cursor-pointer relative flex min-h-11 items-center justify-center gap-1.5 px-3 font-mono text-[11px] whitespace-nowrap sm:px-4 sm:text-xs",
                   isActive
                     ? "text-text-primary"
                     : "text-text-muted hover:text-text-primary"

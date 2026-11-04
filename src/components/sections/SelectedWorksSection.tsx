@@ -292,7 +292,7 @@ export function SelectedWorksSection() {
                 <button
                   type="button"
                   onClick={() => setPreviewStudy(featuredAchievement)}
-                  className="press-scale inline-flex min-h-11 items-center gap-2 border border-accent-primary/60 bg-bg-primary px-4 py-2.5 font-mono text-xs text-accent-primary hover:border-accent-primary"
+                  className="press-scale cursor-pointer inline-flex min-h-11 items-center gap-2 border border-accent-primary/60 bg-bg-primary px-4 py-2.5 font-mono text-xs text-accent-primary hover:border-accent-primary"
                 >
                   <Eye className="h-4 w-4 text-accent-primary" aria-hidden="true" />
                   <span>PREVIEW</span>
@@ -384,7 +384,7 @@ export function SelectedWorksSection() {
                 type="button"
                 onClick={() => handleToggleViewMode("stack")}
                 className={cn(
-                  "press-scale relative flex items-center gap-1.5 px-3 py-1.5 font-mono text-xs transition-colors",
+                  "press-scale cursor-pointer relative flex items-center gap-1.5 px-3 py-1.5 font-mono text-xs transition-colors",
                   viewMode === "stack"
                     ? "font-semibold text-text-primary"
                     : "text-text-muted hover:text-text-primary"
@@ -406,7 +406,7 @@ export function SelectedWorksSection() {
                 type="button"
                 onClick={() => handleToggleViewMode("carousel")}
                 className={cn(
-                  "press-scale relative flex items-center gap-1.5 px-3 py-1.5 font-mono text-xs transition-colors",
+                  "press-scale cursor-pointer relative flex items-center gap-1.5 px-3 py-1.5 font-mono text-xs transition-colors",
                   viewMode === "carousel"
                     ? "font-semibold text-text-primary"
                     : "text-text-muted hover:text-text-primary"
@@ -428,7 +428,7 @@ export function SelectedWorksSection() {
                 type="button"
                 onClick={() => handleToggleViewMode("grid")}
                 className={cn(
-                  "press-scale relative flex items-center gap-1.5 px-3 py-1.5 font-mono text-xs transition-colors",
+                  "press-scale cursor-pointer relative flex items-center gap-1.5 px-3 py-1.5 font-mono text-xs transition-colors",
                   viewMode === "grid"
                     ? "font-semibold text-text-primary"
                     : "text-text-muted hover:text-text-primary"
@@ -462,7 +462,7 @@ export function SelectedWorksSection() {
                   type="button"
                   onClick={() => handleCategorySelect(cat)}
                   className={cn(
-                    "press-scale relative border px-3.5 py-1.5 font-mono text-xs transition-colors",
+                    "press-scale cursor-pointer relative border px-3.5 py-1.5 font-mono text-xs transition-colors",
                     isSelected
                       ? "border-accent-primary bg-accent-primary/10 font-semibold text-accent-primary"
                       : "border-border-subtle bg-bg-elevated/80 text-text-secondary hover:border-accent-primary/50 hover:text-text-primary"
@@ -633,7 +633,7 @@ export function SelectedWorksSection() {
                           <button
                             type="button"
                             onClick={() => setPreviewStudy(project)}
-                            className="press-scale inline-flex min-h-10 items-center gap-1.5 border border-accent-primary/60 bg-bg-primary px-3.5 py-2 font-mono text-xs text-accent-primary hover:border-accent-primary"
+                            className="press-scale cursor-pointer inline-flex min-h-10 items-center gap-1.5 border border-accent-primary/60 bg-bg-primary px-3.5 py-2 font-mono text-xs text-accent-primary hover:border-accent-primary"
                           >
                             <Eye
                               className="h-3.5 w-3.5 text-accent-primary"
@@ -801,7 +801,7 @@ export function SelectedWorksSection() {
                               e.stopPropagation();
                               setPreviewStudy(project);
                             }}
-                            className="press-scale inline-flex min-h-10 items-center gap-1.5 border border-accent-primary/60 bg-bg-primary px-3.5 py-2 font-mono text-xs text-accent-primary hover:border-accent-primary"
+                            className="press-scale cursor-pointer inline-flex min-h-10 items-center gap-1.5 border border-accent-primary/60 bg-bg-primary px-3.5 py-2 font-mono text-xs text-accent-primary hover:border-accent-primary"
                           >
                             <Eye
                               className="h-3.5 w-3.5 text-accent-primary"
@@ -957,7 +957,7 @@ export function SelectedWorksSection() {
                         <button
                           type="button"
                           onClick={() => setPreviewStudy(project)}
-                          className="press-scale inline-flex min-h-10 items-center gap-1.5 border border-accent-primary/60 bg-bg-primary px-3.5 py-2 font-mono text-xs text-accent-primary hover:border-accent-primary"
+                          className="press-scale cursor-pointer inline-flex min-h-10 items-center gap-1.5 border border-accent-primary/60 bg-bg-primary px-3.5 py-2 font-mono text-xs text-accent-primary hover:border-accent-primary"
                         >
                           <Eye
                             className="h-3.5 w-3.5 text-accent-primary"

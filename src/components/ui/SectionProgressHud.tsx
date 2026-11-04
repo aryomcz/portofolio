@@ -138,7 +138,7 @@ export function SectionProgressHud() {
                   onBlur={() => setHoveredIdx(null)}
                   aria-label={`Jump to section ${sec.code}: ${sec.label}`}
                   aria-current={isActive ? "location" : undefined}
-                  className="press-scale group relative flex h-5 w-5 items-center justify-center focus-visible:outline-offset-2"
+                  className="press-scale cursor-pointer group relative flex h-5 w-5 items-center justify-center focus-visible:outline-offset-2"
                 >
                   <span
                     className={cn(

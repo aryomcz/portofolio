@@ -115,7 +115,7 @@ export const SectionNextTeaser = memo(function SectionNextTeaser({
           type="button"
           onClick={handleClick}
           data-testid={`next-section-teaser-${nextCode}`}
-          className="press-scale group relative inline-flex items-center gap-3 border border-border-strong/80 bg-bg-elevated/90 px-4 py-2.5 font-mono text-xs tracking-wider text-text-primary transition-colors duration-200 hover:border-accent-primary hover:bg-accent-primary/10"
+          className="press-scale cursor-pointer group relative inline-flex items-center gap-3 border border-border-strong/80 bg-bg-elevated/90 px-4 py-2.5 font-mono text-xs tracking-wider text-text-primary transition-colors duration-200 hover:border-accent-primary hover:bg-accent-primary/10"
         >
           {/* Corner HUD Brackets */}
           <span
