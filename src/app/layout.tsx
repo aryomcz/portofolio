@@ -30,6 +30,11 @@ const antonDisplay = localFont({
 export const metadata: Metadata = {
   title: `${PORTFOLIO_DATA.owner.fullName} - Full-Stack Developer & System Analyst`,
   description: PORTFOLIO_DATA.owner.bioSummary,
+  manifest: "/icons/site.webmanifest",
+  icons: {
+    icon: "/icons/favicon-32x32.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 const themeInitScript = `
