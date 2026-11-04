@@ -88,7 +88,7 @@ export const VelocityTechMarquee = memo(function VelocityTechMarquee() {
     const tick = (_time: number, deltaTime: number) => {
       if (!isVisible) return;
       const dt = Math.min(deltaTime, 50) * 0.001;
-      const baseSpeed = 4.2; // percent per second
+      const baseSpeed = 2.2; // percent per second
       xPercent += direction * baseSpeed * velocityMultiplier * dt;
 
       if (xPercent <= -50) xPercent += 50;
